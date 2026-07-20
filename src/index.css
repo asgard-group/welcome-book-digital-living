@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600,700&display=swap');
+
+@layer base {
+  :root {
+    --background: 40 20% 94%;
+    --foreground: 30 12% 15%;
+
+    --card: 40 25% 97%;
+    --card-foreground: 30 12% 15%;
+
+    --popover: 40 25% 97%;
+    --popover-foreground: 30 12% 15%;
+
+    --primary: 30 12% 15%;
+    --primary-foreground: 40 25% 97%;
+
+    --secondary: 40 15% 90%;
+    --secondary-foreground: 30 12% 15%;
+
+    --muted: 40 15% 90%;
+    --muted-foreground: 30 8% 45%;
+
+    --accent: 185 38% 52%;
+    --accent-foreground: 30 12% 15%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 40 25% 97%;
+
+    --border: 40 12% 85%;
+    --input: 40 12% 85%;
+    --ring: 30 12% 15%;
+
+    --teal-light: 185 50% 94%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 195 20% 22%;
+    --sidebar-foreground: 180 20% 95%;
+    --sidebar-primary: 185 38% 52%;
+    --sidebar-primary-foreground: 195 25% 15%;
+    --sidebar-accent: 195 20% 28%;
+    --sidebar-accent-foreground: 180 20% 98%;
+    --sidebar-border: 195 20% 28%;
+    --sidebar-ring: 185 38% 52%;
+  }
+
+  .dark {
+    --background: 195 25% 10%;
+    --foreground: 180 20% 95%;
+    --card: 195 25% 13%;
+    --card-foreground: 180 20% 95%;
+    --popover: 195 25% 13%;
+    --popover-foreground: 180 20% 95%;
+    --primary: 180 20% 95%;
+    --primary-foreground: 195 25% 15%;
+    --secondary: 195 20% 18%;
+    --secondary-foreground: 180 20% 95%;
+    --muted: 195 20% 18%;
+    --muted-foreground: 180 10% 65%;
+    --accent: 185 38% 52%;
+    --accent-foreground: 195 25% 10%;
+    --destructive: 0 60% 40%;
+    --destructive-foreground: 180 20% 95%;
+    --border: 195 20% 18%;
+    --input: 195 20% 18%;
+    --ring: 185 38% 52%;
+    --teal-light: 195 25% 18%;
+    --sidebar-background: 195 25% 8%;
+    --sidebar-foreground: 180 20% 95%;
+    --sidebar-primary: 185 38% 52%;
+    --sidebar-primary-foreground: 195 25% 10%;
+    --sidebar-accent: 195 20% 15%;
+    --sidebar-accent-foreground: 180 20% 95%;
+    --sidebar-border: 195 20% 15%;
+    --sidebar-ring: 185 38% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'General Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply px-4 py-6 pb-24 md:pb-6;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold text-primary mb-1;
+  }
+
+  .page-subtitle {
+    @apply text-muted-foreground text-sm mb-6;
+  }
+
+  .info-card {
+    @apply bg-card rounded-xl border p-4 shadow-sm;
+  }
+
+  .wifi-card {
+    @apply bg-teal-light rounded-xl p-5 border border-accent/20;
+  }
+
+  .tab-bar {
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-card border-t flex justify-around items-center h-16 md:hidden;
+  }
+
+  .tab-item {
+    @apply flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors flex-1 h-full;
+  }
+
+  .tab-item-active {
+    @apply text-accent;
+  }
+
+  .floating-contact {
+    @apply fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6 bg-accent text-accent-foreground rounded-full shadow-lg hover:shadow-xl transition-all;
+  }
+
+  .rule-card {
+    @apply flex items-start gap-3 bg-card rounded-xl border p-4;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
