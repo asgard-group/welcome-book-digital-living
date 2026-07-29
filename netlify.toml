@@ -1,0 +1,32 @@
+# Netlify configuration.
+#
+# Local dev: run `netlify dev` (NOT `npm run dev`) so the app, the serverless
+# functions, and the Blobs store all run together on one origin.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# Local `netlify dev`. This app pins Vite to port 8080 (see vite.config.ts),
+# not Vite's default 5173, so tell Netlify the exact command + port instead of
+# letting it auto-detect (which waits on 5173 and times out).
+[dev]
+  command = "npm run dev"
+  targetPort = 8080
+  port = 8888
+  framework = "#custom"
+  autoLaunch = false
+
+# API endpoints -> serverless functions. Must come before the SPA fallback.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA fallback: every other path serves the app shell so client-side routes
+# (e.g. /access, /home) survive a hard refresh / direct hit.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

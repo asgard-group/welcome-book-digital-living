@@ -43,6 +43,18 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
           {
+            // Authenticated building data (Wi-Fi, entry codes, name). Network-first
+            // so codes stay fresh online, with a cache fallback so guests keep
+            // access to them offline. Must precede the broad same-origin rule below.
+            urlPattern: ({ url }: { url: URL }) => url.pathname === "/api/building",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "building-data",
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
             urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
             handler: "NetworkFirst",
             options: {

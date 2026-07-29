@@ -1,7 +1,8 @@
-import { LogIn, DoorOpen, AlertCircle, ChevronLeft } from "lucide-react";
+import { LogIn, DoorOpen, AlertCircle, ChevronLeft, Clock, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import joroLogo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import joroLogo from "@/assets/joro-living-logo.png";
+import { SettingsPopover } from "@/components/SettingsPopover";
 
 function Widget({ children }: { children: React.ReactNode }) {
   return (
@@ -19,7 +20,7 @@ export default function Checkout() {
         <div className="fixed inset-0 z-0 pointer-events-none">
           <div className="relative mx-auto h-full w-full max-w-[760px]">
             <img
-              src={heroImg.url}
+              src={heroImg}
               alt="Haussmann Mogador"
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -30,10 +31,11 @@ export default function Checkout() {
         {/* Content */}
         <div className="relative z-10 flex flex-col min-h-screen pb-6">
           {/* Back arrow */}
-          <div className="px-4 pt-4 flex items-center shrink-0">
-            <Link to="/" aria-label="Back" className="h-8 w-8 flex items-center justify-center -ml-1">
+          <div className="px-4 pt-4 flex items-center justify-between shrink-0">
+            <Link to="/" aria-label="Back" className="h-11 w-11 flex items-center justify-center">
               <ChevronLeft className="h-6 w-6 text-white" />
             </Link>
+            <SettingsPopover variant="light" />
           </div>
 
           {/* Title */}
@@ -80,12 +82,25 @@ export default function Checkout() {
                 L'interphone se trouve dans le hall d'entrée. Appuyez sur la touche d'ouverture pour ouvrir la porte.
               </p>
             </Widget>
+
+            <Widget>
+              <Link to="/services" className="flex items-start gap-3">
+                <Clock className="h-5 w-5 text-[#1c2626] dark:text-white shrink-0 mt-0.5" strokeWidth={2} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-[#1c2626] dark:text-white">Départ tardif / Arrivée anticipée</p>
+                  <p className="text-sm text-[#1c2626]/70 dark:text-white/80 mt-0.5">
+                    Option payante — voir nos Services
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0 mt-0.5 text-[#1c2626]/70 dark:text-white/80" strokeWidth={1.5} />
+              </Link>
+            </Widget>
           </div>
 
           {/* Footer logo */}
           <div className="flex justify-center pt-8 pb-2">
             <img
-              src={joroLogo.url}
+              src={joroLogo}
               alt="Jöro Living"
               className="w-[160px] h-auto object-contain brightness-0 invert"
             />

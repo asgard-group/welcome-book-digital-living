@@ -5,12 +5,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/theme/ThemeContext";
+import { AuthGate } from "@/components/AuthGate";
 import Welcome from "./pages/Welcome";
 import Onboarding from "./pages/Onboarding";
+import Access from "./pages/Access";
 import Checkin from "./pages/Checkin";
 import Checkout from "./pages/Checkout";
 import Rules from "./pages/Rules";
 import Facilities from "./pages/Facilities";
+import Services from "./pages/Services";
 import Explore from "./pages/Explore";
 import InfoPage from "./pages/InfoPage";
 import QrPage from "./pages/QrPage";
@@ -21,7 +24,9 @@ const OnboardingGate = () => {
   let seen = false;
   try {
     seen = typeof window !== "undefined" && localStorage.getItem("joro_onboarded") === "1";
-  } catch {}
+  } catch {
+    // Ignore storage failures (e.g. private mode / disabled storage).
+  }
   return seen ? <Navigate to="/home" replace /> : <Onboarding />;
 };
 
@@ -36,16 +41,24 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<OnboardingGate />} />
-              <Route path="/home" element={<Welcome />} />
-              <Route path="/checkin" element={<Checkin />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/rules" element={<Rules />} />
-              <Route path="/facilities" element={<Facilities />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/info" element={<InfoPage />} />
-              <Route path="/qr" element={<QrPage />} />
-              <Route path="/thanks" element={<Thanks />} />
+              {/* Public: magic-link landing (no valid session yet) */}
+              <Route path="/access" element={<Access />} />
+
+              {/* Everything else requires a valid, in-window access grant */}
+              <Route element={<AuthGate />}>
+                <Route path="/" element={<OnboardingGate />} />
+                <Route path="/home" element={<Welcome />} />
+                <Route path="/checkin" element={<Checkin />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/rules" element={<Rules />} />
+                <Route path="/facilities" element={<Facilities />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/info" element={<InfoPage />} />
+                <Route path="/qr" element={<QrPage />} />
+                <Route path="/thanks" element={<Thanks />} />
+              </Route>
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
