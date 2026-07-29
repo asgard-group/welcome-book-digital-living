@@ -1,0 +1,50 @@
+{
+  "haussmann-halevy": {
+    "id": "haussmann-halevy",
+    "name": "Haussmann Mogador",
+    "wifi": {
+      "network": "Joro-Living",
+      "password": "WELCOME09!"
+    },
+    "entryCodes": {
+      "buildingDoor": "A 3187",
+      "hallCode": "A4326"
+    }
+  },
+  "demo-marais": {
+    "id": "demo-marais",
+    "name": "Le Marais Loft",
+    "wifi": {
+      "network": "Marais_Guest_2G",
+      "password": "vieille-du-temple-42"
+    },
+    "entryCodes": {
+      "buildingDoor": "B 1290",
+      "hallCode": "7781"
+    }
+  },
+  "demo-montmartre": {
+    "id": "demo-montmartre",
+    "name": "Studio Montmartre",
+    "wifi": {
+      "network": "SacreCoeur_WiFi",
+      "password": "abbesses-2024!"
+    },
+    "entryCodes": {
+      "buildingDoor": "C 4407",
+      "hallCode": "0315"
+    }
+  },
+  "demo-bastille": {
+    "id": "demo-bastille",
+    "name": "Bastille Résidence",
+    "wifi": {
+      "network": "Bastille_Fibre_5G",
+      "password": "roquette-lenoir-88"
+    },
+    "entryCodes": {
+      "buildingDoor": "A 2056",
+      "hallCode": "9642"
+    }
+  }
+}

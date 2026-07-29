@@ -12,8 +12,9 @@ import {
   ConciergeBell,
 } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import joroLogo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import joroLogo from "@/assets/joro-living-logo.png";
+import { SettingsPopover } from "@/components/SettingsPopover";
 
 function Widget({ children }: { children: React.ReactNode }) {
   return (
@@ -27,12 +28,10 @@ function Widget({ children }: { children: React.ReactNode }) {
 // Halévy Apartment — 43 boulevard Haussmann, 75009 Paris
 const placesData: Record<string, { name: string; time: number; descEn?: string; descFr?: string }[]> = {
   restaurants: [
+    { name: "Jöro Kaffé", time: 10, descEn: "Café/coworking (-10% code SWEET10)", descFr: "Café/coworking (-10% code SWEET10)" },
     { name: "Galeries Lafayette Gourmet", time: 1, descEn: "Rooftop & gourmet food hall", descFr: "Rooftop & halle gourmande" },
     { name: "El&N", time: 8, descEn: "Instagrammable café & brunch", descFr: "Café & brunch instagrammable" },
-    { name: "Créatures", time: 2, descEn: "Vegetarian with a view", descFr: "Végétarien avec vue" },
-    { name: "Tortuga", time: 10, descEn: "Mexican-Japanese fusion", descFr: "Fusion mexicaine-japonaise" },
     { name: "Perruche", time: 2, descEn: "Rooftop Mediterranean", descFr: "Méditerranéen sur les toits" },
-    { name: "Froufrou", time: 10, descEn: "Chic French bistro", descFr: "Bistrot français chic" },
     { name: "Ao Izakaya", time: 12, descEn: "Japanese tapas", descFr: "Tapas japonaises" },
     { name: "Braun Notes", time: 8, descEn: "Specialty coffee & food", descFr: "Café de spécialité & cuisine" },
     { name: "Brasserie Lazare", time: 5, descEn: "Classic French brasserie", descFr: "Brasserie française classique" },
@@ -50,6 +49,12 @@ const placesData: Record<string, { name: string; time: number; descEn?: string; 
     { name: "Papi Restaurant", time: 15, descEn: "Italian comfort food", descFr: "Cuisine italienne réconfortante" },
     { name: "Zébulon", time: 15, descEn: "Neo-bistro", descFr: "Néo-bistrot" },
     { name: "Le Rouge à Lèvres", time: 10, descEn: "Wine bar & small plates", descFr: "Bar à vin & petites assiettes" },
+    { name: "Maison Noura", time: 3, descEn: "Lebanese/Mediterranean, inside Printemps", descFr: "Libanais/méditerranéen, au Printemps" },
+    { name: "ONYX", time: 5, descEn: "French fine dining", descFr: "Gastronomique français" },
+    { name: "Starving Club", time: 3, descEn: "Gourmet burgers, Galeries Lafayette Gourmet", descFr: "Burgers gourmets, Galeries Lafayette Gourmet" },
+    { name: "Papillons & Co", time: 5, descEn: "French bistro", descFr: "Bistrot français" },
+    { name: "Paul & Julienne", time: 8, descEn: "French brasserie", descFr: "Brasserie française" },
+    { name: "Mamou", time: 6, descEn: "Gastro bistro", descFr: "Bistro gastronomique" },
   ],
   shopping: [
     { name: "Printemps Haussmann", time: 2, descEn: "Iconic department store", descFr: "Grand magasin iconique" },
@@ -90,6 +95,9 @@ const placesData: Record<string, { name: string; time: number; descEn?: string; 
     { name: "Monoprix Haussmann", time: 3, descEn: "Supermarket & essentials", descFr: "Supermarché & essentiels" },
     { name: "La Poste Opéra", time: 5, descEn: "Post office", descFr: "Bureau de poste" },
     { name: "BNP Paribas", time: 4, descEn: "ATM & bank", descFr: "Distributeur & banque" },
+    { name: "E.L.A. Laundromat", time: 9, descEn: "Laundromat", descFr: "Laverie automatique" },
+    { name: "Billy Wash Lavomatic", time: 8, descEn: "Laundromat", descFr: "Laverie automatique" },
+    { name: "Lav'club", time: 9, descEn: "Laundromat", descFr: "Laverie automatique" },
   ],
 };
 
@@ -115,7 +123,7 @@ export default function Explore() {
         <div className="fixed inset-0 z-0 pointer-events-none">
           <div className="relative mx-auto h-full w-full max-w-[760px]">
             <img
-              src={heroImg.url}
+              src={heroImg}
               alt="Haussmann Mogador"
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -126,10 +134,11 @@ export default function Explore() {
         {/* Content */}
         <div className="relative z-10 flex flex-col min-h-screen pb-6">
           {/* Back arrow */}
-          <div className="px-4 pt-4 flex items-center shrink-0">
-            <Link to="/" aria-label="Back" className="h-8 w-8 flex items-center justify-center -ml-1">
+          <div className="px-4 pt-4 flex items-center justify-between shrink-0">
+            <Link to="/" aria-label="Back" className="h-11 w-11 flex items-center justify-center">
               <ChevronLeft className="h-6 w-6 text-white" />
             </Link>
+            <SettingsPopover variant="light" />
           </div>
 
           {/* Title */}
@@ -201,7 +210,7 @@ export default function Explore() {
           {/* Footer logo */}
           <div className="flex justify-center pt-8 pb-2">
             <img
-              src={joroLogo.url}
+              src={joroLogo}
               alt="Jöro Living"
               className="w-[160px] h-auto object-contain brightness-0 invert"
             />

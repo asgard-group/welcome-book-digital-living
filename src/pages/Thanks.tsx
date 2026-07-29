@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, Star, Heart } from "lucide-react";
 import { toast } from "sonner";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import joroLogo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import joroLogo from "@/assets/joro-living-logo.png";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { SettingsPopover } from "@/components/SettingsPopover";
 
 export default function Thanks() {
   const [rating, setRating] = useState<number>(0);
@@ -28,7 +29,7 @@ export default function Thanks() {
       <div className="mx-auto w-full max-w-[760px] min-h-screen relative overflow-hidden shadow-sm">
         {/* Background image */}
         <img
-          src={heroImg.url}
+          src={heroImg}
           alt="Jöro Living"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -38,14 +39,15 @@ export default function Thanks() {
         {/* Content */}
         <div className="relative z-10 flex flex-col min-h-screen pb-6">
           {/* Back arrow */}
-          <div className="px-4 pt-4 flex items-center">
+          <div className="px-4 pt-4 flex items-center justify-between">
             <Link
               to="/home"
               aria-label="Retour"
-              className="h-8 w-8 flex items-center justify-center -ml-1"
+              className="h-11 w-11 flex items-center justify-center"
             >
               <ChevronLeft className="h-6 w-6 text-white" />
             </Link>
+            <SettingsPopover variant="light" />
           </div>
 
           {/* Title / subtitle */}
@@ -145,7 +147,7 @@ export default function Thanks() {
           {/* Footer logo */}
           <div className="flex justify-center pt-2">
             <img
-              src={joroLogo.url}
+              src={joroLogo}
               alt="Jöro Living"
               className="w-[160px] h-auto object-contain brightness-0 invert"
             />

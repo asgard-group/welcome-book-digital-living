@@ -18,7 +18,7 @@ export function SettingsPopover({ variant = "dark" }: Props) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button aria-label="Paramètres" className={`${triggerColor} p-1`}>
+        <button aria-label="Paramètres" className={`${triggerColor} h-11 w-11 flex items-center justify-center`}>
           <Settings className="h-6 w-6" strokeWidth={1.75} />
         </button>
       </PopoverTrigger>

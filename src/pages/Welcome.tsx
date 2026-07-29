@@ -6,11 +6,13 @@ import {
   Compass,
   PenSquare,
   Heart,
+  ConciergeBell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import joroLogo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import joroLogo from "@/assets/joro-living-logo.png";
 import { SettingsPopover } from "@/components/SettingsPopover";
+import { useProperty } from "@/property/useProperty";
 
 type MenuItem = {
   label: string;
@@ -20,9 +22,12 @@ type MenuItem = {
 };
 
 export default function Welcome() {
+  const { data: property } = useProperty();
+
   const menu: MenuItem[] = [
     { label: "Infos pratiques", desc: "Wifi, Accès logement", icon: KeyRound, to: "/checkin" },
     { label: "Guide logement", icon: HomeIcon, to: "/facilities" },
+    { label: "Services", icon: ConciergeBell, to: "/services" },
     { label: "Urgences", desc: "Contacts importants", icon: InfoIcon, to: "/info" },
     { label: "Explorer", desc: "Lieux touristique, activités", icon: Compass, to: "/explore" },
     { label: "Check-in/out", icon: PenSquare, to: "/checkout" },
@@ -34,8 +39,8 @@ export default function Welcome() {
       <div className="mx-auto w-full max-w-[760px] h-[100dvh] relative overflow-hidden shadow-sm">
         {/* Background image */}
         <img
-          src={heroImg.url}
-          alt="Bienvenue à Haussmann Mogador"
+          src={heroImg}
+          alt={property ? `Bienvenue à ${property.name}` : "Bienvenue"}
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Subtle dark overlay for readability (stronger in dark mode) */}
@@ -44,7 +49,7 @@ export default function Welcome() {
         {/* Content */}
         <div className="relative z-10 flex flex-col h-full pb-6">
           {/* Top: settings icon (same position as back arrows on other pages) */}
-          <div className="px-4 pt-4 flex items-center shrink-0">
+          <div className="px-4 pt-4 flex items-center justify-end shrink-0">
             <SettingsPopover variant="light" />
           </div>
 
@@ -54,7 +59,7 @@ export default function Welcome() {
               Bienvenue
             </h1>
             <p className="mt-2 text-white/95 text-[17px] font-medium">
-              à Haussmann Mogador
+              à {property?.name ?? " "}
             </p>
           </div>
 
@@ -96,7 +101,7 @@ export default function Welcome() {
           {/* Footer logo */}
           <div className="flex justify-center pt-2 shrink-0">
             <img
-              src={joroLogo.url}
+              src={joroLogo}
               alt="Jöro Living"
               className="w-[160px] h-auto object-contain brightness-0 invert"
             />

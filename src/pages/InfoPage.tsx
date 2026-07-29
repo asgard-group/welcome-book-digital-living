@@ -7,8 +7,9 @@ import {
   Flame,
 } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import joroLogo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import joroLogo from "@/assets/joro-living-logo.png";
+import { SettingsPopover } from "@/components/SettingsPopover";
 
 function Widget({ children }: { children: React.ReactNode }) {
   return (
@@ -34,7 +35,7 @@ export default function InfoPage() {
         <div className="fixed inset-0 z-0 pointer-events-none">
           <div className="relative mx-auto h-full w-full max-w-[760px]">
             <img
-              src={heroImg.url}
+              src={heroImg}
               alt="Haussmann Mogador"
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -45,10 +46,11 @@ export default function InfoPage() {
         {/* Content */}
         <div className="relative z-10 flex flex-col min-h-screen pb-6">
           {/* Back arrow */}
-          <div className="px-4 pt-4 flex items-center shrink-0">
-            <Link to="/" aria-label="Back" className="h-8 w-8 flex items-center justify-center -ml-1">
+          <div className="px-4 pt-4 flex items-center justify-between shrink-0">
+            <Link to="/" aria-label="Back" className="h-11 w-11 flex items-center justify-center">
               <ChevronLeft className="h-6 w-6 text-white" />
             </Link>
+            <SettingsPopover variant="light" />
           </div>
 
           {/* Title */}
@@ -135,7 +137,7 @@ export default function InfoPage() {
                   className="shrink-0 mt-0.5"
                 >
                   <svg
-                    className="h-[29px] w-[29px] text-[#1c2626] dark:text-white shrink-0"
+                    className="h-[29px] w-[29px] text-[#25D366] shrink-0"
                     viewBox="0 0 42 42"
                     fill="currentColor"
                   >
@@ -149,7 +151,7 @@ export default function InfoPage() {
           {/* Footer logo */}
           <div className="flex justify-center pt-8 pb-2">
             <img
-              src={joroLogo.url}
+              src={joroLogo}
               alt="Jöro Living"
               className="w-[160px] h-auto object-contain brightness-0 invert"
             />

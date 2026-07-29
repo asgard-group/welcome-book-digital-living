@@ -1,9 +1,11 @@
-import { Wifi, MapPin, Key, Phone, ChevronLeft, Copy } from "lucide-react";
+import { Wifi, MapPin, Phone, ChevronLeft, Copy } from "lucide-react";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import joroLogo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import joroLogo from "@/assets/joro-living-logo.png";
+import { useProperty } from "@/property/useProperty";
+import { SettingsPopover } from "@/components/SettingsPopover";
 
 function Widget({ children }: { children: React.ReactNode }) {
   return (
@@ -37,6 +39,10 @@ function CopyField({ value }: { value: string }) {
   );
 }
 
+function FieldSkeleton() {
+  return <div className="h-[42px] rounded-xl bg-[#1c2626]/10 dark:bg-white/10 animate-pulse" />;
+}
+
 function Step({ step, title, children }: { step: number; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
@@ -52,6 +58,8 @@ function Step({ step, title, children }: { step: number; title: string; children
 }
 
 export default function Checkin() {
+  const { data: property } = useProperty();
+
   return (
     <div className="min-h-screen w-full bg-muted/30">
       <div className="mx-auto w-full max-w-[760px] min-h-screen relative overflow-hidden shadow-sm">
@@ -59,8 +67,8 @@ export default function Checkin() {
         <div className="fixed inset-0 z-0 pointer-events-none">
           <div className="relative mx-auto h-full w-full max-w-[760px]">
             <img
-              src={heroImg.url}
-              alt="Haussmann Mogador"
+              src={heroImg}
+              alt={property?.name ?? ""}
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/30 dark:bg-black/50" />
@@ -70,10 +78,11 @@ export default function Checkin() {
         {/* Content */}
         <div className="relative z-10 flex flex-col min-h-screen pb-6">
           {/* Back arrow */}
-          <div className="px-4 pt-4 flex items-center shrink-0">
-            <Link to="/home" aria-label="Retour" className="h-8 w-8 flex items-center justify-center -ml-1">
+          <div className="px-4 pt-4 flex items-center justify-between shrink-0">
+            <Link to="/home" aria-label="Retour" className="h-11 w-11 flex items-center justify-center">
               <ChevronLeft className="h-6 w-6 text-white" />
             </Link>
+            <SettingsPopover variant="light" />
           </div>
 
           {/* Title */}
@@ -95,11 +104,11 @@ export default function Checkin() {
               <div className="space-y-3">
                 <div>
                   <p className="text-xs font-medium text-[#1c2626]/70 dark:text-white/70 mb-1.5">Network</p>
-                  <CopyField value="MiCasa_WiFi_5G" />
+                  {property ? <CopyField value={property.wifi.network} /> : <FieldSkeleton />}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-[#1c2626]/70 dark:text-white/70 mb-1.5">Mot de passe</p>
-                  <CopyField value="Bienvenue à la maison en 2024 !" />
+                  {property ? <CopyField value={property.wifi.password} /> : <FieldSkeleton />}
                 </div>
               </div>
             </Widget>
@@ -130,46 +139,16 @@ export default function Checkin() {
             <Widget>
               <div className="space-y-4">
                 <Step step={1} title="Entrée de l'immeuble">
-                  Code de la porte : <strong className="font-mono">A 3187</strong>
+                  Code de la porte : <strong className="font-mono">{property?.entryCodes.buildingDoor ?? "—"}</strong>
                 </Step>
                 <div className="border-t border-[#1c2626]/15 dark:border-white/15" />
-                <Step step={2} title="Monter au 3e étage">
-                  Porte à droite en sortant de l'ascenseur
+                <Step step={2} title="Accès au hall">
+                  code <strong className="font-mono">{property?.entryCodes.hallCode ?? "—"}</strong>, puis « OK » sur l'interphone
                 </Step>
                 <div className="border-t border-[#1c2626]/15 dark:border-white/15" />
-                <Step step={3} title="Récupérer le badge">
-                  Boîte à clés grise derrière la porte d'entrée → 3e boîte → code <strong className="font-mono">4303</strong>
+                <Step step={3} title="3e étage, porte grise">
+                  Clés sur la table : badge immeuble (entrée principale) et clé du local poubelles (RDC, face à l'ascenseur).
                 </Step>
-              </div>
-            </Widget>
-
-            {/* Tapkey */}
-            <Widget>
-              <div className="flex flex-col items-center text-center pt-2 pb-4">
-                <Key className="h-10 w-10 text-foreground" strokeWidth={2} />
-                <h2 className="font-semibold text-foreground mt-3">
-                  Configurer Tapkey
-                </h2>
-                <p className="text-[13px] text-[#1c2626]/70 dark:text-white/80 mt-1 max-w-[280px]">
-                  Déverrouillez les portes via l'application Tapkey
-                </p>
-              </div>
-              <div className="border-t border-[#1c2626]/15 dark:border-white/15" />
-              <div className="divide-y divide-[#1c2626]/15 dark:divide-white/15">
-                <div className="py-4">
-                  <Step step={1} title="Télécharger Tapkey">Sur l'App Store ou Google Play</Step>
-                </div>
-                <div className="py-4">
-                  <Step step={2} title="Créez un compte">Utilisé le même email que la réservation</Step>
-                </div>
-                <div className="py-4">
-                  <Step step={3} title="Valider votre inscription">Vous recevrez un email de validation</Step>
-                </div>
-                <div className="pt-4">
-                  <Step step={4} title="Activez le Bluetooth">
-                    Approchez votre téléphone de la serrure pour déverrouiller
-                  </Step>
-                </div>
               </div>
             </Widget>
 
@@ -207,7 +186,7 @@ export default function Checkin() {
           {/* Footer logo */}
           <div className="flex justify-center pt-8 pb-2">
             <img
-              src={joroLogo.url}
+              src={joroLogo}
               alt="Jöro Living"
               className="w-[160px] h-auto object-contain brightness-0 invert"
             />

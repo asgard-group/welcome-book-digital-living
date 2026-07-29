@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import logo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import logo from "@/assets/joro-living-logo.png";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function Onboarding() {
   return (
     <div className="fixed inset-0 overflow-hidden">
       <img
-        src={heroImg.url}
+        src={heroImg}
         alt="Intérieur du logement"
         className="absolute inset-0 w-full h-full object-cover"
       />
@@ -32,7 +32,7 @@ export default function Onboarding() {
       <div className="relative z-10 flex h-full w-full max-w-[760px] mx-auto flex-col">
         {/* Logo */}
         <div className="flex justify-center pt-[22%]">
-          <img src={logo.url} alt="Joro Living" className="w-[88%] max-w-[420px]" />
+          <img src={logo} alt="Joro Living" className="w-[88%] max-w-[420px]" />
         </div>
 
         {/* Bottom content */}

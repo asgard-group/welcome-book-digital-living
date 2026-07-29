@@ -12,6 +12,7 @@ import {
   CookingPot,
   ChevronLeft,
   AlertTriangle,
+  Info,
   X,
   Phone,
   CigaretteOff,
@@ -25,13 +26,28 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useLanguage } from "@/i18n/LanguageContext";
-import heroImg from "@/assets/hero-living-room.png.asset.json";
-import joroLogo from "@/assets/joro-living-logo.png.asset.json";
+import heroImg from "@/assets/hero-living-room.png";
+import joroLogo from "@/assets/joro-living-logo.png";
+import { SettingsPopover } from "@/components/SettingsPopover";
 
 function Widget({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-xl p-5 backdrop-blur-md bg-white/90 dark:bg-[#1c2626]/80 text-[#1c2626] dark:text-white">
       {children}
+    </div>
+  );
+}
+
+function Step({ step, title, children }: { step: number; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1c2626]/10 dark:bg-white/15 text-[#1c2626] dark:text-white flex items-center justify-center text-xs font-semibold">
+        {step}
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-[#1c2626] dark:text-white text-sm">{title}</p>
+        <p className="text-[#1c2626]/70 dark:text-white/80 text-sm mt-0.5">{children}</p>
+      </div>
     </div>
   );
 }
@@ -45,13 +61,10 @@ export default function Facilities() {
       icon: Tv,
       title: t.facilities.living,
       items: [
-        { name: t.facilities.tv, detail: t.facilities.tvDesc },
-        { name: t.facilities.clickshare, detail: t.facilities.clickshareDesc },
-        { name: t.facilities.sonos, detail: t.facilities.sonosDesc },
         { name: t.facilities.printer, detail: t.facilities.printerDesc },
-        { name: t.facilities.scanner, detail: t.facilities.scannerDesc },
-        { name: t.facilities.ipad, detail: t.facilities.ipadDesc },
+        { name: t.facilities.tv, detail: t.facilities.tvDesc },
         { name: t.facilities.heating, detail: t.facilities.heatingDesc },
+        { name: t.facilities.sonos, detail: t.facilities.sonosDesc },
       ],
     },
     {
@@ -69,9 +82,6 @@ export default function Facilities() {
       title: t.facilities.bathroom,
       items: [
         { name: t.facilities.heater, detail: t.facilities.heaterDesc },
-        { name: t.facilities.toiletries, detail: t.facilities.toiletriesDesc },
-        { name: t.facilities.hairdryer, detail: t.facilities.hairdryerDesc },
-        { name: t.facilities.straightener, detail: t.facilities.straightenerDesc },
       ],
     },
     {
@@ -80,10 +90,9 @@ export default function Facilities() {
       title: t.facilities.kitchen,
       items: [
         { name: t.facilities.oven, detail: t.facilities.ovenDesc },
+        { name: t.facilities.microwave, detail: t.facilities.microwaveDesc },
+        { name: t.facilities.dishwasher, detail: t.facilities.dishwasherDesc },
         { name: t.facilities.nespresso, detail: t.facilities.nespressoDesc },
-        { name: t.facilities.toaster, detail: t.facilities.toasterDesc },
-        { name: t.facilities.kettle, detail: t.facilities.kettleDesc },
-        { name: t.facilities.kitchenware, detail: t.facilities.kitchenwareDesc },
       ],
     },
   ];
@@ -112,7 +121,7 @@ export default function Facilities() {
         <div className="fixed inset-0 z-0 pointer-events-none">
           <div className="relative mx-auto h-full w-full max-w-[760px]">
             <img
-              src={heroImg.url}
+              src={heroImg}
               alt="Haussmann Mogador"
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -123,10 +132,11 @@ export default function Facilities() {
         {/* Content */}
         <div className="relative z-10 flex flex-col min-h-screen pb-6">
           {/* Back arrow */}
-          <div className="px-4 pt-4 flex items-center shrink-0">
-            <Link to="/" aria-label="Back" className="h-8 w-8 flex items-center justify-center -ml-1">
+          <div className="px-4 pt-4 flex items-center justify-between shrink-0">
+            <Link to="/" aria-label="Back" className="h-11 w-11 flex items-center justify-center">
               <ChevronLeft className="h-6 w-6 text-white" />
             </Link>
+            <SettingsPopover variant="light" />
           </div>
 
           {/* Title */}
@@ -227,7 +237,7 @@ export default function Facilities() {
               {forbidden.map((f) => (
                 <div
                   key={f.title}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 backdrop-blur-md bg-white/90 dark:bg-[#1c2626]/80 border border-destructive/20"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 backdrop-blur-md bg-white/90 dark:bg-[#1c2626]/80 border border-[#1c2626]/20 dark:border-transparent"
                 >
                   <f.icon
                     className="h-5 w-5 text-destructive shrink-0"
@@ -244,6 +254,34 @@ export default function Facilities() {
                 </div>
               ))}
             </div>
+
+            {/* Informations complémentaires */}
+            <Widget>
+              <div className="flex flex-col items-center text-center pt-2 pb-4">
+                <Info className="h-10 w-10 text-foreground" strokeWidth={2} />
+                <h2 className="text-xl font-semibold text-[#1c2626] dark:text-white leading-tight mt-3">
+                  {t.facilities.additionalInfoTitle}
+                </h2>
+                <p className="text-[13px] text-[#1c2626]/70 dark:text-white/80 mt-1 max-w-[280px]">
+                  {t.facilities.additionalInfoSubtitle}
+                </p>
+              </div>
+              <div className="border-t border-[#1c2626]/15 dark:border-white/15" />
+              <div className="divide-y divide-[#1c2626]/15 dark:divide-white/15">
+                <div className="py-4">
+                  <Step step={1} title={t.facilities.lightsTitle}>{t.facilities.lightsDesc}</Step>
+                </div>
+                <div className="py-4">
+                  <Step step={2} title={t.facilities.wifiAccessTitle}>{t.facilities.wifiAccessDesc}</Step>
+                </div>
+                <div className="py-4">
+                  <Step step={3} title={t.facilities.acControlTitle}>{t.facilities.acControlDesc}</Step>
+                </div>
+                <div className="pt-4">
+                  <Step step={4} title={t.facilities.mainDoorTitle}>{t.facilities.mainDoorDesc}</Step>
+                </div>
+              </div>
+            </Widget>
 
             {/* Contact Jöro */}
             <Widget>
@@ -284,7 +322,7 @@ export default function Facilities() {
           {/* Footer logo */}
           <div className="flex justify-center pt-8 pb-2">
             <img
-              src={joroLogo.url}
+              src={joroLogo}
               alt="Jöro Living"
               className="w-[160px] h-auto object-contain brightness-0 invert"
             />
