@@ -9,6 +9,7 @@ import { AuthGate } from "@/components/AuthGate";
 import Welcome from "./pages/Welcome";
 import Onboarding from "./pages/Onboarding";
 import Access from "./pages/Access";
+import Admin from "./pages/Admin";
 import Checkin from "./pages/Checkin";
 import Checkout from "./pages/Checkout";
 import Rules from "./pages/Rules";
@@ -43,6 +44,9 @@ const App = () => (
             <Routes>
               {/* Public: magic-link landing (no valid session yet) */}
               <Route path="/access" element={<Access />} />
+
+              {/* Public: admin login + grant issuance, gated by its own server-side password */}
+              <Route path="/admin" element={<Admin />} />
 
               {/* Everything else requires a valid, in-window access grant */}
               <Route element={<AuthGate />}>

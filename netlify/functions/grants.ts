@@ -1,4 +1,4 @@
-// POST /api/grants   (admin only — header: x-admin-key)
+// POST /api/grants   (admin only — header: x-admin-key, or an admin session cookie)
 //   { buildingId, days, email?, validFrom? }
 //
 // Creates a time-boxed access grant and returns the magic link. If a guest
@@ -6,6 +6,7 @@
 // always returned in the response so it can be issued/tested without email.
 import buildings from "./_data/buildings.json";
 import { generateToken, putGrant, json, type Grant } from "./_lib/grants";
+import { isAdminRequest } from "./_lib/admin";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -13,7 +14,8 @@ export default async (req: Request) => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
   const adminKey = process.env.ADMIN_KEY;
-  if (!adminKey || req.headers.get("x-admin-key") !== adminKey) {
+  const hasValidHeader = !!adminKey && req.headers.get("x-admin-key") === adminKey;
+  if (!hasValidHeader && !(await isAdminRequest(req))) {
     return json(401, { error: "unauthorized" });
   }
 
