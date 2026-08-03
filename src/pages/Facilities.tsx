@@ -24,7 +24,6 @@ import {
   UtensilsCrossed,
   Download,
 } from "lucide-react";
-import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useLanguage } from "@/i18n/LanguageContext";
 import heroImg from "@/assets/hero-living-room.png";
 import joroLogo from "@/assets/joro-living-logo.png";
@@ -272,49 +271,11 @@ export default function Facilities() {
                   <Step step={1} title={t.facilities.lightsTitle}>{t.facilities.lightsDesc}</Step>
                 </div>
                 <div className="py-4">
-                  <Step step={2} title={t.facilities.wifiAccessTitle}>{t.facilities.wifiAccessDesc}</Step>
-                </div>
-                <div className="py-4">
-                  <Step step={3} title={t.facilities.acControlTitle}>{t.facilities.acControlDesc}</Step>
+                  <Step step={2} title={t.facilities.acControlTitle}>{t.facilities.acControlDesc}</Step>
                 </div>
                 <div className="pt-4">
-                  <Step step={4} title={t.facilities.mainDoorTitle}>{t.facilities.mainDoorDesc}</Step>
+                  <Step step={3} title={t.facilities.mainDoorTitle}>{t.facilities.mainDoorDesc}</Step>
                 </div>
-              </div>
-            </Widget>
-
-            {/* Contact Jöro */}
-            <Widget>
-              <div className="flex items-start gap-3">
-                <Phone
-                  className="h-5 w-5 text-[#1c2626] dark:text-white shrink-0 mt-0.5"
-                  strokeWidth={2}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[#1c2626] dark:text-white">
-                    {t.contact.title}
-                  </p>
-                  <a
-                    href="tel:+33637754570"
-                    className="block text-sm text-[#1c2626]/70 dark:text-white/80 mt-0.5 hover:text-[#1c2626] dark:hover:text-white transition-colors"
-                  >
-                    +33 6 37 75 45 70
-                  </a>
-                  <a
-                    href="mailto:reservation@joro-space.fr"
-                    className="block text-sm text-[#1c2626]/70 dark:text-white/80 mt-0.5 hover:text-[#1c2626] dark:hover:text-white transition-colors"
-                  >
-                    reservation@joro-space.fr
-                  </a>
-                </div>
-                <a
-                  href="https://wa.me/33637754570"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 mt-0.5"
-                >
-                  <WhatsAppIcon className="h-[29px] w-[29px] text-[#1c2626] dark:text-white" />
-                </a>
               </div>
             </Widget>
           </div>

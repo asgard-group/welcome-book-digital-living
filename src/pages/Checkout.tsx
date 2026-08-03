@@ -1,4 +1,4 @@
-import { LogIn, DoorOpen, AlertCircle, ChevronLeft, Clock, ChevronRight } from "lucide-react";
+import { LogIn, DoorOpen, AlertCircle, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImg from "@/assets/hero-living-room.png";
 import joroLogo from "@/assets/joro-living-logo.png";
@@ -81,19 +81,6 @@ export default function Checkout() {
               <p className="text-sm text-[#1c2626]/70 dark:text-white/80 leading-relaxed">
                 L'interphone se trouve dans le hall d'entrée. Appuyez sur la touche d'ouverture pour ouvrir la porte.
               </p>
-            </Widget>
-
-            <Widget>
-              <Link to="/services" className="flex items-start gap-3">
-                <Clock className="h-5 w-5 text-[#1c2626] dark:text-white shrink-0 mt-0.5" strokeWidth={2} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[#1c2626] dark:text-white">Départ tardif / Arrivée anticipée</p>
-                  <p className="text-sm text-[#1c2626]/70 dark:text-white/80 mt-0.5">
-                    Option payante — voir nos Services
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 shrink-0 mt-0.5 text-[#1c2626]/70 dark:text-white/80" strokeWidth={1.5} />
-              </Link>
             </Widget>
           </div>
 

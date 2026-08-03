@@ -1,20 +1,24 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   UtensilsCrossed,
   ShoppingBag,
   Landmark,
-  Theater,
+  Baby,
   Sparkles,
-  ConciergeBell,
+  Wrench,
 } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import heroImg from "@/assets/hero-living-room.png";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SettingsPopover } from "@/components/SettingsPopover";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function Widget({ children }: { children: React.ReactNode }) {
   return (
@@ -24,37 +28,59 @@ function Widget({ children }: { children: React.ReactNode }) {
   );
 }
 
+const CUISINE_TYPES = [
+  "International",
+  "Café & brunch",
+  "Sain & végé",
+  "Méditerranéen",
+  "Français",
+  "Japonais",
+  "Asiatique",
+  "Italien",
+];
+
+function RestaurantCardSkeleton() {
+  return (
+    <div className="flex items-center justify-between rounded-xl px-5 py-4 backdrop-blur-md bg-white/90 dark:bg-[#1c2626]/80 border border-[#1c2626]/20 dark:border-transparent">
+      <div className="min-w-0 flex-1 space-y-2">
+        <Skeleton className="h-4 w-3/5" />
+        <Skeleton className="h-3 w-2/5" />
+      </div>
+      <Skeleton className="h-4 w-10 ml-3 shrink-0" />
+    </div>
+  );
+}
+
 // Temps de trajet estimés à pied depuis le logement :
 // Halévy Apartment — 43 boulevard Haussmann, 75009 Paris
-const placesData: Record<string, { name: string; time: number; descEn?: string; descFr?: string }[]> = {
+const placesData: Record<string, { name: string; time: number; descEn?: string; descFr?: string; cuisine?: string[] }[]> = {
   restaurants: [
-    { name: "Jöro Kaffé", time: 10, descEn: "Café/coworking (-10% code SWEET10)", descFr: "Café/coworking (-10% code SWEET10)" },
-    { name: "Galeries Lafayette Gourmet", time: 1, descEn: "Rooftop & gourmet food hall", descFr: "Rooftop & halle gourmande" },
-    { name: "El&N", time: 8, descEn: "Instagrammable café & brunch", descFr: "Café & brunch instagrammable" },
-    { name: "Perruche", time: 2, descEn: "Rooftop Mediterranean", descFr: "Méditerranéen sur les toits" },
-    { name: "Ao Izakaya", time: 12, descEn: "Japanese tapas", descFr: "Tapas japonaises" },
-    { name: "Braun Notes", time: 8, descEn: "Specialty coffee & food", descFr: "Café de spécialité & cuisine" },
-    { name: "Brasserie Lazare", time: 5, descEn: "Classic French brasserie", descFr: "Brasserie française classique" },
-    { name: "Coco", time: 5, descEn: "Asian fusion", descFr: "Fusion asiatique" },
-    { name: "Farmers", time: 8, descEn: "Healthy & organic", descFr: "Sain & bio" },
-    { name: "Pépé Ronchon", time: 10, descEn: "Traditional French comfort food", descFr: "Cuisine française traditionnelle" },
-    { name: "Poni", time: 12, descEn: "Italian pizzeria", descFr: "Pizzeria italienne" },
-    { name: "Mieux", time: 10, descEn: "Modern French cuisine", descFr: "Cuisine française moderne" },
-    { name: "Blue Bao", time: 8, descEn: "Trendy Asian", descFr: "Asiatique tendance" },
-    { name: "Café de la Paix", time: 4, descEn: "Historic grand café", descFr: "Grand café historique" },
-    { name: "Rue Sainte Anne", time: 12, descEn: "Japanese food street", descFr: "Rue japonaise" },
-    { name: "Balagan", time: 12, descEn: "Israeli cuisine", descFr: "Cuisine israélienne" },
-    { name: "Hanoï Cà Phé Opéra", time: 5, descEn: "Vietnamese", descFr: "Vietnamien" },
-    { name: "Pink Mamma", time: 18, descEn: "Iconic Italian", descFr: "Italien iconique" },
-    { name: "Papi Restaurant", time: 15, descEn: "Italian comfort food", descFr: "Cuisine italienne réconfortante" },
-    { name: "Zébulon", time: 15, descEn: "Neo-bistro", descFr: "Néo-bistrot" },
-    { name: "Le Rouge à Lèvres", time: 10, descEn: "Wine bar & small plates", descFr: "Bar à vin & petites assiettes" },
-    { name: "Maison Noura", time: 3, descEn: "Lebanese/Mediterranean, inside Printemps", descFr: "Libanais/méditerranéen, au Printemps" },
-    { name: "ONYX", time: 5, descEn: "French fine dining", descFr: "Gastronomique français" },
-    { name: "Starving Club", time: 3, descEn: "Gourmet burgers, Galeries Lafayette Gourmet", descFr: "Burgers gourmets, Galeries Lafayette Gourmet" },
-    { name: "Papillons & Co", time: 5, descEn: "French bistro", descFr: "Bistrot français" },
-    { name: "Paul & Julienne", time: 8, descEn: "French brasserie", descFr: "Brasserie française" },
-    { name: "Mamou", time: 6, descEn: "Gastro bistro", descFr: "Bistro gastronomique" },
+    { name: "Jöro Kaffé", time: 10, descEn: "Café/coworking (-10% code SWEET10)", descFr: "Café/coworking (-10% code SWEET10)", cuisine: ["Café & brunch"] },
+    { name: "Galeries Lafayette Gourmet", time: 1, descEn: "Rooftop & gourmet food hall", descFr: "Rooftop & halle gourmande", cuisine: ["International"] },
+    { name: "El&N", time: 8, descEn: "Instagrammable café & brunch", descFr: "Café & brunch instagrammable", cuisine: ["Café & brunch"] },
+    { name: "Perruche", time: 2, descEn: "Rooftop Mediterranean", descFr: "Méditerranéen sur les toits", cuisine: ["Méditerranéen"] },
+    { name: "Ao Izakaya", time: 12, descEn: "Japanese tapas", descFr: "Tapas japonaises", cuisine: ["Japonais"] },
+    { name: "Braun Notes", time: 8, descEn: "Specialty coffee & food", descFr: "Café de spécialité & cuisine", cuisine: ["Café & brunch"] },
+    { name: "Brasserie Lazare", time: 5, descEn: "Classic French brasserie", descFr: "Brasserie française classique", cuisine: ["Français"] },
+    { name: "Coco", time: 5, descEn: "Asian fusion", descFr: "Fusion asiatique", cuisine: ["Asiatique"] },
+    { name: "Pépé Ronchon", time: 10, descEn: "Traditional French comfort food", descFr: "Cuisine française traditionnelle", cuisine: ["Français"] },
+    { name: "Poni", time: 12, descEn: "Italian pizzeria", descFr: "Pizzeria italienne", cuisine: ["Italien"] },
+    { name: "Mieux", time: 10, descEn: "Modern French cuisine", descFr: "Cuisine française moderne", cuisine: ["Français"] },
+    { name: "Blue Bao", time: 8, descEn: "Trendy Asian", descFr: "Asiatique tendance", cuisine: ["Asiatique"] },
+    { name: "Café de la Paix", time: 4, descEn: "Historic grand café", descFr: "Grand café historique", cuisine: ["Café & brunch"] },
+    { name: "Rue Sainte Anne", time: 12, descEn: "Japanese food street", descFr: "Rue japonaise", cuisine: ["Japonais"] },
+    { name: "Balagan", time: 12, descEn: "Israeli cuisine", descFr: "Cuisine israélienne", cuisine: ["Méditerranéen"] },
+    { name: "Hanoï Cà Phé Opéra", time: 5, descEn: "Vietnamese", descFr: "Vietnamien", cuisine: ["Asiatique"] },
+    { name: "Pink Mamma", time: 18, descEn: "Iconic Italian", descFr: "Italien iconique", cuisine: ["Italien"] },
+    { name: "Papi Restaurant", time: 15, descEn: "Italian comfort food", descFr: "Cuisine italienne réconfortante", cuisine: ["Italien"] },
+    { name: "Zébulon", time: 15, descEn: "Neo-bistro", descFr: "Néo-bistrot", cuisine: ["Français"] },
+    { name: "Le Rouge à Lèvres", time: 10, descEn: "Wine bar & small plates", descFr: "Bar à vin & petites assiettes", cuisine: ["Français"] },
+    { name: "Maison Noura", time: 3, descEn: "Lebanese/Mediterranean, inside Printemps", descFr: "Libanais/méditerranéen, au Printemps", cuisine: ["Méditerranéen"] },
+    { name: "ONYX", time: 5, descEn: "French fine dining", descFr: "Gastronomique français", cuisine: ["Français"] },
+    { name: "Starving Club", time: 3, descEn: "Gourmet burgers, Galeries Lafayette Gourmet", descFr: "Burgers gourmets, Galeries Lafayette Gourmet", cuisine: ["International"] },
+    { name: "Papillons & Co", time: 5, descEn: "French bistro", descFr: "Bistrot français", cuisine: ["Français"] },
+    { name: "Paul & Julienne", time: 8, descEn: "French brasserie", descFr: "Brasserie française", cuisine: ["Français"] },
+    { name: "Mamou", time: 6, descEn: "Gastro bistro", descFr: "Bistro gastronomique", cuisine: ["Français"] },
   ],
   shopping: [
     { name: "Printemps Haussmann", time: 2, descEn: "Iconic department store", descFr: "Grand magasin iconique" },
@@ -77,14 +103,14 @@ const placesData: Record<string, { name: string; time: number; descEn?: string; 
     { name: "Passage des Panoramas", time: 12, descEn: "Oldest covered passage in Paris", descFr: "Plus ancien passage couvert de Paris" },
     { name: "Jardin des Tuileries", time: 15, descEn: "Classic Parisian garden", descFr: "Jardin parisien classique" },
     { name: "Hop On Hop Off Bus", time: 5, descEn: "Sightseeing bus tour", descFr: "Bus touristique" },
-  ],
-  culture: [
     { name: "Théâtre du Mogador", time: 6, descEn: "Musicals & shows", descFr: "Comédies musicales & spectacles" },
     { name: "Théâtre Édouard VII", time: 5, descEn: "Classic theater", descFr: "Théâtre classique" },
     { name: "L'Olympia", time: 7, descEn: "Legendary concert hall", descFr: "Salle de concert légendaire" },
     { name: "Pinacothèque", time: 8, descEn: "Art exhibitions", descFr: "Expositions d'art" },
     { name: "Musée Grévin", time: 12, descEn: "Wax museum", descFr: "Musée de cire" },
   ],
+  // "Enfants" — addresses à venir.
+  culture: [],
   wellness: [
     { name: "Spa Nuxe Printemps", time: 2, descEn: "Luxurious spa in Printemps", descFr: "Spa luxueux au Printemps" },
     { name: "Seasonly", time: 10, descEn: "Natural skincare facial bar", descFr: "Bar à soins du visage naturels" },
@@ -105,15 +131,41 @@ const placesData: Record<string, { name: string; time: number; descEn?: string; 
 export default function Explore() {
   const { t, lang } = useLanguage();
   const [active, setActive] = useState<string>("restaurants");
+  const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
+  const [filtering, setFiltering] = useState(false);
+  const isFirstRun = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
+    setFiltering(true);
+    const timer = setTimeout(() => setFiltering(false), 500);
+    return () => clearTimeout(timer);
+  }, [selectedCuisines]);
+
+  const toggleCuisine = (type: string) => {
+    setSelectedCuisines((prev) =>
+      prev.includes(type) ? prev.filter((c) => c !== type) : [...prev, type]
+    );
+  };
 
   const categories = [
     { id: "restaurants", icon: UtensilsCrossed, label: t.explore.restaurants },
     { id: "shopping", icon: ShoppingBag, label: t.explore.shopping },
     { id: "visits", icon: Landmark, label: t.explore.visits },
-    { id: "culture", icon: Theater, label: t.explore.culture },
+    { id: "culture", icon: Baby, label: t.explore.culture },
     { id: "wellness", icon: Sparkles, label: t.explore.wellness },
-    { id: "services", icon: ConciergeBell, label: t.explore.services },
+    { id: "services", icon: Wrench, label: t.explore.services },
   ];
+
+  const displayList =
+    active === "restaurants" && selectedCuisines.length > 0
+      ? placesData.restaurants.filter((place) =>
+          place.cuisine?.some((c) => selectedCuisines.includes(c))
+        )
+      : placesData[active];
 
 
   return (
@@ -171,8 +223,64 @@ export default function Explore() {
               ))}
             </div>
 
+            {active === "restaurants" && (
+              <div className="flex items-center justify-end gap-3">
+                {selectedCuisines.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCuisines([])}
+                    className="text-sm font-medium text-white underline underline-offset-2"
+                  >
+                    Réinitialiser
+                  </button>
+                )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-full backdrop-blur-md bg-white/90 dark:bg-[#1c2626]/80 border border-[#1c2626]/20 dark:border-transparent px-4 py-2 text-sm font-medium text-[#1c2626] dark:text-white"
+                    >
+                      {selectedCuisines.length === 0
+                        ? "Tous les types"
+                        : `${selectedCuisines.length} sélectionné${selectedCuisines.length > 1 ? "s" : ""}`}
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    className="w-64 rounded-2xl bg-white/95 dark:bg-[#1c2626]/95 backdrop-blur-md border border-[#1c2626]/10 dark:border-white/10 p-2"
+                  >
+                    <div className="space-y-1">
+                      {CUISINE_TYPES.map((type) => (
+                        <label
+                          key={type}
+                          className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-[#1c2626]/5 dark:hover:bg-white/10"
+                        >
+                          <Checkbox
+                            checked={selectedCuisines.includes(type)}
+                            onCheckedChange={() => toggleCuisine(type)}
+                            className="h-5 w-5 rounded"
+                          />
+                          <span className="text-[15px] text-[#1c2626] dark:text-white">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
             <div className="space-y-3">
-              {placesData[active]?.map((place) => {
+              {active === "restaurants" && filtering ? (
+                Array.from({ length: 4 }).map((_, i) => <RestaurantCardSkeleton key={i} />)
+              ) : (
+              <>
+              {displayList?.length === 0 && (
+                <p className="text-center text-sm text-white/80 py-6">
+                  {lang === "fr" ? "Adresses à venir." : "Addresses coming soon."}
+                </p>
+              )}
+              {displayList?.map((place) => {
                 const desc = lang === "fr" ? place.descFr : place.descEn;
                 return (
                   <a
@@ -204,6 +312,8 @@ export default function Explore() {
                   </a>
                 );
               })}
+              </>
+              )}
             </div>
           </div>
 
