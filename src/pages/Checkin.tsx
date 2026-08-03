@@ -1,5 +1,5 @@
-import { Wifi, MapPin, Phone, ChevronLeft, Copy } from "lucide-react";
-import { WhatsAppIcon } from "@/components/WhatsAppIcon";
+import { Wifi, MapPin, ChevronLeft, Copy, Info } from "lucide-react";
+import { ContactWidget } from "@/components/ContactWidget";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import heroImg from "@/assets/hero-living-room.png";
@@ -152,35 +152,39 @@ export default function Checkin() {
               </div>
             </Widget>
 
-            {/* Contact Jöro */}
+            {/* Informations complémentaires */}
             <Widget>
-              <div className="flex items-start gap-3">
-                <Phone className="h-5 w-5 text-foreground" strokeWidth={2} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">Contacter Jöro</p>
-                  <a
-                    href="tel:+33637754570"
-                    className="block text-sm text-[#1c2626]/70 dark:text-white/80 mt-0.5 hover:text-[#1c2626] dark:hover:text-white transition-colors"
-                  >
-                    +33 6 37 75 45 70
-                  </a>
-                  <a
-                    href="mailto:reservation@joro-space.fr"
-                    className="block text-sm text-[#1c2626]/70 dark:text-white/80 mt-0.5 hover:text-[#1c2626] dark:hover:text-white transition-colors"
-                  >
-                    reservation@joro-space.fr
-                  </a>
+              <div className="flex flex-col items-center text-center pt-2 pb-4">
+                <Info className="h-10 w-10 text-foreground" strokeWidth={2} />
+                <h2 className="text-xl font-semibold text-[#1c2626] dark:text-white leading-tight mt-3">
+                  Infos complémentaires
+                </h2>
+                <p className="text-[13px] text-[#1c2626]/70 dark:text-white/80 mt-1 max-w-[280px]">
+                  Retrouver quelques indications utiles pour profiter pleinement de votre séjour
+                </p>
+              </div>
+              <div className="border-t border-[#1c2626]/15 dark:border-white/15" />
+              <div className="divide-y divide-[#1c2626]/15 dark:divide-white/15">
+                <div className="py-4">
+                  <Step step={1} title="Gestion des lumières">
+                    L'interrupteur principal se trouve juste à côté de la porte d'entrée.
+                  </Step>
                 </div>
-                <a
-                  href="https://wa.me/33637754570"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 mt-0.5"
-                >
-                  <WhatsAppIcon className="h-[29px] w-[29px] text-[#1c2626] dark:text-white" />
-                </a>
+                <div className="py-4">
+                  <Step step={2} title="Commande climatisation">
+                    La commande de climatisation se trouve dans le placard à côté de la porte d'entrée
+                  </Step>
+                </div>
+                <div className="pt-4">
+                  <Step step={3} title="Ouverture porte principale">
+                    Pour ouvrir la porte depuis l'intérieur, veuillez pousser la barre blanche à deux reprises en utilisant vos mains : une sur le bord gauche et l'autre sur le bord droit.
+                  </Step>
+                </div>
               </div>
             </Widget>
+
+            {/* Contact Jöro */}
+            <ContactWidget />
           </div>
 
           {/* Footer logo */}
