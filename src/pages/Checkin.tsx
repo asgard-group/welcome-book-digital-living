@@ -1,4 +1,4 @@
-import { Wifi, MapPin, ChevronLeft, Copy } from "lucide-react";
+import { Wifi, MapPin, ChevronLeft, Copy, Info } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import joroLogo from "@/assets/joro-living-logo.png";
@@ -44,6 +44,25 @@ function CopyField({ value, t }: { value: string; t: Translation }) {
   );
 }
 
+function Step({ step, title, children }: { step: number; title: string; children?: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-brand-ink/10 dark:bg-white/15 text-brand-ink dark:text-white flex items-center justify-center text-xs font-semibold">
+        {step}
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-brand-ink dark:text-white text-sm">{title}</p>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function StepDetail({ text }: { text?: string }) {
+  if (!text) return null;
+  return <p className="text-brand-ink/70 dark:text-white/80 text-sm mt-0.5 whitespace-pre-line">{text}</p>;
+}
+
 function FieldSkeleton() {
   return <div className="h-[42px] rounded-xl bg-brand-ink/10 dark:bg-white/10 animate-pulse" />;
 }
@@ -51,7 +70,7 @@ function FieldSkeleton() {
 export default function Checkin() {
   const { buildingSlug } = useParams<{ buildingSlug: string }>();
   const { data: property } = useProperty();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   return (
     <div className="h-app-shell w-full bg-brand-surface dark:bg-brand-ink overflow-hidden">
@@ -150,44 +169,51 @@ export default function Checkin() {
               </div>
             </Widget>
 
-            {/* Contrôle d'accès — masqué sur demande, code conservé pour réactivation future
-            <Widget>
-              <div className="flex flex-col items-center text-center pt-2 pb-4">
-                <KeyRound className="h-10 w-10 text-foreground" strokeWidth={2} />
-                <h2 className="text-xl font-semibold text-brand-ink dark:text-white leading-tight mt-3">
-                  Contrôle d'accès
-                </h2>
-                <p className="text-[13px] text-brand-ink/70 dark:text-white/80 mt-1 max-w-[280px]">
-                  Process contrôle d'accès Bluetooth
-                </p>
-              </div>
-              <div className="border-t border-brand-ink/15 dark:border-white/15" />
-              <div className="divide-y divide-brand-ink/15 dark:divide-white/15">
-                <div className="py-4">
-                  <Step step={1} title="Télécharger STid Mobile ID">
-                    Sur l'App Store ou Google Play
-                  </Step>
+            {/* Access steps (door codes, floor, keys...), from this apartment's Notion "Accès" table */}
+            {property?.access && property.access.length > 0 && (
+              <Widget>
+                <div className="space-y-4">
+                  {property.access.map((step, i) => (
+                    <div key={`${i}-${step.name.fr}`} className="space-y-4">
+                      {i > 0 && <div className="border-t border-brand-ink/15 dark:border-white/15" />}
+                      <Step step={i + 1} title={step.name[lang]}>
+                        <StepDetail text={step.detail?.[lang]} />
+                        {step.code && (
+                          <div className="mt-2">
+                            <CopyField value={step.code} t={t} />
+                          </div>
+                        )}
+                      </Step>
+                    </div>
+                  ))}
                 </div>
-                <div className="py-4">
-                  <Step step={2} title="Communiquer le numéro">
-                    à votre interlocuteur Asgard : property@asgard-reim.fr<br />
-                    (Ex : 3883888764)
-                  </Step>
+              </Widget>
+            )}
+
+            {/* Extra tips (lights, A/C...), from the Notion "Infos complémentaires" table */}
+            {property?.extraInfo && property.extraInfo.length > 0 && (
+              <Widget>
+                <div className="flex flex-col items-center text-center pt-2 pb-4">
+                  <Info className="h-10 w-10 text-foreground" strokeWidth={2} />
+                  <h2 className="text-xl font-semibold text-brand-ink dark:text-white leading-tight mt-3">
+                    {t.checkin.extraInfoTitle}
+                  </h2>
+                  <p className="text-[13px] text-brand-ink/70 dark:text-white/80 mt-1 max-w-[280px]">
+                    {t.checkin.extraInfoSubtitle}
+                  </p>
                 </div>
-                <div className="py-4">
-                  <Step step={3} title="Mise en place">
-                    Iphone : RAS<br />
-                    Android : désactivée la fonction NFC
-                  </Step>
+                <div className="border-t border-brand-ink/15 dark:border-white/15" />
+                <div className="divide-y divide-brand-ink/15 dark:divide-white/15">
+                  {property.extraInfo.map((info, i) => (
+                    <div key={`${i}-${info.name.fr}`} className="py-4 last:pb-0">
+                      <Step step={i + 1} title={info.name[lang]}>
+                        <StepDetail text={info.detail?.[lang]} />
+                      </Step>
+                    </div>
+                  ))}
                 </div>
-                <div className="pt-4">
-                  <Step step={4} title="Activer le Bluetooth">
-                    Ouvrir l'application puis approchez votre téléphone devant le lecteur
-                  </Step>
-                </div>
-              </div>
-            </Widget>
-            */}
+              </Widget>
+            )}
           </div>
 
           {/* Footer logo */}

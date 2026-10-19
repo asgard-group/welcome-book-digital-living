@@ -11,8 +11,21 @@ import {
   Building2,
   DoorOpen,
   Sun,
+  BedDouble,
+  Bath,
   ChevronLeft,
   ExternalLink,
+  AlertTriangle,
+  X,
+  Phone,
+  CigaretteOff,
+  PartyPopper,
+  PawPrint,
+  Volume2,
+  UserPlus,
+  Camera,
+  UtensilsCrossed,
+  Download,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -28,6 +41,21 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   "bâtiment": Building2,
   porte: DoorOpen,
   soleil: Sun,
+  salon: Tv,
+  chambre: BedDouble,
+  bain: Bath,
+};
+
+// House rules shown as a fixed list (same for every Living apartment); keys match `facilities.forbidden[].id`.
+const FORBIDDEN_ICONS: Record<string, LucideIcon> = {
+  smoking: CigaretteOff,
+  parties: PartyPopper,
+  pets: PawPrint,
+  noise: Volume2,
+  guests: UserPlus,
+  photo: Camera,
+  eating: UtensilsCrossed,
+  download: Download,
 };
 
 export default function Facilities() {
@@ -124,11 +152,13 @@ export default function Facilities() {
                       </div>
                     ) : (
                       <div className="pt-1">
-                        <img
-                          src={section.imageUrl ?? property?.backgroundUrl ?? DEFAULT_BACKGROUND_URL}
-                          alt=""
-                          className="w-full aspect-[16/7] rounded-lg object-cover mb-4"
-                        />
+                        {section.imageUrl && (
+                          <img
+                            src={section.imageUrl}
+                            alt=""
+                            className="w-full aspect-[16/7] rounded-lg object-cover mb-4"
+                          />
+                        )}
                         <div className="space-y-3">
                           {section.items.map((item) => (
                             <div key={item.name.fr} className="grid grid-cols-2 items-start gap-4">
@@ -154,6 +184,50 @@ export default function Facilities() {
                 </AccordionItem>
               ))}
             </Accordion>
+
+            {/* Règlement intérieur (same for every Living apartment) */}
+            <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 text-brand-ink dark:text-white">
+              <div className="flex flex-col items-center text-center gap-3">
+                <AlertTriangle className="h-10 w-10 text-destructive" strokeWidth={2} />
+                <h2 className="text-xl font-semibold text-brand-ink dark:text-white leading-tight">
+                  {t.facilities.rulesTitle}
+                </h2>
+                <p className="text-sm text-brand-ink/70 dark:text-white/80">{t.facilities.rulesIntro}</p>
+              </div>
+              <div className="mt-5 space-y-3">
+                {t.facilities.sanctions.map((sanction) => (
+                  <div
+                    key={sanction}
+                    className="flex items-start gap-3 pt-3 border-t border-brand-ink/15 dark:border-white/15"
+                  >
+                    <X className="h-5 w-5 text-destructive shrink-0 mt-0.5" strokeWidth={2} />
+                    <p className="text-sm font-medium text-brand-ink dark:text-white">{sanction}</p>
+                  </div>
+                ))}
+                <div className="flex items-start gap-3 pt-3 border-t border-brand-ink/15 dark:border-white/15">
+                  <Phone className="h-5 w-5 text-brand-ink dark:text-white shrink-0 mt-0.5" strokeWidth={2} />
+                  <p className="text-sm font-medium text-brand-ink dark:text-white">{t.facilities.incidentNotice}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {t.facilities.forbidden.map((item) => {
+                const Icon = FORBIDDEN_ICONS[item.id] ?? X;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80"
+                  >
+                    <Icon className="h-5 w-5 text-destructive shrink-0" strokeWidth={2} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-semibold text-brand-ink dark:text-white leading-tight">{item.title}</p>
+                      <p className="text-sm text-brand-ink/70 dark:text-white/80 mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Footer logo */}

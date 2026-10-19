@@ -5,9 +5,9 @@ import {
   ChevronLeft,
   ChevronRight,
   UtensilsCrossed,
-  ParkingSquare,
-  TramFront,
+  ShoppingBag,
   Landmark,
+  Baby,
   Sparkles,
   Wrench,
 } from "lucide-react";
@@ -19,11 +19,11 @@ import joroLogo from "@/assets/joro-living-logo.png";
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   restaurants: UtensilsCrossed,
-  parking: ParkingSquare,
-  transport: TramFront,
-  pratique: Wrench,
-  wellness: Sparkles,
+  shopping: ShoppingBag,
   culture: Landmark,
+  enfants: Baby,
+  wellness: Sparkles,
+  pratique: Wrench,
 };
 
 export default function Explore() {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Pulls the "Immeubles" Notion database into netlify/functions/_data/buildings.json,
-// downloading each building's hero photo/logo into public/buildings/<slug>/ (Notion's
+// Pulls the Living "Immeubles" Notion database (one row per apartment) into
+// netlify/functions/_data/buildings.json, downloading each apartment's photos into public/buildings/<slug>/ (Notion's
 // own file URLs are temporary, so they can't be used directly by the app).
 //
 // Runs automatically before every build (see package.json's "prebuild"). If
@@ -13,29 +13,27 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
-const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID || "0101fd7a866e4621b1d1a49c7bb3ef6e";
+// No default on purpose: this project has its own Notion database, and a fallback ID
+// would risk silently syncing another project's content into it.
+const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
 const NOTION_VERSION = "2022-06-28";
 // DeepL free-tier keys end in ":fx" and must hit the separate free API host.
 const DEEPL_API_KEY = process.env.DEEPL_API_KEY;
 const DEEPL_API_URL = DEEPL_API_KEY?.endsWith(":fx")
   ? "https://api-free.deepl.com/v2/translate"
   : "https://api.deepl.com/v2/translate";
-// Never auto-delete this one's image folder: it backs the app's hardcoded
-// DEFAULT_BACKGROUND_URL/DEFAULT_LOGO_URL fallback (src/property/useProperty.ts),
-// shown briefly while any building's real data is still loading.
-const DEFAULT_BUILDING_SLUG = "lamartine";
 // Used for "sur devis" services with no email set in Notion yet (no such
 // column exists there today — add one named "email" to override per-service).
 const DEFAULT_QUOTE_EMAIL = "audrey.robin@joro-space.fr";
 // Notion's French category labels (Adresses utiles) -> the app's fixed category ids
 // (Explore.tsx's CATEGORY_ICONS / i18n `explore.categories`), lowercased for matching.
 const ADDRESS_CATEGORY_MAP = {
+  restaurants: "restaurants",
+  shopping: "shopping",
   culture: "culture",
+  enfants: "enfants",
   "bien-être": "wellness",
   pratique: "pratique",
-  transport: "transport",
-  parking: "parking",
-  restaurants: "restaurants",
 };
 // Notion's French category labels (Guide de l'espace équipement) -> bilingual display titles.
 const EQUIPMENT_SECTION_TITLES = {
@@ -69,6 +67,10 @@ async function main() {
     console.warn("[sync-notion] NOTION_API_KEY not set — skipping, keeping existing buildings.json");
     return;
   }
+  if (!NOTION_DATABASE_ID) {
+    console.warn("[sync-notion] NOTION_DATABASE_ID not set — skipping, keeping existing buildings.json");
+    return;
+  }
   if (!DEEPL_API_KEY) {
     console.warn("[sync-notion] DEEPL_API_KEY not set — English text will fall back to French");
   }
@@ -93,7 +95,6 @@ async function main() {
         network: getText(props.wifi_reseau),
         password: getText(props.wifi_mdp),
       },
-      entryCodes: { buildingDoor: "", hallCode: "" },
     };
 
     const address = getText(props.adresse);
@@ -129,10 +130,22 @@ async function main() {
     if (addressesDb) building.addresses = await buildAddresses(addressesDb.id);
 
     const equipmentDb = findDatabase(childDatabases, "Guide de l'espace (équipement)");
-    const floorsDb = findDatabase(childDatabases, "Guide de l'espace (étage)");
+    // Living describes an apartment room by room; Office describes a building floor by floor.
+    const floorsDb =
+      findDatabase(childDatabases, "Guide du logement (pièces)") ??
+      findDatabase(childDatabases, "Guide de l'espace (étage)");
     if (equipmentDb || floorsDb) {
       building.facilities = await buildFacilities(equipmentDb?.id, floorsDb?.id, slug);
     }
+
+    const accessDb = findDatabase(childDatabases, "Accès");
+    if (accessDb) building.access = await buildAccessSteps(accessDb.id);
+
+    const extraInfoDb = findDatabase(childDatabases, "Infos complémentaires");
+    if (extraInfoDb) building.extraInfo = await buildTextEntries(extraInfoDb.id);
+
+    const stayDb = findDatabase(childDatabases, "Check-in / Check-out");
+    if (stayDb) building.stay = await buildStay(stayDb.id);
 
     buildings[slug] = building;
   }
@@ -230,7 +243,6 @@ async function cleanupOrphanedBuildingDirs(currentSlugs) {
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    if (entry.name === DEFAULT_BUILDING_SLUG) continue;
     if (currentSlugs.has(entry.name)) continue;
 
     await fs.rm(path.join(PUBLIC_BUILDINGS_DIR, entry.name), { recursive: true, force: true });
@@ -292,6 +304,62 @@ async function getChildDatabases(pageId) {
 
 function findDatabase(databases, title) {
   return databases.find((db) => db.title.trim().toLowerCase() === title.trim().toLowerCase());
+}
+
+/** One titled entry per row (title + optional detail), translated; used by "Infos complémentaires". */
+async function buildTextEntries(dbId) {
+  const rows = await queryDatabase(dbId);
+  const entries = [];
+  for (const row of rows) {
+    const props = row.properties;
+    const name = getText(props.Nom);
+    if (!name) continue;
+    const entry = { name: await bilingual(name) };
+    const detail = getText(props["détail"]);
+    if (detail) entry.detail = await bilingual(detail);
+    entries.push(entry);
+  }
+  return entries;
+}
+
+/**
+ * The "Accès" steps (how to get into the apartment). Like buildTextEntries, plus an
+ * optional "code" column kept as-is: access codes are never sent to the
+ * translation service, and are shown verbatim in both languages.
+ */
+async function buildAccessSteps(dbId) {
+  const rows = await queryDatabase(dbId);
+  const steps = [];
+  for (const row of rows) {
+    const props = row.properties;
+    const name = getText(props.Nom);
+    if (!name) continue;
+    const step = { name: await bilingual(name) };
+    const detail = getText(props["détail"]);
+    if (detail) step.detail = await bilingual(detail);
+    const code = getText(props.code);
+    if (code) step.code = code;
+    steps.push(step);
+  }
+  return steps;
+}
+
+/** The "Check-in / Check-out" blocks; the "type" select picks the icon (arrivée/départ/information). */
+async function buildStay(dbId) {
+  const rows = await queryDatabase(dbId);
+  const blocks = [];
+  for (const row of rows) {
+    const props = row.properties;
+    const name = getText(props.Nom);
+    if (!name) continue;
+    const typeLabel = getText(props.type).toLowerCase();
+    const kind = typeLabel.startsWith("arriv") ? "arrivee" : typeLabel.startsWith("dép") || typeLabel.startsWith("dep") ? "depart" : "information";
+    const block = { kind, name: await bilingual(name) };
+    const detail = getText(props["détail"]);
+    if (detail) block.detail = await bilingual(detail);
+    blocks.push(block);
+  }
+  return blocks;
 }
 
 /** Builds the Services widget data (Inclus / Sur devis) from the "Services" child database. */
@@ -402,7 +470,7 @@ async function buildFacilities(equipmentDbId, floorsDbId, slug) {
       const name = getText(props.titre);
       if (!name) continue;
 
-      const tags = getMultiSelect(props["étage"]);
+      const tags = getMultiSelect(props["pièce"] ?? props["étage"]);
       if (tags.length === 0) {
         console.warn(`[sync-notion] Floor element "${name}" has no "étage" tag — skipped`);
         continue;
@@ -411,7 +479,7 @@ async function buildFacilities(equipmentDbId, floorsDbId, slug) {
       const key = titleFr.toLowerCase();
 
       if (!groups.has(key)) {
-        const titleEn = tags.map((tag) => FLOOR_TAG_TITLES_EN[tag] ?? tag).join(" / ");
+        const titleEn = (await Promise.all(tags.map(async (tag) => FLOOR_TAG_TITLES_EN[tag] ?? (await translateToEnglish(tag))))).join(" / ");
         const icon = getText(props.icon).toLowerCase();
         const imageUrl = await syncFile(getFirstFileUrl(props["Fichiers et médias"]), slug, `floor-${slugify(key)}`);
         groups.set(key, { id: key, title: { fr: titleFr, en: titleEn }, tags, icon, imageUrl, items: [] });
