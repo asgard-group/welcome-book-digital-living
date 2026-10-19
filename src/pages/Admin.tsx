@@ -11,12 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const BUILDINGS = [
-  { id: "haussmann-halevy", label: "Haussmann Mogador" },
-  { id: "demo-marais", label: "Demo — Marais" },
-  { id: "demo-montmartre", label: "Demo — Montmartre" },
-  { id: "demo-bastille", label: "Demo — Bastille" },
-];
+type BuildingOption = { id: string; name: string };
 
 function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState("");
@@ -83,11 +78,38 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 function GrantPanel({ onLogout }: { onLogout: () => void }) {
-  const [buildingId, setBuildingId] = useState(BUILDINGS[0].id);
+  const [buildings, setBuildings] = useState<BuildingOption[]>([]);
+  const [buildingId, setBuildingId] = useState("");
   const [days, setDays] = useState("7");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [link, setLink] = useState("");
+
+  // The apartments come from Notion (via the build-time sync), not from a hardcoded list.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/grants", { credentials: "include" });
+        if (res.status === 401) {
+          if (!cancelled) onLogout();
+          return;
+        }
+        const body = (await res.json()) as { buildings?: BuildingOption[] };
+        if (cancelled) return;
+        const list = body.buildings ?? [];
+        setBuildings(list);
+        setBuildingId((current) => current || list[0]?.id || "");
+      } catch {
+        if (!cancelled) toast.error("Impossible de charger la liste des logements.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,9 +164,9 @@ function GrantPanel({ onLogout }: { onLogout: () => void }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {BUILDINGS.map((b) => (
+                {buildings.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
-                    {b.label}
+                    {b.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -174,7 +196,7 @@ function GrantPanel({ onLogout }: { onLogout: () => void }) {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || !buildingId}>
             {loading ? "Création…" : "Créer le lien"}
           </Button>
         </form>

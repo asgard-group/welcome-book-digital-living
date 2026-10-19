@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { AccessExpired, Splash } from "@/components/AuthGate";
+import { AccessExpired, Splash } from "@/components/BuildingGate";
 
 /**
  * Landing target of the magic link: `/access?token=...`.
  *
  * Exchanges the token for an HttpOnly session cookie via `/api/enter`, strips
- * the token from the URL, then redirects into the booklet. On failure it shows
+ * the token from the URL, then redirects into this apartment's booklet
+ * (`/:buildingId`, the apartment the grant was issued for). On failure it shows
  * the expired screen.
  */
 export default function Access() {
@@ -33,11 +34,12 @@ export default function Access() {
           body: JSON.stringify({ token }),
         });
         if (!res.ok) throw new Error(String(res.status));
+        const { buildingId } = (await res.json()) as { buildingId: string };
         if (cancelled) return;
         // Remove the token from the address bar and refetch with the new cookie.
         window.history.replaceState({}, "", "/access");
         await queryClient.invalidateQueries({ queryKey: ["building"] });
-        navigate("/", { replace: true });
+        navigate(`/${buildingId}`, { replace: true });
       } catch {
         if (!cancelled) setFailed(true);
       }

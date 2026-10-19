@@ -1,83 +1,100 @@
-import { Phone } from "lucide-react";
+import { Mail } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
+import { ExternalLink } from "@/components/ExternalLink";
+import { useLanguage } from "@/i18n/LanguageContext";
+import type { Translation } from "@/i18n/translations";
 
 type TeamMember = {
   name: string;
-  role: string;
-  phoneDisplay: string;
-  phoneHref: string;
-  note?: string;
+  role: "roleMultisite" | "roleOfficeManager";
+  desc?: "descAudrey";
+  email?: string;
+  phoneHref?: string;
 };
 
-const TEAM: TeamMember[] = [
-  { name: "Chris", role: "Housekeeper Manager", phoneDisplay: "06 59 19 63 66", phoneHref: "+33659196366" },
-  {
-    name: "Mathilde",
-    role: "Reservation Manager",
-    phoneDisplay: "06 30 00 10 14",
-    phoneHref: "+33630001014",
-    note: "congé maternité",
-  },
-  { name: "Bérénice", role: "Brand Manager", phoneDisplay: "06 37 75 45 70", phoneHref: "+33637754570" },
+const PRIMARY_CONTACT: TeamMember = {
+  name: "Audrey",
+  role: "roleOfficeManager",
+  desc: "descAudrey",
+  email: "audrey.robin@joro-space.fr",
+  phoneHref: "+33659668978",
+};
+
+const OTHER_CONTACTS: TeamMember[] = [
+  { name: "Pauline", role: "roleMultisite", email: "pauline.roureau@joro-space.fr", phoneHref: "+33659195073" },
+  { name: "Manuel", role: "roleMultisite", email: "manuel.colores@joro-space.fr", phoneHref: "+33764012129" },
 ];
 
-export function ContactWidget() {
+function ContactCard({ member, t }: { member: TeamMember; t: Translation }) {
   return (
-    <div className="rounded-xl p-5 backdrop-blur-md bg-white/90 dark:bg-[#1c2626]/80 text-[#1c2626] dark:text-white">
-      {/* Header */}
-      <div className="flex flex-col items-center text-center pt-2 pb-4">
-        <Phone className="h-10 w-10 text-foreground" strokeWidth={2} />
-        <h2 className="text-xl font-semibold text-[#1c2626] dark:text-white leading-tight mt-3">
-          Contact Jöro
-        </h2>
-        <p className="text-[13px] text-[#1c2626]/70 dark:text-white/80 mt-1 max-w-[280px]">
-          Voici quelques numéros utiles pour votre séjour
-        </p>
-      </div>
-
-      <div className="border-t border-[#1c2626]/15 dark:border-white/15" />
-
-      {/* Team */}
-      <div className="divide-y divide-[#1c2626]/15 dark:divide-white/15">
-        {TEAM.map((member) => (
-          <div key={member.name} className="flex items-center justify-between gap-3 py-4">
-            <div className="flex-1 min-w-0 space-y-0.5">
-              <p className="font-semibold text-[#1c2626] dark:text-white text-sm">{member.name}</p>
-              <p className="text-xs uppercase text-[#1c2626]/70 dark:text-white/80">{member.role}</p>
-              {member.note && (
-                <p className="text-xs italic text-[#1c2626]/70 dark:text-white/80">{member.note}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <a
-                href={`tel:${member.phoneHref}`}
-                className="text-sm font-medium text-[#1c2626] dark:text-white underline underline-offset-2 whitespace-nowrap"
-              >
-                {member.phoneDisplay}
-              </a>
-              <a
-                href={`https://wa.me/${member.phoneHref.replace("+", "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0"
-              >
-                <WhatsAppIcon className="h-[27px] w-[27px] text-[#128C7E]" />
-              </a>
-            </div>
-          </div>
-        ))}
-
-        {/* Email */}
-        <div className="flex items-center justify-center gap-[5px] pt-4">
-          <span className="text-sm font-medium text-[#5C6363] dark:text-white/60">Email</span>
-          <a
-            href="mailto:reservation@joro-space.fr"
-            className="text-sm font-medium text-[#1c2626] dark:text-white underline underline-offset-2"
+    <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 text-brand-ink dark:text-white">
+      <p className="font-semibold text-brand-ink dark:text-white text-base">{member.name}</p>
+      <p className="text-sm text-brand-ink/70 dark:text-white/70">{t.contact[member.role]}</p>
+      {member.desc && (
+        <p className="text-sm text-brand-ink/70 dark:text-white/70 mt-2">{t.contact[member.desc]}</p>
+      )}
+      <div className="grid grid-cols-2 gap-3 mt-3">
+        {member.email ? (
+          <ExternalLink
+            href={`mailto:${member.email}`}
+            className="flex items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-medium text-brand-ink dark:text-white bg-white/70 dark:bg-white/10"
           >
-            reservation@joro-space.fr
-          </a>
-        </div>
+            <Mail className="h-5 w-5" strokeWidth={1.75} />
+            {t.contact.emailLabel}
+          </ExternalLink>
+        ) : (
+          <span className="flex items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-medium text-brand-ink/40 dark:text-white/40 bg-white/70 dark:bg-white/10">
+            <Mail className="h-5 w-5" strokeWidth={1.75} />
+            {t.contact.emailLabel}
+          </span>
+        )}
+        {member.phoneHref ? (
+          <ExternalLink
+            href={`https://wa.me/${member.phoneHref.replace("+", "")}`}
+            newTab
+            className="flex items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-medium text-brand-ink dark:text-white bg-white/70 dark:bg-white/10"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+            {t.contact.whatsappLabel}
+          </ExternalLink>
+        ) : (
+          <span className="flex items-center justify-center gap-2 rounded-[8px] py-3 text-sm font-medium text-brand-ink/40 dark:text-white/40 bg-white/70 dark:bg-white/10">
+            <WhatsAppIcon className="h-5 w-5" />
+            {t.contact.whatsappLabel}
+          </span>
+        )}
       </div>
+    </div>
+  );
+}
+
+export function ContactWidget() {
+  const { t } = useLanguage();
+
+  return (
+    <div className="space-y-3">
+      <ContactCard member={PRIMARY_CONTACT} t={t} />
+
+      <Accordion type="single" collapsible>
+        <AccordionItem value="other-contacts">
+          <AccordionTrigger className="hover:no-underline py-4 text-white">
+            <span className="font-semibold text-white">{t.contact.otherContacts}</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <div className="space-y-3 pt-1">
+              {OTHER_CONTACTS.map((member) => (
+                <ContactCard key={member.name} member={member} t={t} />
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

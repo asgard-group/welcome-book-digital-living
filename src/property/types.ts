@@ -1,24 +1,85 @@
 /**
- * Shape of a single building's guest-facing data.
+ * A piece of Notion-sourced text, auto-translated to English at sync time
+ * (see `scripts/sync-notion.mjs`'s `translateToEnglish`). `en` falls back to
+ * the French text when translation wasn't available at sync time.
+ */
+export type Bilingual = { fr: string; en: string };
+
+/** One titled entry of a Notion list (access steps, extra info, check-in/out blocks). */
+export type TextEntry = { name: Bilingual; detail?: Bilingual };
+
+/**
+ * Shape of a single apartment's guest-facing data.
  *
- * One JSON document per building lives at `public/buildings/<id>.json` and is
- * fetched at runtime (see PropertyContext). Keep this in sync with those files.
+ * Served by `GET /api/building?slug=` (see `netlify/functions/building.ts`) only
+ * to a guest holding a valid magic link for that apartment, backed by
+ * `netlify/functions/_data/buildings.json`. Keep this in sync with that file.
  */
 export type PropertyData = {
-  /** Stable building identifier; matches the `/buildings/<id>.json` filename. */
+  /** Stable building identifier; matches its key in `buildings.json`. */
   id: string;
   /** Public-facing building / property name (shown on the welcome screen). */
   name: string;
+  /** Optional until every building sets it. */
+  address?: string;
   wifi: {
     network: string;
     password: string;
   };
-  entryCodes: {
-    /** Street door / building entrance keypad code. */
-    buildingDoor: string;
-    /** Hall access code, entered on the intercom after the street door. */
-    hallCode: string;
+  /** Guest wifi network, separate from the main one above. Optional until every building sets it. */
+  guestWifi?: {
+    network: string;
+    password: string;
   };
-  /** epoch ms when access ends; sent by the API so the client can expire values offline. */
+  /** epoch ms when the guest's access ends; sent by the API with the grant. */
   validUntil?: number;
+  /** "Accès" sub-database: ordered steps to get in (door codes, floor, keys...). */
+  access?: TextEntry[];
+  /** "Infos complémentaires" sub-database: lights, A/C, other tips. */
+  extraInfo?: TextEntry[];
+  /** "Check-in / Check-out" sub-database: arrival, departure and info blocks. */
+  stay?: (TextEntry & { kind: "arrivee" | "depart" | "information" })[];
+  /** Brand colors as hex strings. Optional until every building sets them. */
+  colors?: {
+    primary: string;
+    secondary: string;
+  };
+  /** Hero background photo, served from /buildings/<id>/. Optional until every building sets it. */
+  backgroundUrl?: string;
+  /** Client logo, served from /buildings/<id>/. Optional until every building sets it. */
+  logoUrl?: string;
+  /** From the building's Notion "Services" sub-database. Optional until synced. */
+  services?: {
+    included: { name: Bilingual; icon: string }[];
+    quote: { name: Bilingual; icon: string; email?: string }[];
+  };
+  /**
+   * From the building's Notion "Adresses utiles" sub-database, grouped by category id.
+   * Optional until synced. `name`/`address` aren't translated (real place names/addresses).
+   */
+  addresses?: Record<
+    string,
+    { name: string; address: string; distance?: string; price?: string; description?: Bilingual }[]
+  >;
+  /**
+   * From the building's Notion "Guide de l'espace" sub-databases (equipment + floors),
+   * merged into one ordered list of sections. Optional until synced.
+   */
+  facilities?: {
+    sections: {
+      id: string;
+      title: Bilingual;
+      kind: "video" | "info";
+      icon?: string;
+      /** Shared image for "info" (floor) sections. */
+      imageUrl?: string;
+      items: {
+        name: Bilingual;
+        detail?: Bilingual;
+        videoUrl?: string;
+        /** Per-item image for "video" (equipment) sections. */
+        imageUrl?: string;
+      }[];
+    }[];
+  };
 };

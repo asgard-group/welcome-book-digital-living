@@ -1,0 +1,482 @@
+common:
+  back: "Retour"
+  leaveAppTitle: "Vous quittez le livret d'accueil"
+  leaveAppDesc: "Ce lien va ouvrir une autre page en dehors du livret d'accueil. Voulez-vous continuer ?"
+  leaveAppCancel: "Annuler"
+  leaveAppContinue: "Continuer"
+  emailChooseTitle: "Contacter par email"
+  emailChooseDesc: "Choisis ton application, ou copie simplement l'adresse."
+  emailOpenOutlook: "Ouvrir dans Outlook"
+  emailOpenGmail: "Ouvrir dans Gmail"
+  emailCopy: "Copier l'adresse"
+  emailCopiedToast: "Adresse email copiée"
+
+brand:
+  name: "Jöro Haussmann"
+  sub: "Halévy"
+  footer: "© Jöro Space"
+
+nav:
+  welcome: "Accueil"
+  checkin: "S'y rendre"
+  checkinShort: "Arrivée"
+  facilities: "Équipements"
+  explore: "Explorer Paris"
+  exploreShort: "Explorer"
+  info: "Infos utiles"
+  infoShort: "Infos"
+
+settings:
+  ariaLabel: "Paramètres"
+  title: "Paramètres"
+  language: "Langue"
+  appearance: "Apparence"
+  french: "Français"
+  english: "English"
+  light: "Clair"
+  dark: "Sombre"
+
+contact:
+  roleMultisite: "Responsable multisite"
+  roleOfficeManager: "Responsable des opérations"
+  emailLabel: "Email"
+  whatsappLabel: "WhatsApp"
+  descAudrey: "Référente du site"
+  otherContacts: "Autre contact en cas d'urgence"
+
+welcome:
+  title: "Bienvenue"
+  heroAltPrefix: "Bienvenue à "
+  heroAltFallback: "Bienvenue"
+  menu:
+    checkin: "Infos pratiques"
+    facilities: "Guide de l'espace"
+    services: "Services"
+    info: "Urgences"
+    explore: "Adresses utiles"
+    checkout: "Éco gestes"
+
+onboarding:
+  heroAlt: "Intérieur du logement"
+  cta: "Commencer"
+
+checkin:
+  title: "Infos pratiques"
+  subtitle: "Wifi, Accès bureaux"
+  wifiTitle: "Wifi"
+  wifiGuestTitle: "Wifi Guest"
+  network: "Réseau"
+  password: "Mot de passe"
+  copyAria: "Copier"
+  copiedToast: "Copié"
+  copyErrorToast: "Impossible de copier"
+
+checkout:
+  title: "Éco gestes"
+  subtitle: "Les bons gestes à adopter"
+  wasteItems:
+    - title: "Déchets ménagers"
+      desc: "Restes alimentaires, autres déchets non recyclables."
+    - title: "Verre"
+      desc: "Bouteilles, bocaux, pots en verre uniquement."
+    - title: "Déchets recyclables"
+      desc: "Emballages en plastique, carton, papier, canettes."
+  doLabel: "À faire"
+  avoidLabel: "À éviter"
+  sections:
+    - id: climatisation
+      title: "Climatisation"
+      items:
+        - name: "Fermez les fenêtres"
+          detail: "lorsque la climatisation fonctionne."
+          type: faire
+        - name: "Éteignez la climatisation"
+          detail: "avant de partir en week-end."
+          type: faire
+        - name: "Baissez les stores"
+          detail: "afin de limiter la chaleur en journée."
+          type: faire
+        - name: "Aérez tôt le matin"
+          detail: "pour rafraîchir et ventiler vos locaux."
+          type: faire
+        - name: "Ne bloquez pas les émetteurs de froid"
+          detail: "pour assurer leur bon fonctionnement."
+          type: eviter
+    - id: chauffage
+      title: "Chauffage"
+      items:
+        - name: "Limiter la température à 19°C"
+          detail: "1°C de moins permet d'économiser 7% d'énergie"
+          type: faire
+    - id: eclairage
+      title: "Éclairage"
+      items:
+        - name: "Veillez à éteindre les lumières"
+          detail: "lorsque vous sortez d'une pièce"
+          type: faire
+        - name: "Installer des minuteurs ou détecteur"
+          detail: "dans les locaux de passage"
+          type: faire
+        - name: "Remplacer vos ampoules classiques"
+          detail: "par des ampoules basse consommation de type LED"
+          type: faire
+    - id: eau
+      title: "Eau"
+      items:
+        - name: "Couper l'eau"
+          detail: "quand vous ne vous en servez pas"
+          type: faire
+        - name: "Signaler les fuites"
+          detail: "au Welcome Manager"
+          type: faire
+        - name: "Utiliser la demi-chasse d'eau"
+          detail: "cela permet d'économiser 3 litres d'eau à chaque passage"
+          type: faire
+        - name: "Remplir sa gourde ou son mug"
+          detail: "éviter les bouteilles en plastique"
+          type: faire
+    - id: papier
+      title: "Papier"
+      items:
+        - name: "Imprimer avec parcimonie"
+          detail: "seulement ce qui est essentiel"
+          type: faire
+        - name: "Imprimer en noir et blanc"
+          detail: "et de préférence en recto verso"
+          type: faire
+        - name: "Recycler les papiers imprimés"
+          detail: "en brouillon"
+          type: faire
+        - name: "Penser à installer une badgeuse"
+          detail: "Cela réduit de moitié la consommation de papier et d'encre"
+          type: faire
+    - id: bureautique
+      title: "Bureautique"
+      items:
+        - name: "Débrancher les prises inutilisés"
+          detail: "et ne pas laisser d'appareil en veille"
+          type: faire
+        - name: "Ne pas laisser un chargeur branché"
+          detail: "même non relié à un appareil, il consomme de l'énergie"
+          type: eviter
+        - name: "Penser à éteindre votre ordinateur"
+          detail: "pendant les périodes prolongées de non utilisation (notamment à midi)"
+          type: faire
+        - name: "Préférer un fond d'écran sombre et fixe"
+          detail: "il consommera moins"
+          type: faire
+        - name: "Privilégier la messagerie instantané"
+          detail: "pour envoyer des messages à vos collègues plutôt que les emails"
+          type: faire
+
+services:
+  title: "Services"
+  subtitle: "Les services disponibles"
+  tabIncluded: "Inclus"
+  tabQuote: "Sur Devis"
+  includedItems:
+    - title: "Maintenance technique"
+      desc: "Office manager dédié"
+    - title: "Accès 24/7 sécurisé"
+      desc: "Accès sécurisé jour et nuit"
+    - title: "Contrôle d'accès"
+      desc: "Badge/Smartphone"
+    - title: "Internet fibre pro"
+      desc: "Fibre dédiée sur demande"
+    - title: "Cuisine équipée"
+      desc: "Micro-ondes, vaisselle"
+    - title: "Livraison café"
+      desc: "Grains livrés chaque semaine"
+    - title: "Ménage"
+      desc: "2 fois par jour"
+  quoteItems:
+    - title: "Fontaine à eau"
+      desc: "Eau fraîche et pétillante"
+    - title: "Imprimante"
+      desc: "Impression et scan"
+    - title: "Panier de fruits & food"
+      desc: "Plateaux repas, traiteur"
+    - title: "Branding & décoration"
+      desc: "Aménagement sur mesure"
+    - title: "Végétalisation espaces"
+      desc: "Entretien compris"
+    - title: "Mobilier supplémentaire"
+      desc: "Phonebox, desk, écran"
+    - title: "Alarme"
+      desc: "Installation compris"
+  joroSpaceTitle: "Jöro Space"
+  joroSpaceSubtitle: "Découvrez l'écosystème de Jöro"
+  joroSpaceItems:
+    - name: "Jöro Meeting"
+      role: "Événements & réunions"
+      link: "https://joro-space.fr/lieux-reunions-evenements/"
+    - name: "Jöro Kaffé"
+      role: "Café & coworking"
+      link: "https://joro-space.fr/joro-kaffe-coffee-shop-co-working/"
+    - name: "Jöro Living"
+      role: "Apparthôtels"
+      link: "https://joro-space.fr/reservation-joro/"
+
+facilities:
+  title: "Guide de l'espace"
+  subtitle: "Tout ce qu'il faut savoir"
+  noticeLabel: "Notice :"
+  videoLinkLabel: "Lien vidéo"
+  sections:
+    - id: equipements
+      title: "Équipements"
+      kind: video
+      items:
+        - name: "Projeter l'écran"
+        - name: "Écran"
+          detail: "45/55/65 pouces"
+        - name: "Visio conférence"
+          detail: "Réservation de salle"
+        - name: "Fontaine d'eau"
+          detail: "Eau fraîche & pétillante"
+    - id: cuisine-equipements
+      title: "Cuisine"
+      kind: video
+      items:
+        - name: "Micro ondes"
+          videoUrl: "https://www.youtube.com/watch?v=yqazuy6ngjs"
+        - name: "Machine à café"
+          detail: "Notice à venir"
+        - name: "Lave vaisselle"
+          detail: "Notice à venir"
+    - id: r-1
+      title: "R-1"
+      kind: info
+      items:
+        - name: "Salle de réunion"
+          detail: "2 salle de 3 places\n2 écran 45 pouces\n4 phone box"
+        - name: "Salle hybride"
+          detail: "12 places\n1 écran 65 pouces\n1 écran"
+        - name: "Espace lounge"
+          detail: "18 places\n1 fontaine à eau\n1 machine à café"
+        - name: "Salle de fitness"
+          detail: "4 places"
+        - name: "Espace gaming"
+          detail: "5 places\n1 écran"
+    - id: rdc
+      title: "RDC"
+      kind: info
+      items:
+        - name: "Accueil"
+          detail: "1 écran de 55 pouces"
+        - name: "Espace de travail"
+          detail: "1 espace co working\nAtelier corner\nMother room"
+        - name: "Espace ouvert"
+          detail: "Photoroom house\n1 espace Salon"
+        - name: "Salle de réunion"
+          detail: "2 phone box 6 places\n3 phone box"
+        - name: "Cuisine"
+          detail: "1 four , 2 micro-ondes\n2 lave-vaisselles, 1 frigo\n1 écran de 55 pouce"
+        - name: "Point café"
+          detail: "1 fontaine à eau\n2 machine à café"
+    - id: r+1
+      title: "R+1"
+      kind: info
+      items:
+        - name: "Espace de travail"
+          detail: "7 places (2 desks)\n4 armoires"
+        - name: "La bibliothèque"
+          detail: "24 places (3 desks)\n32 casier"
+        - name: "Salles de reunion"
+          detail: "1 phone box duo\n4 phone box"
+    - id: r+2
+      title: "R+2"
+      kind: info
+      items:
+        - name: "Espace de travail"
+          detail: "28 places (3 desks)\n1 écran de 55 pouces\n32 casiers"
+        - name: "Studio"
+          detail: "5 places"
+        - name: "Espace ouvert"
+          detail: "10 places"
+        - name: "Salle de réunion"
+          detail: "5 places\n1 écran de 55 pouces"
+    - id: r+3-rooftop
+      title: "R+3/Rooftop"
+      kind: info
+      items:
+        - name: "Terrasse privative"
+          detail: "123 m² extérieur"
+
+explore:
+  title: "Adresses utiles"
+  subtitle: "Transports & Restaurants"
+  map: "Carte →"
+  comingSoon: "Adresses à venir."
+  categories:
+    - id: restaurants
+      label: "Restaurants"
+    - id: parking
+      label: "Parking"
+    - id: transport
+      label: "Transport"
+    - id: pratique
+      label: "Pratique"
+    - id: wellness
+      label: "Bien-être"
+    - id: culture
+      label: "Culture"
+  places:
+    restaurants:
+      - name: "Via Mela"
+        desc: "Italien"
+        address: "8 rue Lamartine"
+        right: "20 m"
+        price: "€€"
+      - name: "Brion Restaurant"
+        desc: "Bistronomique"
+        address: "17 rue Lamartine"
+        right: "2 min"
+        price: "€€€"
+      - name: "Les Saisons"
+        desc: "Française"
+        address: "52 rue Lamartine"
+        right: "4 min"
+        price: "€€"
+      - name: "Mount Everest"
+        desc: "Indien"
+        address: "26 rue Lamartine"
+        right: "100 m"
+        price: "€"
+      - name: "Le Mignon"
+        desc: "Bistrot"
+        address: "8 rue Lamartine"
+        right: "20 m"
+        price: "€€"
+    parking:
+      - name: "Parking Vélib'"
+        desc: "Parking vélo libre service"
+        address: "Milton - Manuel, 75009 Paris"
+        right: "6 min"
+      - name: "Zenpark"
+        desc: "Parking voiture"
+        address: "45 Rue Laffitte, 75009 Paris"
+        right: "6 min"
+      - name: "Saemes Parking Montholon"
+        desc: "Parking voiture"
+        address: "1 Rue Mayran, 75009 Paris"
+        right: "3 min"
+      - name: "Onepark Mayran"
+        desc: "Parking voiture"
+        address: "5 Rue Mayran, 75009 Paris"
+        right: "3 min"
+    transport:
+      - name: "Métro 7"
+        desc: "Station Cadet"
+        mapQuery: "Métro Cadet, Paris"
+        right: "2 min"
+      - name: "Métro 12"
+        desc: "Station Notre-Dame-de-Lorette"
+        mapQuery: "Métro Notre-Dame-de-Lorette, Paris"
+        right: "6 min"
+      - name: "Métro 8 & 9"
+        desc: "Station Opéra"
+        mapQuery: "Métro Opéra, Paris"
+        right: "15 min"
+      - name: "Bus 26/43/45/85"
+        desc: "Châteaudun - Lamartine"
+        mapQuery: "Arrêt de bus Châteaudun - Lamartine, Paris"
+        right: "3 min"
+      - name: "RER E"
+        desc: "Station Haussmann"
+        mapQuery: "Gare Haussmann Saint-Lazare, Paris"
+        right: "15 min"
+    pratique:
+      - name: "Carrefour Express"
+        desc: "Supermarché"
+        address: "2 rue Lamartine"
+        right: "65 m"
+      - name: "Crédit Agricole"
+        desc: "Banque"
+        address: "14 rue des Martyrs"
+        right: "6 min"
+      - name: "Pharmacie Cadet Lafayette"
+        desc: "Pharmacie"
+        address: "66 rue La Fayette"
+        right: "2 min"
+      - name: "La Poste"
+        desc: "Courrier / colis"
+        address: "14 rue Bleue"
+        right: "5 min"
+      - name: "La Poste"
+        desc: "Espace Clients Pro"
+        address: "14 rue Bleue"
+        right: "5 min"
+      - name: "Sequoia Pressing"
+        desc: "Pressing"
+        address: "84 rue La Fayette"
+        right: "4 min"
+    wellness:
+      - name: "Platinum Coaching"
+        desc: "Salle de sport"
+        address: "48 rue Lamartine"
+        right: "3 min"
+      - name: "Cercles de la Forme Cadet"
+        desc: "Salle de sport"
+        address: "13 rue Ambroise Thomas"
+        right: "7 min"
+      - name: "Punch Studios Lafayette"
+        desc: "Salle de sport"
+        address: "24 rue Chauchat"
+        right: "6 min"
+      - name: "POSES Studio - Saint-Lazare"
+        desc: "Centre de yoga"
+        address: "28 rue de Châteaudun"
+        right: "7 min"
+      - name: "Qee Pilates Yoga"
+        desc: "Studio de pilates"
+        address: "39 rue de Châteaudun"
+        right: "9 min"
+      - name: "Le Centre Tout Naturellement"
+        desc: "Sauna, naturopathie et soins"
+        address: "83 bis rue La Fayette"
+        right: "5 min"
+    culture:
+      - name: "L'Olympia"
+        desc: "Salle de concert"
+        address: "28 boulevard des Capucines"
+        right: "22 min"
+      - name: "The Dissident Club"
+        desc: "Concert de Jazz, Expos & bar"
+        address: "58 rue Richer, 75009"
+        right: "5 min"
+      - name: "Théâtre Le Bout"
+        desc: "Salle de spectacles"
+        address: "6 rue Frochot"
+        right: "15 min"
+      - name: "Paradox Museum Paris"
+        desc: "Musée"
+        address: "38 boulevard des Italiens"
+        right: "15 min"
+      - name: "Théâtre La Bruyère"
+        desc: "Théâtre"
+        address: "5 rue La Bruyère"
+        right: "10 min"
+      - name: "Max Linder Panorama"
+        desc: "Cinéma"
+        address: "24 boulevard Poissonnière"
+        right: "10 min"
+      - name: "Musée de la Vie romantique"
+        desc: "Musée"
+        address: "16 rue Chaptal"
+        right: "15 min"
+
+info:
+  title: "Infos utiles"
+  securityTitle: "Urgences"
+  subtitle: "Contacts importants"
+  emergency: "Numéros d'urgence"
+  europeanUniversal: "Numéro d'urgence européen"
+  samu: "SAMU"
+  samuDesc: "Urgence médical"
+  police: "Police secours"
+  policeDesc: "Force de l'ordre"
+  fire: "Pompier"
+  fireDesc: "Incendie, secours"
+  urgentJoro: "Urgent — Contacter Jöro"
+  nearby: "Services à proximité"

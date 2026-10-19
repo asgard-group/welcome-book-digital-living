@@ -1,18 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   KeyRound,
   Home as HomeIcon,
   Info as InfoIcon,
   Compass,
-  PenSquare,
-  Heart,
+  Recycle,
   ConciergeBell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import heroImg from "@/assets/hero-living-room.png";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SettingsPopover } from "@/components/SettingsPopover";
-import { useProperty } from "@/property/useProperty";
+import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type MenuItem = {
   label: string;
@@ -23,28 +22,29 @@ type MenuItem = {
 
 export default function Welcome() {
   const { data: property } = useProperty();
+  const { t } = useLanguage();
+  const { buildingSlug } = useParams<{ buildingSlug: string }>();
 
   const menu: MenuItem[] = [
-    { label: "Infos pratiques", desc: "Wifi, Accès logement", icon: KeyRound, to: "/checkin" },
-    { label: "Guide logement", icon: HomeIcon, to: "/facilities" },
-    { label: "Services", icon: ConciergeBell, to: "/services" },
-    { label: "Urgences", desc: "Contacts importants", icon: InfoIcon, to: "/info" },
-    { label: "Explorer", desc: "Lieux touristique, activités", icon: Compass, to: "/explore" },
-    { label: "Check-in/out", icon: PenSquare, to: "/checkout" },
-    { label: "Merci beaucoup", icon: Heart, to: "/thanks" },
+    { label: t.welcome.menu.checkin, icon: KeyRound, to: `/${buildingSlug}/checkin` },
+    { label: t.welcome.menu.facilities, icon: HomeIcon, to: `/${buildingSlug}/facilities` },
+    { label: t.welcome.menu.services, icon: ConciergeBell, to: `/${buildingSlug}/services` },
+    { label: t.welcome.menu.info, icon: InfoIcon, to: `/${buildingSlug}/info` },
+    { label: t.welcome.menu.explore, icon: Compass, to: `/${buildingSlug}/explore` },
+    { label: t.welcome.menu.checkout, icon: Recycle, to: `/${buildingSlug}/checkout` },
   ];
 
   return (
-    <div className="h-[100dvh] w-full bg-muted/30">
-      <div className="mx-auto w-full max-w-[760px] h-[100dvh] relative overflow-hidden shadow-sm">
+    <div className="h-app-shell w-full bg-brand-surface dark:bg-brand-ink">
+      <div className="mx-auto w-full max-w-[760px] h-app-shell relative overflow-hidden shadow-sm">
         {/* Background image */}
         <img
-          src={heroImg}
-          alt={property ? `Bienvenue à ${property.name}` : "Bienvenue"}
+          src={property?.backgroundUrl ?? DEFAULT_BACKGROUND_URL}
+          alt={property ? `${t.welcome.heroAltPrefix}${property.name}` : t.welcome.heroAltFallback}
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Subtle dark overlay for readability (stronger in dark mode) */}
-        <div className="absolute inset-0 bg-black/20 dark:bg-black/40" />
+        <div className="absolute inset-0 bg-brand-ink/30 dark:bg-brand-ink/30" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col h-full pb-6">
@@ -53,42 +53,40 @@ export default function Welcome() {
             <SettingsPopover variant="light" />
           </div>
 
-          {/* Title / subtitle (same level as other page titles) */}
-          <div className="text-center px-4 mt-1 shrink-0">
-            <h1 className="font-serif font-medium text-white text-[44px] leading-none tracking-tight uppercase">
-              Bienvenue
+          {/* Title / subtitle — hidden on very short viewports so it never overlaps the menu below */}
+          <div className="text-center px-4 pt-[30px] shrink-0 [@media(max-height:700px)]:hidden">
+            <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
+              {t.welcome.title}
             </h1>
-            <p className="mt-2 text-white/95 text-[17px] font-medium">
-              à {property?.name ?? " "}
+            <p className="text-base text-white/80">
+              {property?.name ?? " "}
             </p>
           </div>
 
           {/* Menu buttons — fills space between title and footer logo */}
-          <nav className="flex-1 min-h-0 flex flex-col justify-center gap-[15px] py-6 px-[40px]">
-            {menu
-              .filter((item) => item.label !== "Merci beaucoup")
-              .map((item) => (
+          <nav className="flex-1 min-h-0 flex flex-col justify-center gap-[15px] pb-6 px-[40px] [@media(max-height:700px)]:pb-0">
+            {menu.map((item) => (
                 <Link
-                  key={item.label}
+                  key={item.to}
                   to={item.to}
                   className="group relative flex items-center rounded-full p-[3px] backdrop-blur-md transition-colors
-                    bg-white/75 hover:bg-white/85
-                    dark:bg-[#1c2626]/80 dark:hover:bg-[#1c2626]/90"
+                    bg-brand-surface/80 hover:bg-brand-surface/90
+                    dark:bg-brand-ink/80 dark:hover:bg-brand-ink/90"
                 >
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full
-                    border border-[#1c2626]/40
-                    dark:bg-[#323E3E] dark:border-transparent">
+                  <span className="flex h-[3rem] w-[3rem] shrink-0 items-center justify-center rounded-full
+                    bg-white/65
+                    dark:bg-white/10 dark:border-transparent">
                     <item.icon
-                      className="h-[30px] w-[30px] text-[#1c2626] dark:text-white"
+                      className="h-[25px] w-[25px] text-brand-ink dark:text-white"
                       strokeWidth={1.5}
                     />
                   </span>
                   <span className="flex-1 flex flex-col items-center text-center px-2 -ml-10">
-                    <span className="text-[15px] font-semibold uppercase tracking-wide text-[#1c2626] dark:text-white leading-tight">
+                    <span className="text-[15px] font-semibold uppercase text-brand-ink dark:text-white leading-tight">
                       {item.label}
                     </span>
                     {item.desc && (
-                      <span className="text-[12px] font-medium text-[#1c2626]/70 dark:text-white/80 mt-0.5">
+                      <span className="text-[12px] font-medium text-brand-ink/70 dark:text-white/80 mt-0.5">
                         {item.desc}
                       </span>
                     )}
@@ -99,12 +97,19 @@ export default function Welcome() {
 
 
           {/* Footer logo */}
-          <div className="flex justify-center pt-2 shrink-0">
+          <div className="flex items-center justify-center gap-5 pt-6 shrink-0">
             <img
               src={joroLogo}
               alt="Jöro Living"
-              className="w-[160px] h-auto object-contain brightness-0 invert"
+              className="h-[25px] w-auto object-contain brightness-0 invert"
             />
+            {property?.logoUrl && (
+              <img
+                src={property.logoUrl}
+                alt="Logo"
+                className="h-auto max-h-[36px] max-w-[125px] w-auto object-contain brightness-0 invert"
+              />
+            )}
           </div>
         </div>
       </div>
