@@ -37,12 +37,9 @@ settings:
   dark: "Dark"
 
 contact:
-  roleMultisite: "Multi-site Manager"
-  roleOfficeManager: "Operations Manager"
   emailLabel: "Email"
   whatsappLabel: "WhatsApp"
-  descAudrey: "Site contact"
-  otherContacts: "Other contact in case of emergency"
+  callLabel: "Call"
 
 welcome:
   title: "Welcome"

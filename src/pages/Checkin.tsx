@@ -14,7 +14,7 @@ function Widget({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Splits "6 Rue Lamartine 75009 Paris, France" into ["6 Rue Lamartine", "75009 Paris, France"]. */
+/** Splits "43 boulevard Haussmann 75009 Paris, France" into ["43 boulevard Haussmann", "75009 Paris, France"]. */
 function splitAddress(address: string): [string, string?] {
   const match = address.match(/^(.*?)[,]?\s+(\d{5}\s+.*)$/);
   return match ? [match[1].trim(), match[2].trim()] : [address];

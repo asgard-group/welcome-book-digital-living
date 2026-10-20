@@ -4,7 +4,7 @@ import {
   Home as HomeIcon,
   Info as InfoIcon,
   Compass,
-  Recycle,
+  PenSquare,
   ConciergeBell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -31,7 +31,7 @@ export default function Welcome() {
     { label: t.welcome.menu.services, icon: ConciergeBell, to: `/${buildingSlug}/services` },
     { label: t.welcome.menu.info, icon: InfoIcon, to: `/${buildingSlug}/info` },
     { label: t.welcome.menu.explore, icon: Compass, to: `/${buildingSlug}/explore` },
-    { label: t.welcome.menu.checkout, icon: Recycle, to: `/${buildingSlug}/checkout` },
+    { label: t.welcome.menu.checkout, icon: PenSquare, to: `/${buildingSlug}/checkout` },
   ];
 
   return (

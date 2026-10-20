@@ -37,12 +37,9 @@ settings:
   dark: "Sombre"
 
 contact:
-  roleMultisite: "Responsable multisite"
-  roleOfficeManager: "Responsable des opérations"
   emailLabel: "Email"
   whatsappLabel: "WhatsApp"
-  descAudrey: "Référente du site"
-  otherContacts: "Autre contact en cas d'urgence"
+  callLabel: "Appeler"
 
 welcome:
   title: "Bienvenue"

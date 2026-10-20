@@ -24,7 +24,7 @@ const DEEPL_API_URL = DEEPL_API_KEY?.endsWith(":fx")
   : "https://api.deepl.com/v2/translate";
 // Used for "sur devis" services with no email set in Notion yet (no such
 // column exists there today — add one named "email" to override per-service).
-const DEFAULT_QUOTE_EMAIL = "audrey.robin@joro-space.fr";
+const DEFAULT_QUOTE_EMAIL = "reservation@joro-space.fr";
 // Notion's French category labels (Adresses utiles) -> the app's fixed category ids
 // (Explore.tsx's CATEGORY_ICONS / i18n `explore.categories`), lowercased for matching.
 const ADDRESS_CATEGORY_MAP = {
