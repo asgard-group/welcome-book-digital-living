@@ -188,14 +188,15 @@ function ImageUpload({ label, slug, field, value, onChange }: {
         style={{ minHeight: 100 }}
       >
         {value ? (
-          <div className="relative">
-            <img src={value} alt="" className="w-full h-32 object-cover" />
-            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center gap-3">
-              <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-[#1c2626]">
+          <div>
+            <img src={value} alt="" className="w-full h-32 object-cover rounded-t-xl" />
+            <div className="flex items-center gap-2 px-3 py-2 border-t border-black/8">
+              <label className="cursor-pointer text-xs text-[#1c2626]/60 hover:text-[#1c2626] transition">
                 Changer
                 <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
               </label>
-              <button type="button" onClick={() => onChange("")} className="rounded-lg bg-white/20 border border-white/40 px-3 py-1.5 text-xs text-white">Supprimer</button>
+              <span className="text-[#1c2626]/20">·</span>
+              <button type="button" onClick={() => onChange("")} className="text-xs text-red-400 hover:text-red-600 transition">Supprimer</button>
             </div>
           </div>
         ) : (
