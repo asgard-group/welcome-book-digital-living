@@ -148,88 +148,166 @@ function SectionSep() {
   return <div className="border-t border-black/8 my-6" />;
 }
 
+/* ─── ImageUpload ────────────────────────────────────────────────────────── */
+function ImageUpload({ label, slug, field, value, onChange }: {
+  label: string; slug: string; field: string; value?: string; onChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useState<HTMLInputElement | null>(null);
+
+  const handleFile = async (file: File) => {
+    if (!slug) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("slug", slug);
+      fd.append("field", field);
+      const res = await fetch("/api/upload-image", { method: "POST", credentials: "include", body: fd });
+      if (!res.ok) { toast.error("Erreur lors de l'upload."); return; }
+      const body = await res.json();
+      onChange(body.url);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <label className={labelCls}>{label}</label>
+      <div
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="relative rounded-xl border-2 border-dashed border-black/15 hover:border-black/30 transition overflow-hidden"
+        style={{ minHeight: 100 }}
+      >
+        {value ? (
+          <div className="relative">
+            <img src={value} alt="" className="w-full h-32 object-cover" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center gap-3">
+              <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-[#1c2626]">
+                Changer
+                <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+              </label>
+              <button type="button" onClick={() => onChange("")} className="rounded-lg bg-white/20 border border-white/40 px-3 py-1.5 text-xs text-white">Supprimer</button>
+            </div>
+          </div>
+        ) : (
+          <label className="flex flex-col items-center justify-center gap-2 py-7 cursor-pointer">
+            {uploading
+              ? <span className="inline-block h-5 w-5 rounded-full border-2 border-[#1c2626]/20 border-t-[#1c2626] animate-spin" />
+              : <span className="text-2xl">↑</span>}
+            <span className="text-sm text-[#1c2626]/50">{uploading ? "Upload en cours…" : "Glisser-déposer ou cliquer"}</span>
+            <span className="text-xs text-[#1c2626]/30">JPG, PNG, WebP — 10 Mo max</span>
+            <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+          </label>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Tab: Infos de base ─────────────────────────────────────────────────── */
 function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d: BuildingData) => void; isNew: boolean }) {
   const set = (key: keyof BuildingData, val: unknown) => onChange({ ...data, [key]: val });
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Nom public">
-          <input className={inputCls} value={data.name} onChange={(e) => set("name", e.target.value)} placeholder="Haussmann Mogador" />
-        </Field>
-        <Field label="Slug (identifiant URL)">
-          <input
-            className={inputCls}
-            value={data.id}
-            readOnly={!isNew}
-            onChange={(e) => set("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
-            placeholder="haussmann-halevy-1"
-            title={isNew ? undefined : "Le slug ne peut pas être modifié après création"}
-          />
-        </Field>
-      </div>
-      <Field label="Adresse complète">
-        <input className={inputCls} value={data.address} onChange={(e) => set("address", e.target.value)} placeholder="43 boulevard Haussmann, 75009 Paris, France" />
-      </Field>
-
-      <SectionSep />
-      <p className={sectionTitle}>WiFi principal</p>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Réseau">
-          <input className={inputCls} value={data.wifi.network} onChange={(e) => set("wifi", { ...data.wifi, network: e.target.value })} placeholder="JORO-LIVING" />
-        </Field>
-        <Field label="Mot de passe">
-          <input className={inputCls} value={data.wifi.password} onChange={(e) => set("wifi", { ...data.wifi, password: e.target.value })} placeholder="bienvenue2024" />
-        </Field>
-      </div>
-
-      <SectionSep />
-      <div className="flex items-center justify-between mb-3">
-        <p className={sectionTitle}>WiFi invité <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
-        {!data.guestWifi && (
-          <button type="button" onClick={() => set("guestWifi", { network: "", password: "" })} className="text-xs text-[#1c2626]/60 hover:text-[#1c2626]">
-            + Ajouter
-          </button>
-        )}
-        {data.guestWifi && (
-          <button type="button" onClick={() => set("guestWifi", undefined)} className="text-xs text-red-400 hover:text-red-600">
-            Supprimer
-          </button>
-        )}
-      </div>
-      {data.guestWifi && (
+    <div className="space-y-4">
+      {/* Identité */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <p className={sectionTitle}>Identité</p>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Réseau">
-            <input className={inputCls} value={data.guestWifi.network} onChange={(e) => set("guestWifi", { ...data.guestWifi, network: e.target.value })} placeholder="JORO-GUEST" />
+          <Field label="Nom public">
+            <input className={inputCls} value={data.name} onChange={(e) => set("name", e.target.value)} placeholder="Haussmann Mogador" />
           </Field>
-          <Field label="Mot de passe">
-            <input className={inputCls} value={data.guestWifi.password} onChange={(e) => set("guestWifi", { ...data.guestWifi, password: e.target.value })} placeholder="" />
+          <Field label="Slug (identifiant URL)">
+            <input
+              className={inputCls}
+              value={data.id}
+              readOnly={!isNew}
+              onChange={(e) => set("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+              placeholder="haussmann-halevy-1"
+              title={isNew ? undefined : "Le slug ne peut pas être modifié après création"}
+            />
           </Field>
         </div>
-      )}
-
-      <SectionSep />
-      <p className={sectionTitle}>Apparence <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Couleur principale">
-          <div className="flex gap-2">
-            <input type="color" value={data.colors?.primary ?? "#1c2626"} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
-            <input className={inputCls} value={data.colors?.primary ?? ""} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} placeholder="#1c2626" />
-          </div>
-        </Field>
-        <Field label="Couleur secondaire">
-          <div className="flex gap-2">
-            <input type="color" value={data.colors?.secondary ?? "#ffffff"} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
-            <input className={inputCls} value={data.colors?.secondary ?? ""} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} placeholder="#ffffff" />
-          </div>
+        <Field label="Adresse complète">
+          <input className={inputCls} value={data.address} onChange={(e) => set("address", e.target.value)} placeholder="43 boulevard Haussmann, 75009 Paris, France" />
         </Field>
       </div>
-      <Field label="URL de la photo de fond">
-        <input className={inputCls} value={data.backgroundUrl ?? ""} onChange={(e) => set("backgroundUrl", e.target.value || undefined)} placeholder="https://..." />
-      </Field>
-      <Field label="URL du logo de l'immeuble">
-        <input className={inputCls} value={data.logoUrl ?? ""} onChange={(e) => set("logoUrl", e.target.value || undefined)} placeholder="https://..." />
-      </Field>
+
+      {/* WiFi principal */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <p className={sectionTitle}>WiFi principal</p>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Réseau">
+            <input className={inputCls} value={data.wifi.network} onChange={(e) => set("wifi", { ...data.wifi, network: e.target.value })} placeholder="JORO-LIVING" />
+          </Field>
+          <Field label="Mot de passe">
+            <input className={inputCls} value={data.wifi.password} onChange={(e) => set("wifi", { ...data.wifi, password: e.target.value })} placeholder="bienvenue2024" />
+          </Field>
+        </div>
+      </div>
+
+      {/* WiFi invité */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className={sectionTitle}>WiFi invité <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
+          {!data.guestWifi
+            ? <button type="button" onClick={() => set("guestWifi", { network: "", password: "" })} className="text-xs text-[#1c2626]/60 hover:text-[#1c2626]">+ Ajouter</button>
+            : <button type="button" onClick={() => set("guestWifi", undefined)} className="text-xs text-red-400 hover:text-red-600">Supprimer</button>}
+        </div>
+        {data.guestWifi && (
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Réseau">
+              <input className={inputCls} value={data.guestWifi.network} onChange={(e) => set("guestWifi", { ...data.guestWifi, network: e.target.value })} placeholder="JORO-GUEST" />
+            </Field>
+            <Field label="Mot de passe">
+              <input className={inputCls} value={data.guestWifi.password} onChange={(e) => set("guestWifi", { ...data.guestWifi, password: e.target.value })} placeholder="" />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      {/* Apparence */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <p className={sectionTitle}>Apparence <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Couleur principale">
+            <div className="flex gap-2">
+              <input type="color" value={data.colors?.primary ?? "#1c2626"} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
+              <input className={inputCls} value={data.colors?.primary ?? ""} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} placeholder="#1c2626" />
+            </div>
+          </Field>
+          <Field label="Couleur secondaire">
+            <div className="flex gap-2">
+              <input type="color" value={data.colors?.secondary ?? "#ffffff"} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
+              <input className={inputCls} value={data.colors?.secondary ?? ""} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} placeholder="#ffffff" />
+            </div>
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <ImageUpload
+            label="Photo de fond"
+            slug={data.id}
+            field="background"
+            value={data.backgroundUrl}
+            onChange={(url) => set("backgroundUrl", url || undefined)}
+          />
+          <ImageUpload
+            label="Logo de l'immeuble"
+            slug={data.id}
+            field="logo"
+            value={data.logoUrl}
+            onChange={(url) => set("logoUrl", url || undefined)}
+          />
+        </div>
+      </div>
     </div>
   );
 }
