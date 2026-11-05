@@ -5,7 +5,8 @@
 //   GET    /api/building-admin?slug=xxx  → get one building's full data
 //   POST   /api/building-admin           → create or update a building (upsert)
 //   DELETE /api/building-admin?slug=xxx  → delete a building
-import { isAdminRequest, json } from "./_lib/admin";
+import { isAdminRequest } from "./_lib/admin";
+import { json } from "./_lib/grants";
 import { getBuilding, putBuilding, deleteBuilding, listBuildingSlugs } from "./_lib/building-store";
 import staticBuildings from "./_data/buildings.json";
 
