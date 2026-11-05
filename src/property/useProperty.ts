@@ -1,42 +1,201 @@
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import heroImg from "@/assets/hero-living-room.png";
 import type { PropertyData } from "./types";
+
+/** Fallback background, used until an apartment's own photo has loaded (or if it has none). */
+export const DEFAULT_BACKGROUND_URL = heroImg;
 
 /** Dev-only sample used when running plain `vite dev` (no backend). */
 const DEV_BUILDING: PropertyData = {
   id: "dev",
-  name: "Dev Building",
-  wifi: { network: "Dev_WiFi_5G", password: "dev-password-123" },
-  entryCodes: { buildingDoor: "0000", hallCode: "0000" },
+  name: "Haussmann Mogador",
+  address: "43 boulevard Haussmann, 75009 Paris, France",
+  wifi: { network: "JORO-LIVING", password: "bienvenue2024" },
+  backgroundUrl: DEFAULT_BACKGROUND_URL,
+  access: [
+    { name: { fr: "Entrée de l'immeuble", en: "Building entrance" }, code: "A3187", detail: { fr: "Code de la porte", en: "Door code" } },
+    { name: { fr: "Porte du hall", en: "Hall door" }, code: "A4326", detail: { fr: "puis « OK » sur l'interphone", en: "then « OK » on the intercom" } },
+    { name: { fr: "3ème étage, porte grise", en: "3rd floor, grey door" }, detail: { fr: "Clés sur la table : badge immeuble (entrée principale) et clé du local poubelles (RDC, face à l'ascenseur).", en: "Keys on the table: building badge (main entrance) and bin room key (ground floor, facing the lift)." } },
+  ],
+  extraInfo: [
+    { name: { fr: "La lumière ne fonctionne pas ?", en: "Light not working?" }, detail: { fr: "Si la lumière de la salle de bain ne fonctionne pas, pensez à allumer l'interrupteur principal qui se situe à côté de la porte d'entrée de l'appartement.", en: "If the bathroom light is not working, turn on the main switch located next to the apartment entrance door." } },
+    { name: { fr: "Comment régler la climatisation ?", en: "How to adjust the air conditioning?" }, detail: { fr: "La commande de climatisation se trouve dans le placard à côté de la porte d'entrée et peut se modifier manuellement avec les petits boutons (+ et -) sur le côté.", en: "The A/C control is in the cupboard next to the entrance door and can be adjusted manually with the small buttons (+ and -) on the side." } },
+    { name: { fr: "Comment ouvrir la porte principale ?", en: "How to open the front door?" }, detail: { fr: "Pour ouvrir la porte palière depuis l'intérieur, veuillez pousser la barre blanche à deux reprises.", en: "To open the front door from inside, push the white bar twice." } },
+  ],
+  stay: [
+    { kind: "arrivee", name: { fr: "Arrivée", en: "Arrival" }, detail: { fr: "Arrivée à partir de 15h.\n- Accueil sur place du lundi au vendredi, de 12h à 18h.\n- Arrivée autonome après 18h et le week-end (sauf exception).", en: "Check-in from 3pm.\n- On-site welcome Monday to Friday, 12pm to 6pm.\n- Self check-in after 6pm and on weekends (unless otherwise agreed)." } },
+    { kind: "depart", name: { fr: "Départ", en: "Departure" }, detail: { fr: "Check-out avant 11h00.\n- Trier et jeter les déchets.\n- Éteindre lumières et climatisation.\n- Fermer les fenêtres.\n- Laisser le badge dans l'appartement ou la boîte à clés.", en: "Check-out before 11am.\n- Sort and dispose of waste.\n- Turn off lights and A/C.\n- Close all windows.\n- Leave the badge in the apartment or key box." } },
+    { kind: "information", name: { fr: "Information", en: "Information" }, detail: { fr: "L'interphone se trouve dans le hall d'entrée. Appuyez sur la touche d'ouverture pour ouvrir la porte.", en: "The intercom is located in the entrance hall. Press the open button to open the door." } },
+  ],
+  addresses: {
+    restaurants: [
+      { name: "Jöro Kaffé", distance: "10 min", description: { fr: "Café/coworking (-10% code SWEET10)", en: "Café/coworking (-10% code SWEET10)" } },
+      { name: "Galeries Lafayette Le Gourmet", distance: "2 min", description: { fr: "Épicerie fine et halles gourmandes", en: "Fine food & gourmet market" }, type: "Épicerie" },
+      { name: "Perruche", distance: "2 min", description: { fr: "Cuisine provençale et méditerranéenne", en: "Provençal and Mediterranean cuisine" }, type: "Française" },
+      { name: "Maison Noura", address: "Printemps Haussmann, 75009 Paris", distance: "3 min", description: { fr: "Libanais/méditerranéen, au Printemps", en: "Lebanese/Mediterranean, at Printemps" }, type: "Libanaise" },
+      { name: "Café de la Paix", address: "5 Pl. de l'Opéra, 75009 Paris", distance: "4 min", description: { fr: "Grand café historique", en: "Historic grand café" }, type: "Café" },
+      { name: "Hanoï Cà Phé Opéra", distance: "5 min", description: { fr: "Vietnamien", en: "Vietnamese" }, type: "Asiatique" },
+      { name: "Onyx", address: "71 Rue de Provence, 75009 Paris", distance: "7 min", description: { fr: "Restaurant bistronomique", en: "Bistronomic restaurant" }, type: "Française" },
+      { name: "Bleu Bao", distance: "8 min", description: { fr: "Restaurant chinois branché", en: "Trendy Chinese restaurant" }, type: "Chinoise" },
+      { name: "Mieux", distance: "10 min", description: { fr: "Cuisine française moderne", en: "Modern French cuisine" }, type: "Française" },
+      { name: "Pépé Ronchon", address: "31 Rue Saint-Lazare, 75009 Paris", distance: "10 min", description: { fr: "Pizzeria napolitaine", en: "Neapolitan pizzeria" }, type: "Italienne" },
+      { name: "Le Rouge à Lèvres", distance: "10 min", description: { fr: "Bar à vin & petites assiettes", en: "Wine bar & small plates" }, type: "Bar à vin" },
+      { name: "Poni", distance: "12 min", description: { fr: "Cuisine française, cadre chaleureux", en: "French cuisine, cosy setting" }, type: "Française" },
+      { name: "Pink Mamma", distance: "18 min", description: { fr: "Restaurant italien branché", en: "Trendy Italian restaurant" }, type: "Italienne" },
+    ],
+    shopping: [
+      { name: "Galeries Lafayette", address: "40 Bd Haussmann, 75009 Paris", distance: "1 min", description: { fr: "Luxe & mode", en: "Luxury & fashion" } },
+      { name: "Printemps Haussmann", address: "64 Bd Haussmann, 75009 Paris", distance: "2 min", description: { fr: "Grand magasin iconique", en: "Iconic department store" } },
+      { name: "Citadium", distance: "5 min", description: { fr: "Streetwear & sneakers", en: "Streetwear & sneakers" } },
+      { name: "Lindt Opéra", distance: "6 min", description: { fr: "Paradis du chocolat", en: "Chocolate paradise" } },
+      { name: "Cédric Grolet Opéra", distance: "6 min", description: { fr: "Pâtisserie de renommée mondiale", en: "World-renowned pastry shop" } },
+      { name: "RAP Italian Grocery", distance: "12 min", description: { fr: "Épicerie & traiteur italien", en: "Italian grocery & deli" } },
+    ],
+    culture: [
+      { name: "Musée du Parfum Fragonard", distance: "3 min", description: { fr: "Musée du parfum gratuit", en: "Free perfume museum" } },
+      { name: "Opéra Palais Garnier", address: "Pl. de l'Opéra, 75009 Paris", distance: "4 min", description: { fr: "Opéra somptueux", en: "Sumptuous opera house" } },
+      { name: "Hop On Hop Off Bus", distance: "5 min", description: { fr: "Bus touristique", en: "Tourist bus" } },
+      { name: "Square Édouard VII", distance: "5 min", description: { fr: "Charmante place cachée", en: "Charming hidden square" } },
+      { name: "Théâtre Édouard VII", distance: "5 min", description: { fr: "Théâtre classique", en: "Classic theatre" } },
+      { name: "Théâtre du Mogador", distance: "6 min", description: { fr: "Comédies musicales & spectacles", en: "Musicals & shows" } },
+      { name: "L'Olympia", distance: "7 min", description: { fr: "Salle de concert légendaire", en: "Legendary concert hall" } },
+      { name: "Église Sainte Trinité", distance: "8 min", description: { fr: "Belle église", en: "Beautiful church" } },
+      { name: "Pinacothèque", distance: "8 min", description: { fr: "Expositions d'art", en: "Art exhibitions" } },
+      { name: "Place de la Madeleine", distance: "10 min", description: { fr: "Boutiques gastronomiques", en: "Gourmet shops" } },
+      { name: "Passage Jouffroy", distance: "10 min", description: { fr: "Passage couvert historique", en: "Historic covered arcade" } },
+      { name: "Musée Grévin", distance: "12 min", description: { fr: "Musée de cire", en: "Wax museum" } },
+      { name: "Passage des Panoramas", distance: "12 min", description: { fr: "Plus ancien passage couvert de Paris", en: "Oldest covered arcade in Paris" } },
+      { name: "Jardin des Tuileries", distance: "15 min", description: { fr: "Jardin parisien classique", en: "Classic Parisian garden" } },
+    ],
+    wellness: [
+      { name: "Seasonly Galeries Lafayette", distance: "1 min", description: { fr: "Bar à soins du visage naturels", en: "Natural facial care bar" } },
+      { name: "Basic Fit Chaussée d'Antin", address: "58 rue de la Chaussée d'Antin, 75009", distance: "2 min", description: { fr: "Salle de sport", en: "Gym" } },
+      { name: "Spa Cinq Mondes Opéra", address: "6 square de l'Opéra-Louis Jouvet, 75009", distance: "10 min", description: { fr: "Rituels spa inspirés du monde", en: "World-inspired spa rituals" } },
+      { name: "Cercles de la Forme — Saint-Lazare", address: "94 rue Saint-Lazare, 75009", distance: "12 min", description: { fr: "Salle de sport", en: "Gym" } },
+      { name: "Studio Qee", distance: "15 min", description: { fr: "Pilates, reformer & yoga — Notre-Dame-de-Lorette, 9e", en: "Pilates, reformer & yoga — Notre-Dame-de-Lorette, 9th" } },
+      { name: "Cercles de la Forme — Cadet", address: "13 rue Ambroise Thomas, 75009", distance: "18 min", description: { fr: "Salle de sport", en: "Gym" } },
+    ],
+    pratique: [
+      { name: "Pharmacie Mogador", address: "10 Rue de Mogador, 75009 Paris", distance: "2 min", description: { fr: "Pharmacie ouverte 7j/7", en: "Pharmacy open 7 days" } },
+      { name: "Monoprix Haussmann", address: "50 Bd Haussmann, 75009 Paris", distance: "3 min", description: { fr: "Supermarché & essentiels", en: "Supermarket & essentials" } },
+      { name: "BNP Paribas", distance: "4 min", description: { fr: "Distributeur & banque", en: "ATM & bank" } },
+      { name: "La Poste Opéra", distance: "5 min", description: { fr: "Bureau de poste", en: "Post office" } },
+      { name: "City Locker Opéra", address: "33 rue Godot de Mauroy, 75009 Paris", distance: "7 min", description: { fr: "Consigne bagages", en: "Luggage storage" } },
+      { name: "Billy Wash Lavomatic", distance: "8 min", description: { fr: "Laverie automatique", en: "Laundromat" } },
+      { name: "Pharmacie Européenne", distance: "8 min", description: { fr: "Pharmacie ouverte 24/7", en: "Pharmacy open 24/7" } },
+      { name: "E.L.A. Laundromat", distance: "9 min", description: { fr: "Laverie automatique", en: "Laundromat" } },
+      { name: "Lav'club", distance: "9 min", description: { fr: "Laverie automatique", en: "Laundromat" } },
+      { name: "Nannybag", description: { fr: "Consigne bagages", en: "Luggage storage" } },
+      { name: "Stasher", description: { fr: "Consigne bagages", en: "Luggage storage" } },
+      { name: "LuggageHero", description: { fr: "Consigne bagages", en: "Luggage storage" } },
+    ],
+  },
+  services: {
+    included: [
+      { name: { fr: "Bagagerie sur site", en: "On-site luggage storage" }, icon: "clé" },
+      { name: { fr: "Wifi haut débit", en: "High-speed WiFi" }, icon: "wifi" },
+      { name: { fr: "Bagagerie au Jöro Kaffé", en: "Luggage storage at Jöro Kaffé" }, icon: "café" },
+      { name: { fr: "Ménage entre chaque séjour", en: "Cleaning between stays" }, icon: "ménage" },
+    ],
+    quote: [
+      { name: { fr: "Arrivée anticipée", en: "Early check-in" }, icon: "clé", email: "reservation@joro-space.fr" },
+      { name: { fr: "Départ tardif", en: "Late check-out" }, icon: "clé", email: "reservation@joro-space.fr" },
+      { name: { fr: "Courses pré-arrivée", en: "Pre-arrival grocery shopping" }, icon: "nourriture", email: "reservation@joro-space.fr" },
+      { name: { fr: "Ménage refresh à la demande", en: "Refresh cleaning on request" }, icon: "ménage", email: "reservation@joro-space.fr" },
+      { name: { fr: "Literie / Serviette supplémentaire", en: "Extra linen & towels" }, icon: "eau", email: "reservation@joro-space.fr" },
+      { name: { fr: "Kids pack / Business pack", en: "Kids pack / Business pack" }, icon: "déco", email: "reservation@joro-space.fr" },
+    ],
+  },
+  facilities: {
+    sections: [
+      {
+        id: "equipements",
+        title: { fr: "Équipements", en: "Facilities" },
+        kind: "video",
+        icon: "équipements",
+        items: [
+          { name: { fr: "Télévision", en: "Television" }, detail: { fr: "Netflix disponible. Application Molotov pour accéder à l'ensemble des chaînes.", en: "Netflix available. Molotov app to access all channels." } },
+          { name: { fr: "Enceinte Triangle AIO3", en: "Triangle AIO3 speaker" }, detail: { fr: "Connexion Bluetooth depuis votre téléphone.", en: "Bluetooth connection from your phone." } },
+          { name: { fr: "Climatisation", en: "Air conditioning" }, detail: { fr: "Commande dans le placard à côté de la porte d'entrée.", en: "Control unit in the cupboard next to the entrance door." } },
+          { name: { fr: "Coffre-fort", en: "Safe deposit box" }, videoUrl: "https://app.notion.com/p/asgard-group/Coffre-fort-35dee4d00fd6806a882ce418189fe19b?source=copy_link#35dee4d00fd68048a9f6f477470f0eeb", detail: { fr: "Voir la vidéo d'utilisation.", en: "See the usage video." } },
+          { name: { fr: "Chaussons", en: "Slippers" }, detail: { fr: "Pour des raisons écologiques, nous ne fournissons pas de chaussons. Faites comme chez vous… même sans pantoufles !", en: "For environmental reasons, we do not provide slippers. Feel at home — even without them!" } },
+        ],
+      },
+      {
+        id: "cuisine",
+        title: { fr: "Cuisine", en: "Kitchen" },
+        kind: "video",
+        icon: "cuisine",
+        items: [
+          { name: { fr: "Four & micro-ondes", en: "Oven & microwave" }, detail: { fr: "Encastrés sous le plan de travail.", en: "Built-in under the counter." } },
+          { name: { fr: "Lave-vaisselle", en: "Dishwasher" }, detail: { fr: "Pastilles fournies dans le placard.", en: "Tablets provided in the cupboard." } },
+          { name: { fr: "Cafetière Nespresso", en: "Nespresso coffee maker" }, detail: { fr: "Capsules fournies pour le début du séjour.", en: "Capsules provided for the beginning of your stay." } },
+          { name: { fr: "Thé & café", en: "Tea & coffee" }, detail: { fr: "Fournis pour le début de votre séjour.", en: "Provided for the beginning of your stay." } },
+        ],
+      },
+      {
+        id: "reglement",
+        title: { fr: "Règlement intérieur", en: "House rules" },
+        kind: "rules",
+        icon: "bâtiment",
+        items: [
+          { name: { fr: "Interdiction de fumer dans l'appartement", en: "No smoking inside the apartment" }, detail: { fr: "", en: "" } },
+          { name: { fr: "Les fêtes ne sont pas autorisées dans l'appartement", en: "No parties inside the apartment" }, detail: { fr: "", en: "" } },
+          { name: { fr: "Pas d'animaux dans les appartements", en: "No pets inside the apartment" }, detail: { fr: "", en: "" } },
+          { name: { fr: "Pas de bruit après 22h pour préserver le voisinage", en: "No noise after 10pm to respect neighbours" }, detail: { fr: "", en: "" } },
+          { name: { fr: "Pas d'invités imprévus non listés sur la réservation", en: "No unregistered guests" }, detail: { fr: "", en: "" } },
+          { name: { fr: "Pas de tournage vidéo sans accord de Jöro", en: "No video filming without Jöro's agreement" }, detail: { fr: "", en: "" } },
+          { name: { fr: "Pas de nourriture ni boissons dans les chambres", en: "No food or drinks in the bedrooms" }, detail: { fr: "", en: "" } },
+          { name: { fr: "Télécharger du contenu illégal depuis internet est interdit", en: "Downloading illegal content is prohibited" }, detail: { fr: "", en: "" } },
+        ],
+      },
+    ],
+  },
 };
 
 /**
- * Fetch the authenticated guest's building data.
+ * Fetch one apartment's booklet data for the given slug (the `:buildingSlug`
+ * route param).
  *
- * The building is derived server-side from the session cookie set at `/access`,
- * so the client never chooses which building to load. A 401 means the magic
- * link is missing/expired and surfaces as `isError` for AuthGate to handle.
+ * Access is time-boxed: the guest arrives through a magic link (`/access`),
+ * which sets a session cookie for this apartment only. Without a valid cookie
+ * the API answers 401 (no session / stay over) or 403 (another apartment's
+ * session) and both surface as an "access_required" error for BuildingGate.
+ * A 404 means the slug matches no apartment ("building_not_found").
  *
  * Plain `vite dev` has no functions, so a dev sample is returned to keep UI
- * work possible. Under `netlify dev` the real function runs and 401s propagate
- * so the expired flow can be exercised.
+ * work possible. Under `netlify dev` the real function runs and 401s
+ * propagate so the expired flow can be exercised.
  */
-async function fetchBuilding(): Promise<PropertyData> {
+async function fetchBuilding(buildingSlug?: string): Promise<PropertyData> {
+  const url = buildingSlug ? `/api/building?slug=${encodeURIComponent(buildingSlug)}` : "/api/building";
   let res: Response;
   try {
-    res = await fetch("/api/building", { credentials: "include" });
+    res = await fetch(url, { credentials: "include" });
   } catch {
     if (import.meta.env.DEV) return DEV_BUILDING;
     throw new Error("network_error");
   }
-  if (res.ok) return (await res.json()) as PropertyData;
-  if (res.status === 404 && import.meta.env.DEV) return DEV_BUILDING;
+  if (res.ok) {
+    try {
+      return (await res.json()) as PropertyData;
+    } catch {
+      // Vite's SPA fallback answers unknown routes with HTML (200) in plain `vite dev`.
+      if (import.meta.env.DEV) return DEV_BUILDING;
+      throw new Error("invalid_response");
+    }
+  }
+  if (res.status === 401 || res.status === 403) throw new Error("access_required");
+  if (res.status === 404) throw new Error("building_not_found");
   throw new Error(`building_unavailable_${res.status}`);
 }
 
 export function useProperty() {
+  const { buildingSlug } = useParams<{ buildingSlug?: string }>();
   const query = useQuery({
-    queryKey: ["building"],
-    queryFn: fetchBuilding,
+    queryKey: ["building", buildingSlug],
+    queryFn: () => fetchBuilding(buildingSlug),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

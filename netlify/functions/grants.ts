@@ -1,5 +1,6 @@
 // POST /api/grants   (admin only — header: x-admin-key, or an admin session cookie)
 //   { buildingId, days, email?, validFrom? }
+// GET  /api/grants   (admin only) -> { buildings: [{ id, name }] }
 //
 // Creates a time-boxed access grant and returns the magic link. If a guest
 // email and RESEND_API_KEY are present, it also emails the link. The link is
@@ -11,12 +12,22 @@ import { isAdminRequest } from "./_lib/admin";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default async (req: Request) => {
-  if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+  if (req.method !== "POST" && req.method !== "GET") return json(405, { error: "method_not_allowed" });
 
   const adminKey = process.env.ADMIN_KEY;
   const hasValidHeader = !!adminKey && req.headers.get("x-admin-key") === adminKey;
   if (!hasValidHeader && !(await isAdminRequest(req))) {
     return json(401, { error: "unauthorized" });
+  }
+
+  // GET: the apartments an admin can issue a link for (kept in sync with Notion
+  // by the build-time sync, so the Admin page never needs a hardcoded list).
+  if (req.method === "GET") {
+    const list = Object.values(buildings as Record<string, { id: string; name?: string }>).map((b) => ({
+      id: b.id,
+      name: b.name ?? b.id,
+    }));
+    return json(200, { buildings: list });
   }
 
   let body: {

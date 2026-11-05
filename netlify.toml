@@ -25,7 +25,7 @@
   status = 200
 
 # SPA fallback: every other path serves the app shell so client-side routes
-# (e.g. /access, /home) survive a hard refresh / direct hit.
+# (e.g. /haussmann-halevy/checkin) survive a hard refresh / direct hit.
 [[redirects]]
   from = "/*"
   to = "/index.html"

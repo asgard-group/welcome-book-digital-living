@@ -46,6 +46,15 @@
     --sidebar-accent-foreground: 180 20% 98%;
     --sidebar-border: 195 20% 28%;
     --sidebar-ring: 185 38% 52%;
+
+    /* Brand colors for the "Jöro" pages (Welcome, Checkin, Checkout, Services,
+       Facilities, Explore, InfoPage...). Single source of truth so a future
+       multi-property setup can override these per building. Intentionally
+       theme-independent (not redefined under .dark) — pages already switch
+       between them explicitly via dark: variants (e.g. text-brand-ink
+       dark:text-white, bg-brand-surface dark:bg-brand-ink). */
+    --brand-ink: 180 15% 13%; /* #1c2626 */
+    --brand-surface: 0 0% 100%; /* #ffffff */
   }
 
   .dark {
@@ -81,10 +90,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'General Sans', ui-sans-serif, system-ui, sans-serif;
@@ -92,51 +97,12 @@
 }
 
 @layer components {
-  .page-container {
-    @apply px-4 py-6 pb-24 md:pb-6;
+  /* 100vh first as a fallback for browsers/OS versions without dvh support
+     (e.g. old iOS Safari) — the second declaration wins wherever dvh works. */
+  .h-app-shell {
+    height: 100vh;
+    height: 100dvh;
   }
-
-  .page-title {
-    @apply text-2xl font-bold text-primary mb-1;
-  }
-
-  .page-subtitle {
-    @apply text-muted-foreground text-sm mb-6;
-  }
-
-  .info-card {
-    @apply bg-card rounded-xl border p-4 shadow-sm;
-  }
-
-  .wifi-card {
-    @apply bg-teal-light rounded-xl p-5 border border-accent/20;
-  }
-
-  .tab-bar {
-    @apply fixed bottom-0 left-0 right-0 z-50 bg-card border-t flex justify-around items-center h-16 md:hidden;
-  }
-
-  .tab-item {
-    @apply flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors flex-1 h-full;
-  }
-
-  .tab-item-active {
-    @apply text-accent;
-  }
-
-  .floating-contact {
-    @apply fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6 bg-accent text-accent-foreground rounded-full shadow-lg hover:shadow-xl transition-all;
-  }
-
-  .rule-card {
-    @apply flex items-start gap-3 bg-card rounded-xl border p-4;
-  }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }

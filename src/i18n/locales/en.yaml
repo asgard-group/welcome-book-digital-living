@@ -1,0 +1,165 @@
+common:
+  back: "Back"
+  leaveAppTitle: "You're leaving the welcome book"
+  leaveAppDesc: "This link will open another page outside the welcome book. Do you want to continue?"
+  leaveAppCancel: "Cancel"
+  leaveAppContinue: "Continue"
+  emailChooseTitle: "Contact by email"
+  emailChooseDesc: "Pick your app, or just copy the address."
+  emailOpenOutlook: "Open in Outlook"
+  emailOpenGmail: "Open in Gmail"
+  emailCopy: "Copy address"
+  emailCopiedToast: "Email address copied"
+
+brand:
+  name: "Jöro Haussmann"
+  sub: "Halévy"
+  footer: "© Jöro Space"
+
+nav:
+  welcome: "Welcome"
+  checkin: "Getting There"
+  checkinShort: "Check-in"
+  facilities: "Facilities"
+  explore: "Explore Paris"
+  exploreShort: "Explore"
+  info: "Useful Info"
+  infoShort: "Info"
+
+settings:
+  ariaLabel: "Settings"
+  title: "Settings"
+  language: "Language"
+  appearance: "Appearance"
+  french: "Français"
+  english: "English"
+  light: "Light"
+  dark: "Dark"
+
+contact:
+  emailLabel: "Email"
+  whatsappLabel: "WhatsApp"
+  callLabel: "Call"
+
+welcome:
+  title: "Welcome"
+  heroAltPrefix: "Welcome to "
+  heroAltFallback: "Welcome"
+  menu:
+    checkin: "Practical info"
+    facilities: "Housing guide"
+    services: "Services"
+    info: "Emergencies"
+    explore: "Explore"
+    checkout: "Check-in/out"
+
+onboarding:
+  heroAlt: "Interior of the space"
+  cta: "Start"
+
+checkin:
+  title: "Practical info"
+  subtitle: "Wifi, Apartment access"
+  wifiTitle: "Wifi"
+  wifiGuestTitle: "Guest wifi"
+  network: "Network"
+  password: "Password"
+  copyAria: "Copy"
+  copiedToast: "Copied"
+  copyErrorToast: "Unable to copy"
+  extraInfoTitle: "Additional info"
+  extraInfoSubtitle: "A few useful tips to make the most of your stay"
+
+checkout:
+  title: "Check-in/out"
+  subtitle: "Before you arrive and leave"
+
+services:
+  title: "Services"
+  subtitle: "Available services"
+  tabIncluded: "Included"
+  tabQuote: "Add-ons"
+  joroSpaceTitle: "Jöro Space"
+  joroSpaceSubtitle: "Discover the Jöro ecosystem"
+  joroSpaceItems:
+    - name: "Jöro Meeting"
+      role: "Events & meetings"
+      link: "https://joro-space.fr/lieux-reunions-evenements/"
+    - name: "Jöro Kaffé"
+      role: "Coffee & coworking"
+      link: "https://joro-space.fr/joro-kaffe-coffee-shop-co-working/"
+    - name: "Jöro Living"
+      role: "Aparthotels"
+      link: "https://joro-space.fr/reservation-joro/"
+
+facilities:
+  title: "Housing guide"
+  subtitle: "Everything you need to know"
+  noticeLabel: "Notice:"
+  videoLinkLabel: "Video link"
+  rulesTitle: "Internal Rules"
+  rulesIntro: "Non-compliance with the Terms may lead to the following sanctions:"
+  sanctions:
+    - "Partial or total retention of the deposit."
+    - "Immediate cancellation of the reservation."
+    - "Expulsion from the apartment without refund."
+  incidentNotice: "Any incident must be reported to the Jöro team"
+  forbidden:
+    - id: smoking
+      title: "No Smoking"
+      desc: "Inside the apartment"
+    - id: parties
+      title: "No Parties"
+      desc: "Are not allowed in the apartment"
+    - id: pets
+      title: "No Pets"
+      desc: "Are not permitted in the apartment"
+    - id: noise
+      title: "No Noise After 10 PM"
+      desc: "That could disturb the neighbourhood"
+    - id: guests
+      title: "No Unexpected Guests"
+      desc: "Not listed on the reservation"
+    - id: photo
+      title: "No professional photo"
+      desc: "Or video shoots"
+    - id: eating
+      title: "No eating in the bedrooms"
+      desc: "Or drinking"
+    - id: download
+      title: "Download illegal content"
+      desc: "from internet is not allowed"
+
+explore:
+  title: "Explore"
+  subtitle: "Sights & activities"
+  map: "Map →"
+  comingSoon: "Addresses coming soon."
+  categories:
+    - id: restaurants
+      label: "Restaurants"
+    - id: shopping
+      label: "Shopping"
+    - id: culture
+      label: "Culture"
+    - id: enfants
+      label: "Kids"
+    - id: wellness
+      label: "Wellness"
+    - id: pratique
+      label: "Practical"
+
+info:
+  title: "Useful Info"
+  securityTitle: "Emergency"
+  subtitle: "Important contacts"
+  emergency: "Emergency Numbers"
+  europeanUniversal: "European emergency number"
+  samu: "SAMU"
+  samuDesc: "Medical emergency"
+  police: "Police"
+  policeDesc: "Law enforcement"
+  fire: "Fire Department"
+  fireDesc: "Fire, rescue"
+  urgentJoro: "Urgent — Contact Jöro"
+  nearby: "Nearby Services"

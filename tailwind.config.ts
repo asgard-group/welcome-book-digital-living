@@ -52,6 +52,8 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         "teal-light": "hsl(var(--teal-light))",
+        "brand-ink": "hsl(var(--brand-ink) / <alpha-value>)",
+        "brand-surface": "hsl(var(--brand-surface) / <alpha-value>)",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

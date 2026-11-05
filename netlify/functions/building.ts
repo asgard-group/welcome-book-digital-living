@@ -1,35 +1,29 @@
-// GET /api/building
+// GET /api/building?slug=<slug>
 //
-// Returns the guest's building data. If their session cookie maps to a
-// currently-valid grant, it's derived from that grant (so a guest can't read
-// another building's codes). Otherwise it falls back to DEFAULT_BUILDING_ID —
-// the magic-link requirement is temporarily disabled (REQUIRE_GRANT = false)
-// so the booklet is reachable with no link at all. Flip REQUIRE_GRANT back to
-// true to re-enforce it once ready.
+// Returns one apartment's booklet data (wifi, access steps, services, ...), but
+// only to a guest whose session cookie maps to a currently-valid grant for that
+// very apartment. The grant is created by an admin (see grants.ts) and handed
+// to the guest as a magic link; /api/enter turns it into the cookie.
+//
+//   401 -> no session, or the stay is over
+//   403 -> valid session, but for a different apartment than the one requested
+//   404 -> unknown apartment
 import buildings from "./_data/buildings.json";
 import { COOKIE_NAME, getCookie, getGrant, isGrantValid, json } from "./_lib/grants";
 
-const REQUIRE_GRANT = false;
-const DEFAULT_BUILDING_ID = "haussmann-halevy";
-
 export default async (req: Request) => {
+  const slug = new URL(req.url).searchParams.get("slug");
+  if (!slug) return json(400, { error: "missing_slug" });
+
   const token = getCookie(req, COOKIE_NAME);
   const grant = token ? await getGrant(token) : null;
-
-  let buildingId = DEFAULT_BUILDING_ID;
-  let validUntil: number | undefined;
-
-  if (isGrantValid(grant)) {
-    buildingId = grant!.buildingId;
-    // Include validUntil so the client can hide values once the stay ends,
-    // even while offline (cached).
-    validUntil = grant!.validUntil;
-  } else if (REQUIRE_GRANT) {
+  if (!isGrantValid(grant)) {
     return json(401, { error: token ? "invalid_or_expired" : "no_session" });
   }
+  if (grant!.buildingId !== slug) return json(403, { error: "wrong_building" });
 
-  const data = (buildings as Record<string, unknown>)[buildingId];
+  const data = (buildings as Record<string, unknown>)[slug];
   if (!data) return json(404, { error: "building_not_found" });
 
-  return json(200, { ...(data as object), ...(validUntil ? { validUntil } : {}) });
+  return json(200, { ...(data as object), validUntil: grant!.validUntil });
 };

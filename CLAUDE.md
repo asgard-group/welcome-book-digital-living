@@ -4,49 +4,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Mobile-first PWA that serves as a digital "welcome booklet" for a short-stay Paris apartment (branded "Jöro" / "Haussmann Mogador"). Bilingual FR/EN. Generated with [Lovable](https://lovable.dev) — Vite + React 18 + TypeScript + Tailwind + shadcn/ui.
+Mobile-first PWA that serves as a digital "welcome booklet" for short-stay Paris apartments, branded "Jöro Living" (first building: Haussmann Halévy). Multi-property: each apartment is served from its own sub-URL (e.g. `/haussmann-halevy-1`) and only reachable with a time-boxed **magic link**. Bilingual FR/EN. Generated with [Lovable](https://lovable.dev) — Vite + React 18 + TypeScript + Tailwind + shadcn/ui.
+
+The UI and the Notion-driven content pipeline are ported from the sibling project "Jöro Office" (`welcome-book-digital-office`), which is the most up-to-date reference for look and feel. Living differs on purpose: access codes are protected by magic links, content blocks are apartment-specific (access steps, check-in/out, house rules), and the footer shows only the Jöro Living logo.
 
 ## Commands
 
 npm scripts are canonical (both `bun.lockb` and `package-lock.json` are checked in; the repo currently tracks `package-lock.json`).
 
-- `netlify dev` — **preferred local dev.** Runs the app *and* the serverless functions (+ local Blobs) on one origin, so `/api/*` works. Requires the Netlify CLI.
-- `npm run dev` — Vite-only dev server on **port 8080**, host `::`. No `/api/*`; `useProperty` falls back to a dev sample building so UI work still renders (auth can't be exercised here).
-- `npm run build` — production build; `npm run build:dev` builds in development mode
+- `netlify dev` — **preferred local dev.** Runs the app *and* the serverless functions (+ local Blobs) on one origin, so `/api/*` works. Requires the Netlify CLI. `predev` runs the Notion sync first (skipped when `NOTION_API_KEY` / `NOTION_DATABASE_ID` aren't set).
+- `npm run dev` — Vite-only dev server on **port 8080**. No `/api/*`; `useProperty` falls back to a dev sample building so UI work still renders (the magic-link flow can't be exercised here).
+- `npm run build` — production build (`prebuild` runs the Notion sync); `npm run build:dev` builds in development mode
+- `npm run sync:notion` — run the Notion sync by hand
 - `npm run lint` — ESLint (flat config, `eslint.config.js`)
 - `npm run test` — Vitest run once; `npm run test:watch` for watch mode
-- `npx vitest run src/test/example.test.ts` — run a single test file; add `-t "name"` to filter by test name
 - `npm run preview` — serve the production build
 
-Issue a test magic link (needs `ADMIN_KEY` set): `POST /api/grants` with header `x-admin-key` and body `{"buildingId","days","email?"}` — the response returns the `/access?token=…` link (and emails it when `RESEND_API_KEY` is set).
+Issue a test magic link locally (needs `ADMIN_KEY` in `.env`): `POST /api/grants` with header `x-admin-key` and body `{"buildingId":"<slug>","days":1}` — the response returns the `/access?token=…` link. `GET /api/grants` (same auth) lists the available apartments.
 
 ## Architecture
 
 **Entry & providers.** `src/main.tsx` → `src/App.tsx`. Provider nesting order (outer→inner): `QueryClientProvider` → `ThemeProvider` → `LanguageProvider` → `TooltipProvider` → toasters → `BrowserRouter`.
 
-**Routing.** All routes live in `src/App.tsx`, one page component per route under `src/pages/`. `react-router-dom` v6. `/access` is public (magic-link landing); **every other route is nested under `<AuthGate>`** and requires a valid access grant. `/` is an `OnboardingGate`: if `localStorage["joro_onboarded"] === "1"` it redirects to `/home` (the `Welcome` page), otherwise it shows `Onboarding` (which sets that flag on "start").
+**Routing.** `src/App.tsx`: `/access` (magic-link landing) and `/admin` are public static routes; `/` shows `AccessExpired` (there is no default apartment); every apartment lives under `/:buildingSlug/*`, rendered by `BuildingGate`, with nested pages `home`, `checkin`, `checkout`, `facilities`, `services`, `explore`, `info`. The index route is `OnboardingGate` (per-slug flag `localStorage["joro_onboarded_<slug>"]`). Static `/access` and `/admin` win over `/:buildingSlug`, so those two words can't be used as slugs. Internal links must stay slug-aware (read `buildingSlug` via `useParams()` and build `` `/${buildingSlug}/...` ``).
 
-**Auth & building data (magic-link grants).** There are no user accounts — access is a time-boxed *grant* to one building, keyed by an unguessable token.
-- **Backend:** Netlify Functions in `netlify/functions/` (`grants` = admin issues a grant + link; `enter` = exchanges the link token for an HttpOnly `joro_token` cookie; `building` = returns the guest's building data iff the cookie maps to a currently-valid grant). Shared helpers in `_lib/grants.ts`; grants persist in **Netlify Blobs** (store name `grants`, key = SHA-256 of the token). Building content is private in `_data/buildings.json` — **never** put it back in `public/`. Env vars: `ADMIN_KEY`, `TOKEN_PEPPER`, `RESEND_API_KEY`, `EMAIL_FROM`, `APP_URL`.
-- **Frontend:** `useProperty()` (`src/property/useProperty.ts`) fetches `GET /api/building` via React Query (query key `["building"]`); the client never sends a building id (server derives it). `AuthGate` (`src/components/AuthGate.tsx`) shows a splash while loading and an "expired link" screen on 401. `Access` (`src/pages/Access.tsx`) posts the token to `/api/enter`, strips it from the URL, then redirects to `/`.
+**Access (magic links).** No accounts. An admin creates a *grant* (one apartment, one stay) on `/admin`; the guest opens `/access?token=…`, `Access` posts the token to `/api/enter`, which sets the HttpOnly `joro_token` cookie, then redirects to `/<buildingId>`. Backend in `netlify/functions/`: `grants` (admin: `POST` creates a link, `GET` lists apartments), `enter` (token → cookie), `building` (`GET /api/building?slug=` — 401 without a valid session, 403 if the session is for another apartment, 404 unknown slug), `admin-login/logout/check` + `_lib/{admin,grants}.ts`. Grants persist in **Netlify Blobs** (store `grants`, key = SHA-256 of token + `TOKEN_PEPPER`). Env vars (Netlify site settings): `ADMIN_KEY`, `TOKEN_PEPPER`, optional `RESEND_API_KEY`, `EMAIL_FROM`, `APP_URL`. `buildings.json` is private (`netlify/functions/_data/`) — **never** put it in `public/`.
 
-**i18n (custom, not i18next).** `useLanguage()` from `src/i18n/LanguageContext.tsx` returns `{ lang, setLang, t }`. All strings live in the nested `en`/`fr` object in `src/i18n/translations.ts`; access via `t.section.key`. Language persists to `localStorage["lang"]` and falls back to `navigator.language`.
+**Building data (Notion).** `scripts/sync-notion.mjs` runs before every build. It queries the Notion database whose id is in `NOTION_DATABASE_ID` (**no default on purpose** — don't hardcode another project's database) with `NOTION_API_KEY`, one row per apartment (`slug`, `nom_public`, `adresse`, `wifi_reseau`, `wifi_mdp`, optional guest wifi/colors/`background`/`logo`), and writes `buildings.json` + downloads photos into `public/buildings/<slug>/`. Each row is a Notion page holding child databases, found by exact title: `Services`, `Adresses utiles`, `Guide de l'espace (équipement)`, `Guide du logement (pièces)` (or `Guide de l'espace (étage)`), `Accès` (steps; optional untranslated `code` column — access codes are never sent to DeepL), `Infos complémentaires`, `Check-in / Check-out` (`type` select: arrivée/départ/information; lines starting with `- ` render as bullets). Texts are translated FR→EN via DeepL (`DEEPL_API_KEY`, cache in `scripts/.translation-cache.json`, falls back to French). The sync fails soft: any problem leaves the existing `buildings.json` untouched. `useProperty()` reads `buildingSlug` from the route and caches with React Query (key `["building", slug]`).
 
-**Theme (custom, not next-themes).** `useTheme()` from `src/theme/ThemeContext.tsx` toggles the `.dark` class on `<html>` and persists to `localStorage["theme"]`. `next-themes` is a dependency but is **not** used for theming.
+**Per-building brand colors.** Optional `colors` (hex) are applied by `BuildingGate` onto `--brand-ink` / `--brand-surface`; the `:root` values in `src/index.css` (Living's own `#1c2626` / white) are the fallback. Tailwind consumes them as `brand-ink` / `brand-surface`.
 
-**Styling.** Tailwind with HSL CSS-variable design tokens defined in `src/index.css` (`:root` for light, `.dark` for dark). shadcn/ui components live in `src/components/ui/`. Use the `cn()` helper (`src/lib/utils.ts`) to compose classes. Path alias `@` → `src/` is configured in `vite.config.ts`, `vitest.config.ts`, and `tsconfig.json`.
+**Adding an apartment.** Add a row to the Notion database (+ its child databases), then publish; it becomes available at `/<slug>`. To let a guest in, create a magic link for that slug on `/admin`.
 
-**PWA.** `vite-plugin-pwa` (autoUpdate). Registration logic in `src/lib/registerSW.ts` deliberately **skips** the service worker in non-production builds, inside iframes, on Lovable preview/dev hostnames, and when `?sw=off` is present — and unregisters stale SWs in those cases. Expect no SW during local `dev`. A `NetworkFirst` runtime rule (in `vite.config.ts`) caches `GET /api/building` so entry codes / Wi-Fi stay available **offline** after the first online load.
+**i18n (custom, not i18next).** `useLanguage()` returns `{ lang, setLang, t }`. Static strings live in `src/i18n/locales/{en,fr}.yaml`, parsed by `src/i18n/translations.ts`; Notion-driven texts arrive as `{ fr, en }` objects (`Bilingual`) and are picked with `[lang]`.
 
-**Hosting (Netlify).** `netlify.toml` sets `publish = dist`, `functions = netlify/functions`, redirects `/api/*` → functions, and adds the SPA fallback (`/*` → `/index.html`) so deep links like `/access` survive a hard refresh.
+**Theme (custom, not next-themes).** `useTheme()` toggles `.dark` on `<html>` and persists to `localStorage["theme"]`.
 
-**Layout.** Single-column, mobile-first, capped at `max-w-[760px]`. `AppLayout` (`PageHeader` + `BottomTabBar`) exists but is only used by `Rules` and `QrPage`; most pages implement their own full-bleed layout.
+**Styling.** Tailwind with HSL CSS-variable tokens in `src/index.css`; shadcn/ui components in `src/components/ui/`; `cn()` from `src/lib/utils.ts`; alias `@` → `src/`. `.h-app-shell` is the standard full-height page wrapper. Every page implements its own full-bleed layout (hero photo + `h-app-shell`).
+
+**PWA.** `vite-plugin-pwa` (autoUpdate); `src/lib/registerSW.ts` skips the service worker in dev, in iframes, on Lovable preview hosts and with `?sw=off`. A `NetworkFirst` rule caches `GET /api/building` so the booklet stays available offline after the first online load.
+
+**Hosting (Netlify).** `netlify.toml`: `publish = dist`, `functions = netlify/functions`, `/api/*` → functions, SPA fallback. The Netlify site is `welcome-book`; make sure it is linked to this GitHub repo for continuous deployment (it was deployed by hand with the CLI before the port).
 
 ## Conventions & gotchas
 
-- **Two coexisting page styles.** Match whichever the page you're editing already uses:
-  - *Template pages* use i18n `t` and the CSS design tokens: `Facilities`, `Rules`, `InfoPage`, `QrPage`, `Explore`.
-  - *Rebranded "Jöro" pages* hardcode **French** strings (no `t`), hardcode a dark-teal hex palette (`#1c2626`, `#2E3F3E`, `#323E3E`), and use hero-image backgrounds: `Welcome`, `Onboarding`, `Checkin`, `Checkout`, `Thanks`. Don't retrofit i18n here unless deliberately converting the page.
-- **`src/components/LanguageToggle.tsx` is dead code.** It's imported nowhere and imports two deleted assets (`flag-fr.svg`, `flag-gb.svg`). It was superseded by `SettingsPopover` (language + theme, used on `Welcome`). Don't re-import it without restoring the flag assets.
-- **Loose TypeScript.** `strictNullChecks`, `noImplicitAny`, `noUnusedLocals`/`noUnusedParameters` are all off, and `@typescript-eslint/no-unused-vars` is disabled — don't rely on strict null/unused checking to catch mistakes.
-- **Lovable project.** `lovable-tagger`'s `componentTagger` runs in dev mode only; `.lovable/plan.md` holds project plan state. Images under `src/assets/` have companion `*.asset.json` sidecar files (Lovable asset metadata) — keep them alongside their image.
+- **Loose TypeScript.** `strictNullChecks`, `noImplicitAny`, `noUnusedLocals`/`noUnusedParameters` are off — don't rely on them to catch mistakes.
+- **Lovable project.** `lovable-tagger` runs in dev only; `.lovable/plan.md` holds Lovable plan state. Images under `src/assets/` have companion `*.asset.json` sidecar files — keep them alongside their image.
+- **Access codes are sensitive.** They live in the Notion `Accès` table and in `buildings.json` (private repo). Keep them out of logs, translations and public files.

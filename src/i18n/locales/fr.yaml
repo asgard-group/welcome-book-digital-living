@@ -1,0 +1,166 @@
+common:
+  back: "Retour"
+  leaveAppTitle: "Vous quittez le livret d'accueil"
+  leaveAppDesc: "Ce lien va ouvrir une autre page en dehors du livret d'accueil. Voulez-vous continuer ?"
+  leaveAppCancel: "Annuler"
+  leaveAppContinue: "Continuer"
+  emailChooseTitle: "Contacter par email"
+  emailChooseDesc: "Choisis ton application, ou copie simplement l'adresse."
+  emailOpenOutlook: "Ouvrir dans Outlook"
+  emailOpenGmail: "Ouvrir dans Gmail"
+  emailCopy: "Copier l'adresse"
+  emailCopiedToast: "Adresse email copiée"
+
+brand:
+  name: "Jöro Haussmann"
+  sub: "Halévy"
+  footer: "© Jöro Space"
+
+nav:
+  welcome: "Accueil"
+  checkin: "S'y rendre"
+  checkinShort: "Arrivée"
+  facilities: "Équipements"
+  explore: "Explorer Paris"
+  exploreShort: "Explorer"
+  info: "Infos utiles"
+  infoShort: "Infos"
+
+settings:
+  ariaLabel: "Paramètres"
+  title: "Paramètres"
+  language: "Langue"
+  appearance: "Apparence"
+  french: "Français"
+  english: "English"
+  light: "Clair"
+  dark: "Sombre"
+
+contact:
+  emailLabel: "Email"
+  whatsappLabel: "WhatsApp"
+  callLabel: "Appeler"
+
+welcome:
+  title: "Bienvenue"
+  subtitle: "Jöro Living Haussmann - Mogador"
+  heroAltPrefix: "Bienvenue à "
+  heroAltFallback: "Bienvenue"
+  menu:
+    checkin: "Infos pratiques"
+    facilities: "Guide du logement"
+    services: "Services"
+    info: "Urgences"
+    explore: "Explorer"
+    checkout: "Check-in/out"
+
+onboarding:
+  heroAlt: "Intérieur du logement"
+  cta: "Commencer"
+
+checkin:
+  title: "Infos pratiques"
+  subtitle: "Wifi, Accès logement"
+  wifiTitle: "Wifi"
+  wifiGuestTitle: "Wifi Guest"
+  network: "Réseau"
+  password: "Mot de passe"
+  copyAria: "Copier"
+  copiedToast: "Copié"
+  copyErrorToast: "Impossible de copier"
+  extraInfoTitle: "Infos complémentaires"
+  extraInfoSubtitle: "Retrouver quelques indications utiles pour profiter pleinement de votre séjour"
+
+checkout:
+  title: "Check-in/out"
+  subtitle: "Avant d'arriver et de partir"
+
+services:
+  title: "Services"
+  subtitle: "Les services disponibles"
+  tabIncluded: "Inclus"
+  tabQuote: "En plus"
+  joroSpaceTitle: "Jöro Space"
+  joroSpaceSubtitle: "Découvrez l'écosystème de Jöro"
+  joroSpaceItems:
+    - name: "Jöro Meeting"
+      role: "Événements & réunions"
+      link: "https://joro-space.fr/lieux-reunions-evenements/"
+    - name: "Jöro Kaffé"
+      role: "Café & coworking"
+      link: "https://joro-space.fr/joro-kaffe-coffee-shop-co-working/"
+    - name: "Jöro Living"
+      role: "Apparthôtels"
+      link: "https://joro-space.fr/reservation-joro/"
+
+facilities:
+  title: "Guide du logement"
+  subtitle: "Tout ce qu'il faut savoir"
+  noticeLabel: "Notice :"
+  videoLinkLabel: "Lien vidéo"
+  rulesTitle: "Règlement intérieur"
+  rulesIntro: "Le non-respect des Conditions générales peut entraîner les sanctions suivantes :"
+  sanctions:
+    - "Retenue partielle ou totale de la caution."
+    - "Annulation immédiate de la réservation."
+    - "Expulsion de l'appartement sans remboursement."
+  incidentNotice: "Le moindre incident doit être signalé à l'équipe Jöro"
+  forbidden:
+    - id: smoking
+      title: "Interdiction de fumer"
+      desc: "Dans l'appartement"
+    - id: parties
+      title: "Pas de fêtes"
+      desc: "Ne sont pas autorisés dans l'appartement"
+    - id: pets
+      title: "Pas d'animaux"
+      desc: "Ne sont pas admis dans l'appartement"
+    - id: noise
+      title: "Pas de bruit après 22h"
+      desc: "Cela pourrait déranger le voisinage"
+    - id: guests
+      title: "Pas d'invités imprévus"
+      desc: "Non listés sur la réservation"
+    - id: photo
+      title: "Pas de photo pro"
+      desc: "Ni tournage vidéo"
+    - id: eating
+      title: "Pas de nourriture dans les chambres"
+      desc: "Ni boissons"
+    - id: download
+      title: "Téléchargement illégal"
+      desc: "Depuis internet est interdit"
+
+explore:
+  title: "Explorer"
+  subtitle: "Lieux touristiques & activités"
+  map: "Carte →"
+  comingSoon: "Adresses à venir."
+  categories:
+    - id: restaurants
+      label: "Restaurants"
+    - id: shopping
+      label: "Shopping"
+    - id: culture
+      label: "Culture"
+    - id: enfants
+      label: "Enfants"
+    - id: wellness
+      label: "Bien-être"
+    - id: pratique
+      label: "Pratique"
+
+info:
+  title: "Infos utiles"
+  securityTitle: "Urgences"
+  subtitle: "Contacts importants"
+  emergency: "Numéros d'urgence"
+  europeanUniversal: "Numéro d'urgence européen"
+  samu: "SAMU"
+  samuDesc: "Urgence médical"
+  police: "Police secours"
+  policeDesc: "Force de l'ordre"
+  fire: "Pompier"
+  fireDesc: "Incendie, secours"
+  urgentJoro: "Urgent — Contacter Jöro"
+  nearby: "Services à proximité"
