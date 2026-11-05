@@ -60,6 +60,32 @@ function emptyBuilding(): BuildingData {
   };
 }
 
+/** Ensures all array/object fields exist even when loading from incomplete legacy data. */
+function normalizeBuilding(raw: Record<string, unknown>): BuildingData {
+  const base = emptyBuilding();
+  const svc = (raw.services as BuildingData["services"] | undefined) ?? { included: [], quote: [] };
+  const addr = (raw.addresses as BuildingData["addresses"] | undefined) ?? base.addresses;
+  return {
+    ...base,
+    ...(raw as Partial<BuildingData>),
+    access: (raw.access as AccessStep[]) ?? [],
+    extraInfo: (raw.extraInfo as FaqItem[]) ?? [],
+    stay: (raw.stay as StayBlock[]) ?? base.stay,
+    services: {
+      included: svc.included ?? [],
+      quote: svc.quote ?? [],
+    },
+    addresses: {
+      restaurants: addr.restaurants ?? [],
+      shopping: addr.shopping ?? [],
+      culture: addr.culture ?? [],
+      enfants: addr.enfants ?? [],
+      wellness: addr.wellness ?? [],
+      pratique: addr.pratique ?? [],
+    },
+  };
+}
+
 /* ─── Reusable form primitives ───────────────────────────────────────────── */
 const inputCls = "w-full rounded-xl border border-black/15 bg-[#f5f2ed] px-3.5 py-2.5 text-sm text-[#1c2626] placeholder:text-[#1c2626]/30 focus:outline-none focus:ring-2 focus:ring-[#1c2626]/20";
 const textareaCls = `${inputCls} resize-y min-h-[80px] font-mono text-xs leading-relaxed`;
@@ -834,7 +860,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     try {
       const res = await fetch(`/api/building-admin?slug=${b.id}`, { credentials: "include" });
       const body = await res.json();
-      setEditData(body);
+      setEditData(normalizeBuilding(body));
       setView({ screen: "edit", slug: b.id });
     } catch {
       toast.error("Impossible de charger les données du logement.");
