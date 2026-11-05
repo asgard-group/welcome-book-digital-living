@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Eye, Key, LogOut, ChevronRight, X, Copy, Check, Trash2, ChevronLeft } from "lucide-react";
+import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft } from "lucide-react";
 import joroLogo from "@/assets/joro-living-logo.png";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -588,15 +588,130 @@ function BuildingForm({
   );
 }
 
+/* ─── Grants section ─────────────────────────────────────────────────────── */
+type GrantEntry = {
+  key: string;
+  buildingId: string;
+  buildingName: string;
+  guestEmail?: string;
+  validFrom: number;
+  validUntil: number;
+  createdAt: number;
+  revoked: boolean;
+  status: "active" | "expired" | "revoked";
+};
+
+function fmt(ts: number) {
+  return new Date(ts).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function StatusBadge({ status }: { status: GrantEntry["status"] }) {
+  const styles: Record<GrantEntry["status"], string> = {
+    active: "bg-emerald-50 text-emerald-700",
+    expired: "bg-black/8 text-[#1c2626]/50",
+    revoked: "bg-red-50 text-red-600",
+  };
+  const labels: Record<GrantEntry["status"], string> = { active: "Actif", expired: "Expiré", revoked: "Révoqué" };
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function GrantsSection({ onLogout, refreshKey }: { onLogout: () => void; refreshKey: number }) {
+  const [grants, setGrants] = useState<GrantEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/grant-list", { credentials: "include" });
+      if (res.status === 401) { onLogout(); return; }
+      const body = await res.json().catch(() => ({}));
+      setGrants(body.grants ?? []);
+    } catch {
+      toast.error("Impossible de charger les accès.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [refreshKey]);
+
+  const handleRevoke = async (grant: GrantEntry) => {
+    if (!confirm(`Révoquer l'accès de ${grant.guestEmail ?? grant.buildingName} ?`)) return;
+    setRevoking(grant.key);
+    try {
+      await fetch(`/api/grant-list?key=${encodeURIComponent(grant.key)}`, { method: "DELETE", credentials: "include" });
+      toast.success("Accès révoqué.");
+      await load();
+    } catch {
+      toast.error("Erreur lors de la révocation.");
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-[#1c2626]">Accès voyageurs</h2>
+        <button onClick={load} className="text-xs text-[#1c2626]/50 hover:text-[#1c2626] transition">
+          Actualiser
+        </button>
+      </div>
+      {loading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => <div key={i} className={`${card} h-14 animate-pulse`} />)}
+        </div>
+      ) : grants.length === 0 ? (
+        <div className={`${card} px-6 py-8 text-center`}>
+          <p className="text-sm text-[#1c2626]/50">Aucun accès créé pour le moment.</p>
+        </div>
+      ) : (
+        <div className={`${card} divide-y divide-black/8 overflow-hidden`}>
+          {grants.map((g) => (
+            <div key={g.key} className="flex items-center gap-4 px-5 py-3.5">
+              <div className="flex-1 min-w-0 space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-[#1c2626] truncate">{g.buildingName}</span>
+                  <StatusBadge status={g.status} />
+                </div>
+                <p className="text-xs text-[#1c2626]/40 truncate">
+                  {g.guestEmail ? `${g.guestEmail} · ` : ""}
+                  {fmt(g.validFrom)} → {fmt(g.validUntil)}
+                </p>
+              </div>
+              {g.status === "active" && (
+                <button
+                  onClick={() => handleRevoke(g)}
+                  disabled={revoking === g.key}
+                  className="shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-40 transition"
+                >
+                  {revoking === g.key ? "…" : "Révoquer"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ─── Create access modal ─────────────────────────────────────────────────── */
 function AccessModal({
   building,
   onClose,
   onLogout,
+  onSuccess,
 }: {
   building: BuildingOption;
   onClose: () => void;
   onLogout: () => void;
+  onSuccess?: () => void;
 }) {
   const [days, setDays] = useState("7");
   const [email, setEmail] = useState("");
@@ -623,6 +738,7 @@ function AccessModal({
       }
       setLink(body.link);
       toast.success(body.emailed ? "Lien créé et envoyé par email." : "Lien créé.");
+      onSuccess?.();
     } catch {
       toast.error("Une erreur est survenue.");
     } finally {
@@ -692,6 +808,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [accessTarget, setAccessTarget] = useState<BuildingOption | null>(null);
   const [view, setView] = useState<DashboardView>({ screen: "dashboard" });
   const [editData, setEditData] = useState<BuildingData | null>(null);
+  const [grantsRefreshKey, setGrantsRefreshKey] = useState(0);
 
   const loadBuildings = async () => {
     try {
@@ -841,19 +958,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           )}
         </section>
 
-        <section className={`${card} divide-y divide-black/8`}>
-          {[
-            { label: "Accès actifs", sub: "Voir les voyageurs connectés — bientôt disponible", icon: ChevronRight },
-          ].map(({ label, sub, icon: Icon }) => (
-            <div key={label} className="flex items-center justify-between gap-4 px-5 py-4">
-              <div>
-                <p className="text-sm font-medium text-[#1c2626]">{label}</p>
-                <p className="text-xs text-[#1c2626]/40 mt-0.5">{sub}</p>
-              </div>
-              <Icon className="h-4 w-4 text-[#1c2626]/30 shrink-0" />
-            </div>
-          ))}
-        </section>
+        <GrantsSection onLogout={onLogout} refreshKey={grantsRefreshKey} />
       </main>
 
       {accessTarget && (
@@ -861,6 +966,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           building={accessTarget}
           onClose={() => setAccessTarget(null)}
           onLogout={onLogout}
+          onSuccess={() => setGrantsRefreshKey((k) => k + 1)}
         />
       )}
     </div>
