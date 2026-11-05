@@ -43,6 +43,24 @@ export async function getGrant(token: string): Promise<Grant | null> {
   return (g as Grant) ?? null;
 }
 
+export async function revokeGrantByKey(key: string): Promise<void> {
+  const store = grantsStore();
+  const grant = (await store.get(key, { type: "json" })) as Grant | null;
+  if (grant) await store.setJSON(key, { ...grant, revoked: true });
+}
+
+export async function listAllGrants(): Promise<Array<{ key: string } & Grant>> {
+  const store = grantsStore();
+  const { blobs } = await store.list();
+  const results = await Promise.all(
+    blobs.map(async (b) => {
+      const g = (await store.get(b.key, { type: "json" })) as Grant | null;
+      return g ? { key: b.key, ...g } : null;
+    })
+  );
+  return results.filter(Boolean) as Array<{ key: string } & Grant>;
+}
+
 export function isGrantValid(grant: Grant | null, now: number = Date.now()): boolean {
   return !!grant && !grant.revoked && now >= grant.validFrom && now <= grant.validUntil;
 }
