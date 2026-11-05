@@ -10,6 +10,84 @@ import { json } from "./_lib/grants";
 import { getBuilding, putBuilding, deleteBuilding, listBuildingSlugs } from "./_lib/building-store";
 import staticBuildings from "./_data/buildings.json";
 
+const DEEPL_API_KEY = process.env.DEEPL_API_KEY;
+const DEEPL_URL = DEEPL_API_KEY?.endsWith(":fx")
+  ? "https://api-free.deepl.com/v2/translate"
+  : "https://api.deepl.com/v2/translate";
+
+async function translateText(text: string): Promise<string> {
+  if (!DEEPL_API_KEY || !text.trim()) return text;
+  try {
+    const res = await fetch(DEEPL_URL, {
+      method: "POST",
+      headers: { authorization: `DeepL-Auth-Key ${DEEPL_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ text: [text], source_lang: "FR", target_lang: "EN" }),
+    });
+    if (!res.ok) return text;
+    const data = await res.json();
+    return data?.translations?.[0]?.text ?? text;
+  } catch {
+    return text;
+  }
+}
+
+type Bilingual = { fr: string; en: string };
+
+async function translateBilingual(b: Bilingual): Promise<Bilingual> {
+  return { fr: b.fr, en: await translateText(b.fr) };
+}
+
+async function translateBuilding(raw: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const data = raw as Record<string, unknown>;
+
+  const tr = async (b: unknown) => {
+    if (!b || typeof b !== "object") return b;
+    const bil = b as Bilingual;
+    if (typeof bil.fr === "string" && typeof bil.en === "string") return translateBilingual(bil);
+    return b;
+  };
+
+  const trArr = async <T>(arr: T[], fn: (item: T) => Promise<T>) =>
+    Promise.all((arr ?? []).map(fn));
+
+  const access = await trArr((data.access as Record<string, unknown>[]) ?? [], async (s) => ({
+    ...s, name: await tr(s.name), detail: await tr(s.detail),
+  }));
+
+  const extraInfo = await trArr((data.extraInfo as Record<string, unknown>[]) ?? [], async (s) => ({
+    ...s, name: await tr(s.name), detail: await tr(s.detail),
+  }));
+
+  const stay = await trArr((data.stay as Record<string, unknown>[]) ?? [], async (s) => ({
+    ...s, name: await tr(s.name), detail: await tr(s.detail),
+  }));
+
+  const svc = (data.services ?? { included: [], quote: [] }) as { included: Record<string, unknown>[]; quote: Record<string, unknown>[] };
+  const services = {
+    included: await trArr(svc.included ?? [], async (s) => ({ ...s, name: await tr(s.name) })),
+    quote: await trArr(svc.quote ?? [], async (s) => ({ ...s, name: await tr(s.name) })),
+  };
+
+  const addr = (data.addresses ?? {}) as Record<string, Record<string, unknown>[]>;
+  const addresses: Record<string, unknown[]> = {};
+  for (const cat of Object.keys(addr)) {
+    addresses[cat] = await trArr(addr[cat] ?? [], async (p) => ({ ...p, description: await tr(p.description) }));
+  }
+
+  const fac = (data.facilities ?? { sections: [] }) as { sections: Record<string, unknown>[] };
+  const facilities = {
+    sections: await trArr(fac.sections ?? [], async (sec) => ({
+      ...sec,
+      title: await tr(sec.title),
+      items: await trArr((sec.items as Record<string, unknown>[]) ?? [], async (item) => ({
+        ...item, name: await tr(item.name), detail: await tr(item.detail),
+      })),
+    })),
+  };
+
+  return { ...data, access, extraInfo, stay, services, addresses, facilities };
+}
+
 type StaticBuilding = { id: string; name: string };
 
 export default async (req: Request) => {
@@ -55,7 +133,8 @@ export default async (req: Request) => {
     if (!body.name || typeof body.name !== "string") return json(400, { error: "missing_name" });
     // Basic slug validation: lowercase, hyphens only
     if (!/^[a-z0-9-]+$/.test(body.id)) return json(400, { error: "invalid_id" });
-    await putBuilding(body as Parameters<typeof putBuilding>[0]);
+    const translated = await translateBuilding(body);
+    await putBuilding(translated as Parameters<typeof putBuilding>[0]);
     return json(200, { ok: true });
   }
 

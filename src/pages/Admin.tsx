@@ -106,16 +106,7 @@ function BilingualInput({
   return (
     <div className="space-y-1.5">
       <label className={labelCls}>{label}</label>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <span className="text-[10px] text-[#1c2626]/40 uppercase tracking-widest ml-1">FR</span>
-          <Tag className={cls} value={value.fr} onChange={(e) => onChange({ ...value, fr: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
-        </div>
-        <div>
-          <span className="text-[10px] text-[#1c2626]/40 uppercase tracking-widest ml-1">EN</span>
-          <Tag className={cls} value={value.en} onChange={(e) => onChange({ ...value, en: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
-        </div>
-      </div>
+      <Tag className={cls} value={value.fr} onChange={(e) => onChange({ ...value, fr: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
     </div>
   );
 }
@@ -547,6 +538,24 @@ function BuildingForm({
   const [data, setData] = useState<BuildingData>(initial);
   const [tab, setTab] = useState<TabId>("infos");
   const [saving, setSaving] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+
+  const handlePreview = async () => {
+    setPreviewing(true);
+    try {
+      const res = await fetch("/api/grants", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ buildingId: data.id, days: 1 }),
+      });
+      if (!res.ok) { toast.error("Impossible de générer le lien de prévisualisation."); return; }
+      const body = await res.json();
+      window.open(body.link, "_blank");
+    } finally {
+      setPreviewing(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!data.id) { toast.error("Le slug (identifiant) est obligatoire."); setTab("infos"); return; }
@@ -575,9 +584,9 @@ function BuildingForm({
           </div>
           <div className="flex items-center gap-2">
             {!isNew && data.id && (
-              <a href={`/${data.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
-                <Eye className="h-3.5 w-3.5" /> Prévisualiser
-              </a>
+              <button onClick={handlePreview} disabled={previewing} className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 disabled:opacity-40 transition">
+                <Eye className="h-3.5 w-3.5" /> {previewing ? "Ouverture…" : "Prévisualiser"}
+              </button>
             )}
             <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-xl bg-[#1c2626] px-4 py-2 text-sm font-medium text-white hover:bg-[#1c2626]/85 disabled:opacity-40 transition">
               {saving ? "Enregistrement…" : "Enregistrer"}
@@ -835,6 +844,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [view, setView] = useState<DashboardView>({ screen: "dashboard" });
   const [editData, setEditData] = useState<BuildingData | null>(null);
   const [grantsRefreshKey, setGrantsRefreshKey] = useState(0);
+  const [deployState, setDeployState] = useState<"idle" | "loading" | "ok" | "error" | "unconfigured">("idle");
+
+  const handleDeploy = async () => {
+    setDeployState("loading");
+    try {
+      const res = await fetch("/api/deploy", { method: "POST", credentials: "include" });
+      if (res.status === 503) { setDeployState("unconfigured"); return; }
+      setDeployState(res.ok ? "ok" : "error");
+    } catch {
+      setDeployState("error");
+    } finally {
+      setTimeout(() => setDeployState("idle"), 5000);
+    }
+  };
 
   const loadBuildings = async () => {
     try {
@@ -893,6 +916,18 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     toast.success("Logement supprimé.");
     setLoadingBuildings(true);
     await loadBuildings();
+  };
+
+  const handleQuickPreview = async (slug: string) => {
+    const res = await fetch("/api/grants", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ buildingId: slug, days: 1 }),
+    });
+    if (!res.ok) { toast.error("Impossible de générer le lien de prévisualisation."); return; }
+    const body = await res.json();
+    window.open(body.link, "_blank");
   };
 
   // ── Building form views ──────────────────────────────────────────────────
@@ -971,9 +1006,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                     <button onClick={() => handleEditClick(b)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                       Modifier
                     </button>
-                    <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
+                    <button onClick={() => handleQuickPreview(b.id)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                       <Eye className="h-3.5 w-3.5" /> Voir
-                    </a>
+                    </button>
                     <button onClick={() => setAccessTarget(b)} className="flex items-center gap-1.5 rounded-lg bg-[#1c2626] px-3 py-2 text-sm text-white hover:bg-[#1c2626]/85 transition">
                       <Key className="h-3.5 w-3.5" /> Accès
                     </button>
@@ -982,6 +1017,27 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               ))}
             </div>
           )}
+        </section>
+
+        {/* Maintenance */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-medium text-[#1c2626]/40 uppercase tracking-widest">Maintenance</h2>
+          <div className={`${card} px-5 py-4 flex items-center justify-between gap-4`}>
+            <div>
+              <p className="text-sm font-medium text-[#1c2626]">Redéployer le site</p>
+              <p className="text-xs text-[#1c2626]/50 mt-0.5">
+                Le contenu des welcome books est mis à jour instantanément — ce bouton sert uniquement pour déployer des mises à jour du code.
+              </p>
+            </div>
+            <button
+              onClick={handleDeploy}
+              disabled={deployState === "loading"}
+              className="shrink-0 flex items-center gap-2 rounded-xl border border-black/15 bg-white px-4 py-2 text-sm text-[#1c2626] hover:bg-black/4 disabled:opacity-40 transition"
+            >
+              {deployState === "loading" && <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-[#1c2626]/30 border-t-[#1c2626] animate-spin" />}
+              {deployState === "ok" ? "✓ Lancé !" : deployState === "error" ? "✗ Erreur" : deployState === "unconfigured" ? "⚠ Hook non configuré" : deployState === "loading" ? "Déploiement…" : "🚀 Déployer"}
+            </button>
+          </div>
         </section>
 
         <GrantsSection onLogout={onLogout} refreshKey={grantsRefreshKey} />
