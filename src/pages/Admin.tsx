@@ -607,11 +607,13 @@ function BuildingForm({
   initial,
   isNew,
   onSave,
+  onRenameSlug,
   onCancel,
 }: {
   initial: BuildingData;
   isNew: boolean;
   onSave: (data: BuildingData) => Promise<void>;
+  onRenameSlug?: (oldSlug: string, newSlug: string) => Promise<void>;
   onCancel: () => void;
 }) {
   const [data, setData] = useState<BuildingData>(initial);
@@ -644,6 +646,20 @@ function BuildingForm({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {!isNew && onRenameSlug && data.id && (
+              <button
+                onClick={async () => {
+                  const newSlug = window.prompt(`Nouveau slug (identifiant URL)\nActuel : ${data.id}\n\nUniquement lettres minuscules, chiffres et tirets.`);
+                  if (!newSlug || newSlug === data.id) return;
+                  if (!/^[a-z0-9-]+$/.test(newSlug)) { toast.error("Slug invalide : lettres minuscules, chiffres et tirets uniquement."); return; }
+                  if (!window.confirm(`Changer «${data.id}» → «${newSlug}» ?\nCette action est irréversible.`)) return;
+                  await onRenameSlug(data.id, newSlug);
+                }}
+                className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
+              >
+                <Key className="h-3.5 w-3.5" /> Changer le slug
+              </button>
+            )}
             {!isNew && data.id && (
               <a href={`/${data.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                 <Eye className="h-3.5 w-3.5" /> Prévisualiser
@@ -960,6 +976,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const handleEditClick = async (b: BuildingOption) => {
     try {
       const res = await fetch(`/api/building-admin?slug=${b.id}`, { credentials: "include" });
+      if (res.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
+      if (!res.ok) { toast.error("Impossible de charger les données du logement."); return; }
       const body = await res.json();
       setEditData(normalizeBuilding(body));
       setView({ screen: "edit", slug: b.id });
@@ -977,7 +995,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      if (body?.error === "unauthorized") { onLogout(); return; }
+      if (body?.error === "unauthorized") { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
       toast.error("Erreur lors de l'enregistrement.");
       return;
     }
@@ -991,9 +1009,38 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const handleDelete = async (slug: string) => {
     if (!confirm(`Supprimer le logement « ${slug} » ? Cette action est irréversible.`)) return;
     const res = await fetch(`/api/building-admin?slug=${encodeURIComponent(slug)}`, { method: "DELETE", credentials: "include" });
-    if (res.status === 401) { onLogout(); return; }
+    if (res.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
     if (!res.ok) { toast.error("Erreur lors de la suppression."); return; }
     toast.success("Logement supprimé.");
+    setLoadingBuildings(true);
+    await loadBuildings();
+  };
+
+  const handleRenameSlug = async (oldSlug: string, newSlug: string) => {
+    // Fetch current building data
+    const resGet = await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { credentials: "include" });
+    if (resGet.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
+    if (!resGet.ok) { toast.error("Impossible de récupérer les données."); return; }
+    const data = await resGet.json();
+
+    // Save under new slug (triggers DeepL translation)
+    const updatedData = { ...data, id: newSlug };
+    const toastId = toast.loading(`Changement de slug en cours…`);
+    const resPost = await fetch("/api/building-admin", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(updatedData),
+    });
+    if (!resPost.ok) { toast.dismiss(toastId); toast.error("Erreur lors du changement de slug."); return; }
+
+    // Delete old slug
+    await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { method: "DELETE", credentials: "include" });
+
+    toast.dismiss(toastId);
+    toast.success(`Slug changé : «${oldSlug}» → «${newSlug}».`);
+    setView({ screen: "dashboard" });
+    setEditData(null);
     setLoadingBuildings(true);
     await loadBuildings();
   };
@@ -1029,6 +1076,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         initial={editData}
         isNew={false}
         onSave={handleSave}
+        onRenameSlug={handleRenameSlug}
         onCancel={() => { setView({ screen: "dashboard" }); setEditData(null); }}
       />
     );
