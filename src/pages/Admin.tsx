@@ -989,7 +989,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const handleDelete = async (slug: string) => {
     if (!confirm(`Supprimer le logement « ${slug} » ? Cette action est irréversible.`)) return;
-    await fetch(`/api/building-admin?slug=${slug}`, { method: "DELETE", credentials: "include" });
+    const res = await fetch(`/api/building-admin?slug=${encodeURIComponent(slug)}`, { method: "DELETE", credentials: "include" });
+    if (res.status === 401) { onLogout(); return; }
+    if (!res.ok) { toast.error("Erreur lors de la suppression."); return; }
     toast.success("Logement supprimé.");
     setLoadingBuildings(true);
     await loadBuildings();
@@ -1088,6 +1090,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                         <Eye className="h-3.5 w-3.5" /> Voir
                       </a>
+                      <button
+                        onClick={() => handleDelete(b.id)}
+                        title="Supprimer ce logement"
+                        className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                      </button>
                     </div>
                   </div>
                   {/* QR Code */}
