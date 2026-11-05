@@ -186,7 +186,6 @@ async function fetchBuilding(buildingSlug?: string): Promise<PropertyData> {
       throw new Error("invalid_response");
     }
   }
-  if (res.status === 401 || res.status === 403) throw new Error("access_required");
   if (res.status === 404) throw new Error("building_not_found");
   throw new Error(`building_unavailable_${res.status}`);
 }

@@ -538,24 +538,6 @@ function BuildingForm({
   const [data, setData] = useState<BuildingData>(initial);
   const [tab, setTab] = useState<TabId>("infos");
   const [saving, setSaving] = useState(false);
-  const [previewing, setPreviewing] = useState(false);
-
-  const handlePreview = async () => {
-    setPreviewing(true);
-    try {
-      const res = await fetch("/api/grants", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ buildingId: data.id, days: 1 }),
-      });
-      if (!res.ok) { toast.error("Impossible de générer le lien de prévisualisation."); return; }
-      const body = await res.json();
-      window.open(body.link, "_blank");
-    } finally {
-      setPreviewing(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!data.id) { toast.error("Le slug (identifiant) est obligatoire."); setTab("infos"); return; }
@@ -584,9 +566,9 @@ function BuildingForm({
           </div>
           <div className="flex items-center gap-2">
             {!isNew && data.id && (
-              <button onClick={handlePreview} disabled={previewing} className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 disabled:opacity-40 transition">
-                <Eye className="h-3.5 w-3.5" /> {previewing ? "Ouverture…" : "Prévisualiser"}
-              </button>
+              <a href={`/${data.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
+                <Eye className="h-3.5 w-3.5" /> Prévisualiser
+              </a>
             )}
             <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-xl bg-[#1c2626] px-4 py-2 text-sm font-medium text-white hover:bg-[#1c2626]/85 disabled:opacity-40 transition">
               {saving ? "Enregistrement…" : "Enregistrer"}
@@ -774,6 +756,7 @@ function AccessModal({
       setLink(body.link);
       toast.success(body.emailed ? "Lien créé et envoyé par email." : "Lien créé.");
       onSuccess?.();
+      setTimeout(() => onClose(), 3000);
     } catch {
       toast.error("Une erreur est survenue.");
     } finally {
@@ -840,10 +823,8 @@ type DashboardView =
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [buildings, setBuildings] = useState<BuildingOption[]>([]);
   const [loadingBuildings, setLoadingBuildings] = useState(true);
-  const [accessTarget, setAccessTarget] = useState<BuildingOption | null>(null);
   const [view, setView] = useState<DashboardView>({ screen: "dashboard" });
   const [editData, setEditData] = useState<BuildingData | null>(null);
-  const [grantsRefreshKey, setGrantsRefreshKey] = useState(0);
   const [deployState, setDeployState] = useState<"idle" | "loading" | "ok" | "error" | "unconfigured">("idle");
 
   const handleDeploy = async () => {
@@ -918,16 +899,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     await loadBuildings();
   };
 
-  const handleQuickPreview = async (slug: string) => {
-    const res = await fetch("/api/grants", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ buildingId: slug, days: 1 }),
-    });
-    if (!res.ok) { toast.error("Impossible de générer le lien de prévisualisation."); return; }
-    const body = await res.json();
-    window.open(body.link, "_blank");
+  const buildingUrl = (slug: string) => `${window.location.origin}/${slug}`;
+  const qrSrc = (slug: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(buildingUrl(slug))}`;
+
+  const handleDownloadQr = async (slug: string, name: string) => {
+    const res = await fetch(qrSrc(slug));
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `qr-${slug}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   // ── Building form views ──────────────────────────────────────────────────
@@ -997,21 +979,30 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           ) : (
             <div className="space-y-3">
               {buildings.map((b) => (
-                <div key={b.id} className={`${card} flex items-center justify-between gap-4 px-5 py-4`}>
-                  <div className="min-w-0">
-                    <p className="font-medium text-[#1c2626] truncate">{b.name}</p>
-                    <p className="text-xs text-[#1c2626]/40 mt-0.5">/{b.id}</p>
+                <div key={b.id} className={`${card} px-5 py-4`}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#1c2626] truncate">{b.name}</p>
+                      <p className="text-xs text-[#1c2626]/40 mt-0.5 truncate">{buildingUrl(b.id)}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => handleEditClick(b)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
+                        Modifier
+                      </button>
+                      <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
+                        <Eye className="h-3.5 w-3.5" /> Voir
+                      </a>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => handleEditClick(b)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
-                      Modifier
-                    </button>
-                    <button onClick={() => handleQuickPreview(b.id)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
-                      <Eye className="h-3.5 w-3.5" /> Voir
-                    </button>
-                    <button onClick={() => setAccessTarget(b)} className="flex items-center gap-1.5 rounded-lg bg-[#1c2626] px-3 py-2 text-sm text-white hover:bg-[#1c2626]/85 transition">
-                      <Key className="h-3.5 w-3.5" /> Accès
-                    </button>
+                  {/* QR Code */}
+                  <div className="mt-4 flex items-center gap-5 pt-4 border-t border-black/6">
+                    <img src={qrSrc(b.id)} alt={`QR ${b.name}`} className="h-24 w-24 rounded-lg border border-black/8" />
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#1c2626]/50">QR code à imprimer pour les voyageurs</p>
+                      <button onClick={() => handleDownloadQr(b.id, b.name)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs text-[#1c2626] hover:bg-black/4 transition">
+                        ↓ Télécharger le QR code
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1040,17 +1031,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         </section>
 
-        <GrantsSection onLogout={onLogout} refreshKey={grantsRefreshKey} />
       </main>
-
-      {accessTarget && (
-        <AccessModal
-          building={accessTarget}
-          onClose={() => setAccessTarget(null)}
-          onLogout={onLogout}
-          onSuccess={() => setGrantsRefreshKey((k) => k + 1)}
-        />
-      )}
     </div>
   );
 }
