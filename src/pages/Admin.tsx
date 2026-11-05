@@ -814,6 +814,24 @@ function AccessModal({
   );
 }
 
+/* ─── CopyUrl ────────────────────────────────────────────────────────────── */
+function CopyUrl({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={handleCopy} className="group flex items-center gap-1.5 mt-0.5 text-left">
+      <span className="text-xs text-[#1c2626]/40 truncate group-hover:text-[#1c2626]/70 transition">{url}</span>
+      <span className="text-[10px] text-[#1c2626]/30 group-hover:text-[#1c2626]/60 transition shrink-0">
+        {copied ? "✓ Copié" : "Copier"}
+      </span>
+    </button>
+  );
+}
+
 /* ─── Dashboard ──────────────────────────────────────────────────────────── */
 type DashboardView =
   | { screen: "dashboard" }
@@ -981,9 +999,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               {buildings.map((b) => (
                 <div key={b.id} className={`${card} px-5 py-4`}>
                   <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium text-[#1c2626] truncate">{b.name}</p>
-                      <p className="text-xs text-[#1c2626]/40 mt-0.5 truncate">{buildingUrl(b.id)}</p>
+                      <CopyUrl url={buildingUrl(b.id)} />
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button onClick={() => handleEditClick(b)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
