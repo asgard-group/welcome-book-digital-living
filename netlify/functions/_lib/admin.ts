@@ -1,29 +1,12 @@
 // Shared helpers for admin authentication.
 //
-// Separate from the guest grant system: the admin logs in with a single
-// shared password (ADMIN_KEY), checked here on the server. On success we
-// hand back an opaque session token (stored server-side in Blobs, looked up
-// by its hash) via an HttpOnly cookie — the password itself never sits in a
-// cookie or reaches the browser again after login.
-import { getStore } from "@netlify/blobs";
+// Stateless HMAC-signed session tokens: no Blobs lookup on every request.
+// Token format: base64url(expiresAt_ms) + "." + HMAC-SHA256(payload, ADMIN_KEY)
+// Logout = clear the cookie (token is self-contained, no server state to remove).
 import crypto from "node:crypto";
 
 export const ADMIN_COOKIE_NAME = "joro_admin";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
-
-type AdminSession = {
-  createdAt: number;
-  expiresAt: number;
-};
-
-function adminSessionsStore() {
-  return getStore("admin_sessions");
-}
-
-function hashSessionToken(token: string): string {
-  const pepper = process.env.TOKEN_PEPPER ?? "";
-  return crypto.createHash("sha256").update(token + pepper).digest("hex");
-}
 
 /** Constant-time password check against the server-side ADMIN_KEY secret. */
 export function isCorrectAdminPassword(candidate: string): boolean {
@@ -35,17 +18,22 @@ export function isCorrectAdminPassword(candidate: string): boolean {
   return crypto.timingSafeEqual(a, b);
 }
 
-export async function createAdminSession(): Promise<{ token: string; maxAgeSeconds: number }> {
-  const token = crypto.randomBytes(32).toString("base64url");
-  const now = Date.now();
-  const session: AdminSession = { createdAt: now, expiresAt: now + SESSION_TTL_MS };
-  await adminSessionsStore().setJSON(hashSessionToken(token), session);
-  return { token, maxAgeSeconds: SESSION_TTL_MS / 1000 };
+function hmacSign(payload: string): string {
+  const key = process.env.ADMIN_KEY ?? "fallback-key";
+  return crypto.createHmac("sha256", key).update(payload).digest("base64url");
 }
 
-export async function revokeAdminSession(token: string): Promise<void> {
-  await adminSessionsStore().delete(hashSessionToken(token));
+/** Create a stateless signed session token. No Blobs write needed. */
+export async function createAdminSession(): Promise<{ token: string; maxAgeSeconds: number }> {
+  const expiresAt = Date.now() + SESSION_TTL_MS;
+  const payload = expiresAt.toString();
+  const payloadB64 = Buffer.from(payload).toString("base64url");
+  const sig = hmacSign(payload);
+  return { token: `${payloadB64}.${sig}`, maxAgeSeconds: SESSION_TTL_MS / 1000 };
 }
+
+/** No-op: stateless tokens can't be server-side revoked; clearing the cookie is enough. */
+export async function revokeAdminSession(_token: string): Promise<void> {}
 
 export function getCookie(req: Request, name: string): string | null {
   const header = req.headers.get("cookie");
@@ -60,13 +48,17 @@ export function getCookie(req: Request, name: string): string | null {
   return null;
 }
 
+/** Verify a stateless HMAC-signed session token — no Blobs lookup. */
 export async function isAdminRequest(req: Request): Promise<boolean> {
   const token = getCookie(req, ADMIN_COOKIE_NAME);
   if (!token) return false;
-  const session = (await adminSessionsStore().get(hashSessionToken(token), { type: "json" })) as
-    | AdminSession
-    | null;
-  return !!session && Date.now() <= session.expiresAt;
+  const [payloadB64, sig] = token.split(".");
+  if (!payloadB64 || !sig) return false;
+  const payload = Buffer.from(payloadB64, "base64url").toString();
+  const expectedSig = hmacSign(payload);
+  if (sig !== expectedSig) return false;
+  const expiresAt = parseInt(payload, 10);
+  return !isNaN(expiresAt) && Date.now() <= expiresAt;
 }
 
 export function buildAdminCookie(token: string, maxAgeSeconds: number, secure = true): string {
@@ -81,6 +73,8 @@ export function buildAdminCookie(token: string, maxAgeSeconds: number, secure = 
   return parts.join("; ");
 }
 
-export function clearAdminCookie(): string {
-  return [`${ADMIN_COOKIE_NAME}=`, "Path=/", "HttpOnly", "Secure", "SameSite=Lax", "Max-Age=0"].join("; ");
+export function clearAdminCookie(secure = true): string {
+  const parts = [`${ADMIN_COOKIE_NAME}=`, "Path=/", "HttpOnly", "SameSite=Lax", "Max-Age=0"];
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
 }
