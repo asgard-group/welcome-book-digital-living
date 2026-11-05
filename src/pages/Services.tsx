@@ -5,7 +5,7 @@ import {
   ChevronLeft,
   ArrowRight,
   Check,
-  Pencil,
+  Plus,
   Wrench,
   KeyRound,
   Sparkles,
@@ -63,16 +63,18 @@ function ServiceCard({
 }) {
   const content = (
     <>
-      <Icon className="h-6 w-6 text-brand-ink dark:text-white" strokeWidth={1.75} />
-      <span className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-brand-ink/10 dark:bg-white/10">
-        {indicator}
-      </span>
-      <p className="mt-4 pr-[36px] text-[15px] font-semibold text-brand-ink dark:text-white leading-snug">
+      <div className="flex items-start justify-between gap-2">
+        <Icon className="h-6 w-6 text-brand-ink dark:text-white" strokeWidth={1.75} />
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-ink/10 dark:bg-white/10 shrink-0">
+          {indicator}
+        </span>
+      </div>
+      <p className="mt-4 text-[15px] font-semibold text-brand-ink dark:text-white leading-snug">
         {title}
       </p>
     </>
   );
-  const className = "relative rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80";
+  const className = "rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80";
 
   if (href) {
     return (
@@ -176,11 +178,26 @@ export default function Services() {
                     icon={SERVICE_ICONS[item.icon] ?? Wrench}
                     title={item.name[lang]}
                     href={`mailto:${item.email}`}
-                    indicator={<Pencil className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} />}
+                    indicator={<Plus className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} />}
                   />
                 ))}
               </div>
             )}
+
+            {/* Consigne à bagages */}
+            {active === "inclus" && <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 space-y-3">
+              <h2 className="text-base font-semibold text-brand-ink dark:text-white">Consigne à bagages</h2>
+              <div className="space-y-2 text-sm text-brand-ink/80 dark:text-white/80">
+                <p>
+                  <span className="font-medium text-brand-ink dark:text-white">Casiers sur site</span>
+                  {" — "}Gratuits, couloir commun aux 3 appartements. Sous la responsabilité des clients — demander à Jöro les dispos et codes.
+                </p>
+                <p>
+                  <span className="font-medium text-brand-ink dark:text-white">Jöro Kaffé</span>
+                  {" — "}Gratuit, sous réserve de disponibilité (prévenir à l'avance). Ouvert 6j/7 (fermé le dimanche).
+                </p>
+              </div>
+            </div>}
 
             {/* Jöro Space */}
             <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 text-brand-ink dark:text-white">
@@ -221,7 +238,7 @@ export default function Services() {
             <img
               src={joroLogo}
               alt="Jöro Living"
-              className="h-[25px] w-auto object-contain brightness-0 invert"
+              className="h-[30px] w-auto object-contain brightness-0 invert"
             />
             {property?.logoUrl && (
               <img

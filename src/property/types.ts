@@ -59,7 +59,7 @@ export type PropertyData = {
    */
   addresses?: Record<
     string,
-    { name: string; address: string; distance?: string; price?: string; description?: Bilingual }[]
+    { name: string; address?: string; distance?: string; price?: string; description?: Bilingual; type?: string }[]
   >;
   /**
    * From the building's Notion "Guide de l'espace" sub-databases (equipment + floors),

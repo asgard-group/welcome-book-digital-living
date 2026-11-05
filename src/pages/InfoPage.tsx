@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Phone } from "lucide-react";
+import { ChevronLeft, Phone, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import joroLogo from "@/assets/joro-living-logo.png";
@@ -91,6 +91,17 @@ export default function InfoPage() {
               ))}
             </div>
 
+            {/* Intro contacts */}
+            <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 text-brand-ink dark:text-white">
+              <div className="flex items-center gap-3 mb-3">
+                <AlertCircle className="h-5 w-5 text-brand-ink dark:text-white shrink-0" strokeWidth={2} />
+                <h2 className="font-semibold text-brand-ink dark:text-white">Information</h2>
+              </div>
+              <p className="text-sm text-brand-ink/70 dark:text-white/70">
+                Privilégiez les échanges via la plateforme de réservation (Booking, Airbnb…) pour assurer le suivi par toute l'équipe Jöro. Utilisez ces contacts uniquement en cas d'urgence.
+              </p>
+            </div>
+
             {/* Contact Jöro */}
             <ContactWidget />
           </div>
@@ -100,7 +111,7 @@ export default function InfoPage() {
             <img
               src={joroLogo}
               alt="Jöro Living"
-              className="h-[25px] w-auto object-contain brightness-0 invert"
+              className="h-[30px] w-auto object-contain brightness-0 invert"
             />
             {property?.logoUrl && (
               <img

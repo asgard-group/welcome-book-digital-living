@@ -59,7 +59,7 @@ export default function Welcome() {
               {t.welcome.title}
             </h1>
             <p className="text-base text-white/80">
-              {property?.name ?? " "}
+              {"43 boulevard Haussmann, Paris 9"}
             </p>
           </div>
 
@@ -101,7 +101,7 @@ export default function Welcome() {
             <img
               src={joroLogo}
               alt="Jöro Living"
-              className="h-[25px] w-auto object-contain brightness-0 invert"
+              className="h-[30px] w-auto object-contain brightness-0 invert"
             />
             {property?.logoUrl && (
               <img

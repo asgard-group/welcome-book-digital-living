@@ -78,7 +78,7 @@ services:
   title: "Services"
   subtitle: "Available services"
   tabIncluded: "Included"
-  tabQuote: "On Quote"
+  tabQuote: "Add-ons"
   joroSpaceTitle: "Jöro Space"
   joroSpaceSubtitle: "Discover the Jöro ecosystem"
   joroSpaceItems:

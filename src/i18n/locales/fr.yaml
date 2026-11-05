@@ -43,11 +43,12 @@ contact:
 
 welcome:
   title: "Bienvenue"
+  subtitle: "Jöro Living Haussmann - Mogador"
   heroAltPrefix: "Bienvenue à "
   heroAltFallback: "Bienvenue"
   menu:
     checkin: "Infos pratiques"
-    facilities: "Guide logement"
+    facilities: "Guide du logement"
     services: "Services"
     info: "Urgences"
     explore: "Explorer"
@@ -78,7 +79,7 @@ services:
   title: "Services"
   subtitle: "Les services disponibles"
   tabIncluded: "Inclus"
-  tabQuote: "Sur Devis"
+  tabQuote: "En plus"
   joroSpaceTitle: "Jöro Space"
   joroSpaceSubtitle: "Découvrez l'écosystème de Jöro"
   joroSpaceItems:
@@ -93,7 +94,7 @@ services:
       link: "https://joro-space.fr/reservation-joro/"
 
 facilities:
-  title: "Guide logement"
+  title: "Guide du logement"
   subtitle: "Tout ce qu'il faut savoir"
   noticeLabel: "Notice :"
   videoLinkLabel: "Lien vidéo"
