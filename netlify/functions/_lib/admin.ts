@@ -9,7 +9,7 @@ import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
 
 export const ADMIN_COOKIE_NAME = "joro_admin";
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12h
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
 
 type AdminSession = {
   createdAt: number;
@@ -69,15 +69,16 @@ export async function isAdminRequest(req: Request): Promise<boolean> {
   return !!session && Date.now() <= session.expiresAt;
 }
 
-export function buildAdminCookie(token: string, maxAgeSeconds: number): string {
-  return [
+export function buildAdminCookie(token: string, maxAgeSeconds: number, secure = true): string {
+  const parts = [
     `${ADMIN_COOKIE_NAME}=${encodeURIComponent(token)}`,
     "Path=/",
     "HttpOnly",
-    "Secure",
     "SameSite=Lax",
     `Max-Age=${Math.max(0, Math.floor(maxAgeSeconds))}`,
-  ].join("; ");
+  ];
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
 }
 
 export function clearAdminCookie(): string {

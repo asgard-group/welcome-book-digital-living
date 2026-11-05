@@ -24,5 +24,6 @@ export default async (req: Request) => {
   }
 
   const { token, maxAgeSeconds } = await createAdminSession();
-  return json(200, { ok: true }, { "Set-Cookie": buildAdminCookie(token, maxAgeSeconds) });
+  const secure = new URL(req.url).protocol === "https:";
+  return json(200, { ok: true }, { "Set-Cookie": buildAdminCookie(token, maxAgeSeconds, secure) });
 };
