@@ -106,16 +106,7 @@ function BilingualInput({
   return (
     <div className="space-y-1.5">
       <label className={labelCls}>{label}</label>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <span className="text-[10px] text-[#1c2626]/40 uppercase tracking-widest ml-1">FR</span>
-          <Tag className={cls} value={value.fr} onChange={(e) => onChange({ ...value, fr: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
-        </div>
-        <div>
-          <span className="text-[10px] text-[#1c2626]/40 uppercase tracking-widest ml-1">EN</span>
-          <Tag className={cls} value={value.en} onChange={(e) => onChange({ ...value, en: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
-        </div>
-      </div>
+      <Tag className={cls} value={value.fr} onChange={(e) => onChange({ ...value, fr: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
     </div>
   );
 }
@@ -157,88 +148,166 @@ function SectionSep() {
   return <div className="border-t border-black/8 my-6" />;
 }
 
+/* ─── ImageUpload ────────────────────────────────────────────────────────── */
+function ImageUpload({ label, slug, field, value, onChange }: {
+  label: string; slug: string; field: string; value?: string; onChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useState<HTMLInputElement | null>(null);
+
+  const handleFile = async (file: File) => {
+    if (!slug) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("slug", slug);
+      fd.append("field", field);
+      const res = await fetch("/api/upload-image", { method: "POST", credentials: "include", body: fd });
+      if (!res.ok) { toast.error("Erreur lors de l'upload."); return; }
+      const body = await res.json();
+      onChange(body.url);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <label className={labelCls}>{label}</label>
+      <div
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="relative rounded-xl border-2 border-dashed border-black/15 hover:border-black/30 transition overflow-hidden"
+        style={{ minHeight: 100 }}
+      >
+        {value ? (
+          <div className="relative">
+            <img src={value} alt="" className="w-full h-32 object-cover" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition flex items-center justify-center gap-3">
+              <label className="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-[#1c2626]">
+                Changer
+                <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+              </label>
+              <button type="button" onClick={() => onChange("")} className="rounded-lg bg-white/20 border border-white/40 px-3 py-1.5 text-xs text-white">Supprimer</button>
+            </div>
+          </div>
+        ) : (
+          <label className="flex flex-col items-center justify-center gap-2 py-7 cursor-pointer">
+            {uploading
+              ? <span className="inline-block h-5 w-5 rounded-full border-2 border-[#1c2626]/20 border-t-[#1c2626] animate-spin" />
+              : <span className="text-2xl">↑</span>}
+            <span className="text-sm text-[#1c2626]/50">{uploading ? "Upload en cours…" : "Glisser-déposer ou cliquer"}</span>
+            <span className="text-xs text-[#1c2626]/30">JPG, PNG, WebP — 10 Mo max</span>
+            <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+          </label>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Tab: Infos de base ─────────────────────────────────────────────────── */
 function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d: BuildingData) => void; isNew: boolean }) {
   const set = (key: keyof BuildingData, val: unknown) => onChange({ ...data, [key]: val });
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Nom public">
-          <input className={inputCls} value={data.name} onChange={(e) => set("name", e.target.value)} placeholder="Haussmann Mogador" />
-        </Field>
-        <Field label="Slug (identifiant URL)">
-          <input
-            className={inputCls}
-            value={data.id}
-            readOnly={!isNew}
-            onChange={(e) => set("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
-            placeholder="haussmann-halevy-1"
-            title={isNew ? undefined : "Le slug ne peut pas être modifié après création"}
-          />
-        </Field>
-      </div>
-      <Field label="Adresse complète">
-        <input className={inputCls} value={data.address} onChange={(e) => set("address", e.target.value)} placeholder="43 boulevard Haussmann, 75009 Paris, France" />
-      </Field>
-
-      <SectionSep />
-      <p className={sectionTitle}>WiFi principal</p>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Réseau">
-          <input className={inputCls} value={data.wifi.network} onChange={(e) => set("wifi", { ...data.wifi, network: e.target.value })} placeholder="JORO-LIVING" />
-        </Field>
-        <Field label="Mot de passe">
-          <input className={inputCls} value={data.wifi.password} onChange={(e) => set("wifi", { ...data.wifi, password: e.target.value })} placeholder="bienvenue2024" />
-        </Field>
-      </div>
-
-      <SectionSep />
-      <div className="flex items-center justify-between mb-3">
-        <p className={sectionTitle}>WiFi invité <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
-        {!data.guestWifi && (
-          <button type="button" onClick={() => set("guestWifi", { network: "", password: "" })} className="text-xs text-[#1c2626]/60 hover:text-[#1c2626]">
-            + Ajouter
-          </button>
-        )}
-        {data.guestWifi && (
-          <button type="button" onClick={() => set("guestWifi", undefined)} className="text-xs text-red-400 hover:text-red-600">
-            Supprimer
-          </button>
-        )}
-      </div>
-      {data.guestWifi && (
+    <div className="space-y-4">
+      {/* Identité */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <p className={sectionTitle}>Identité</p>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Réseau">
-            <input className={inputCls} value={data.guestWifi.network} onChange={(e) => set("guestWifi", { ...data.guestWifi, network: e.target.value })} placeholder="JORO-GUEST" />
+          <Field label="Nom public">
+            <input className={inputCls} value={data.name} onChange={(e) => set("name", e.target.value)} placeholder="Haussmann Mogador" />
           </Field>
-          <Field label="Mot de passe">
-            <input className={inputCls} value={data.guestWifi.password} onChange={(e) => set("guestWifi", { ...data.guestWifi, password: e.target.value })} placeholder="" />
+          <Field label="Slug (identifiant URL)">
+            <input
+              className={inputCls}
+              value={data.id}
+              readOnly={!isNew}
+              onChange={(e) => set("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+              placeholder="haussmann-halevy-1"
+              title={isNew ? undefined : "Le slug ne peut pas être modifié après création"}
+            />
           </Field>
         </div>
-      )}
-
-      <SectionSep />
-      <p className={sectionTitle}>Apparence <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Couleur principale">
-          <div className="flex gap-2">
-            <input type="color" value={data.colors?.primary ?? "#1c2626"} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
-            <input className={inputCls} value={data.colors?.primary ?? ""} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} placeholder="#1c2626" />
-          </div>
-        </Field>
-        <Field label="Couleur secondaire">
-          <div className="flex gap-2">
-            <input type="color" value={data.colors?.secondary ?? "#ffffff"} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
-            <input className={inputCls} value={data.colors?.secondary ?? ""} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} placeholder="#ffffff" />
-          </div>
+        <Field label="Adresse complète">
+          <input className={inputCls} value={data.address} onChange={(e) => set("address", e.target.value)} placeholder="43 boulevard Haussmann, 75009 Paris, France" />
         </Field>
       </div>
-      <Field label="URL de la photo de fond">
-        <input className={inputCls} value={data.backgroundUrl ?? ""} onChange={(e) => set("backgroundUrl", e.target.value || undefined)} placeholder="https://..." />
-      </Field>
-      <Field label="URL du logo de l'immeuble">
-        <input className={inputCls} value={data.logoUrl ?? ""} onChange={(e) => set("logoUrl", e.target.value || undefined)} placeholder="https://..." />
-      </Field>
+
+      {/* WiFi principal */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <p className={sectionTitle}>WiFi principal</p>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Réseau">
+            <input className={inputCls} value={data.wifi.network} onChange={(e) => set("wifi", { ...data.wifi, network: e.target.value })} placeholder="JORO-LIVING" />
+          </Field>
+          <Field label="Mot de passe">
+            <input className={inputCls} value={data.wifi.password} onChange={(e) => set("wifi", { ...data.wifi, password: e.target.value })} placeholder="bienvenue2024" />
+          </Field>
+        </div>
+      </div>
+
+      {/* WiFi invité */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className={sectionTitle}>WiFi invité <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
+          {!data.guestWifi
+            ? <button type="button" onClick={() => set("guestWifi", { network: "", password: "" })} className="text-xs text-[#1c2626]/60 hover:text-[#1c2626]">+ Ajouter</button>
+            : <button type="button" onClick={() => set("guestWifi", undefined)} className="text-xs text-red-400 hover:text-red-600">Supprimer</button>}
+        </div>
+        {data.guestWifi && (
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Réseau">
+              <input className={inputCls} value={data.guestWifi.network} onChange={(e) => set("guestWifi", { ...data.guestWifi, network: e.target.value })} placeholder="JORO-GUEST" />
+            </Field>
+            <Field label="Mot de passe">
+              <input className={inputCls} value={data.guestWifi.password} onChange={(e) => set("guestWifi", { ...data.guestWifi, password: e.target.value })} placeholder="" />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      {/* Apparence */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <p className={sectionTitle}>Apparence <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Couleur principale">
+            <div className="flex gap-2">
+              <input type="color" value={data.colors?.primary ?? "#1c2626"} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
+              <input className={inputCls} value={data.colors?.primary ?? ""} onChange={(e) => set("colors", { ...data.colors, primary: e.target.value })} placeholder="#1c2626" />
+            </div>
+          </Field>
+          <Field label="Couleur secondaire">
+            <div className="flex gap-2">
+              <input type="color" value={data.colors?.secondary ?? "#ffffff"} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} className="h-10 w-10 rounded-lg border border-black/15 cursor-pointer" />
+              <input className={inputCls} value={data.colors?.secondary ?? ""} onChange={(e) => set("colors", { ...data.colors, secondary: e.target.value })} placeholder="#ffffff" />
+            </div>
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <ImageUpload
+            label="Photo de fond"
+            slug={data.id}
+            field="background"
+            value={data.backgroundUrl}
+            onChange={(url) => set("backgroundUrl", url || undefined)}
+          />
+          <ImageUpload
+            label="Logo de l'immeuble"
+            slug={data.id}
+            field="logo"
+            value={data.logoUrl}
+            onChange={(url) => set("logoUrl", url || undefined)}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -765,6 +834,7 @@ function AccessModal({
       setLink(body.link);
       toast.success(body.emailed ? "Lien créé et envoyé par email." : "Lien créé.");
       onSuccess?.();
+      setTimeout(() => onClose(), 3000);
     } catch {
       toast.error("Une erreur est survenue.");
     } finally {
@@ -822,6 +892,24 @@ function AccessModal({
   );
 }
 
+/* ─── CopyUrl ────────────────────────────────────────────────────────────── */
+function CopyUrl({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={handleCopy} className="group flex items-center gap-1.5 mt-0.5 text-left">
+      <span className="text-xs text-[#1c2626]/40 truncate group-hover:text-[#1c2626]/70 transition">{url}</span>
+      <span className="text-[10px] text-[#1c2626]/30 group-hover:text-[#1c2626]/60 transition shrink-0">
+        {copied ? "✓ Copié" : "Copier"}
+      </span>
+    </button>
+  );
+}
+
 /* ─── Dashboard ──────────────────────────────────────────────────────────── */
 type DashboardView =
   | { screen: "dashboard" }
@@ -831,10 +919,22 @@ type DashboardView =
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [buildings, setBuildings] = useState<BuildingOption[]>([]);
   const [loadingBuildings, setLoadingBuildings] = useState(true);
-  const [accessTarget, setAccessTarget] = useState<BuildingOption | null>(null);
   const [view, setView] = useState<DashboardView>({ screen: "dashboard" });
   const [editData, setEditData] = useState<BuildingData | null>(null);
-  const [grantsRefreshKey, setGrantsRefreshKey] = useState(0);
+  const [deployState, setDeployState] = useState<"idle" | "loading" | "ok" | "error" | "unconfigured">("idle");
+
+  const handleDeploy = async () => {
+    setDeployState("loading");
+    try {
+      const res = await fetch("/api/deploy", { method: "POST", credentials: "include" });
+      if (res.status === 503) { setDeployState("unconfigured"); return; }
+      setDeployState(res.ok ? "ok" : "error");
+    } catch {
+      setDeployState("error");
+    } finally {
+      setTimeout(() => setDeployState("idle"), 5000);
+    }
+  };
 
   const loadBuildings = async () => {
     try {
@@ -889,10 +989,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const handleDelete = async (slug: string) => {
     if (!confirm(`Supprimer le logement « ${slug} » ? Cette action est irréversible.`)) return;
-    await fetch(`/api/building-admin?slug=${slug}`, { method: "DELETE", credentials: "include" });
+    const res = await fetch(`/api/building-admin?slug=${encodeURIComponent(slug)}`, { method: "DELETE", credentials: "include" });
+    if (res.status === 401) { onLogout(); return; }
+    if (!res.ok) { toast.error("Erreur lors de la suppression."); return; }
     toast.success("Logement supprimé.");
     setLoadingBuildings(true);
     await loadBuildings();
+  };
+
+  const buildingUrl = (slug: string) => `${window.location.origin}/${slug}`;
+  const qrSrc = (slug: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(buildingUrl(slug))}`;
+
+  const handleDownloadQr = async (slug: string, name: string) => {
+    const res = await fetch(qrSrc(slug));
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `qr-${slug}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   // ── Building form views ──────────────────────────────────────────────────
@@ -962,21 +1077,37 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           ) : (
             <div className="space-y-3">
               {buildings.map((b) => (
-                <div key={b.id} className={`${card} flex items-center justify-between gap-4 px-5 py-4`}>
-                  <div className="min-w-0">
-                    <p className="font-medium text-[#1c2626] truncate">{b.name}</p>
-                    <p className="text-xs text-[#1c2626]/40 mt-0.5">/{b.id}</p>
+                <div key={b.id} className={`${card} px-5 py-4`}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-[#1c2626] truncate">{b.name}</p>
+                      <CopyUrl url={buildingUrl(b.id)} />
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => handleEditClick(b)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
+                        Modifier
+                      </button>
+                      <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
+                        <Eye className="h-3.5 w-3.5" /> Voir
+                      </a>
+                      <button
+                        onClick={() => handleDelete(b.id)}
+                        title="Supprimer ce logement"
+                        className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => handleEditClick(b)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
-                      Modifier
-                    </button>
-                    <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
-                      <Eye className="h-3.5 w-3.5" /> Voir
-                    </a>
-                    <button onClick={() => setAccessTarget(b)} className="flex items-center gap-1.5 rounded-lg bg-[#1c2626] px-3 py-2 text-sm text-white hover:bg-[#1c2626]/85 transition">
-                      <Key className="h-3.5 w-3.5" /> Accès
-                    </button>
+                  {/* QR Code */}
+                  <div className="mt-4 flex items-center gap-5 pt-4 border-t border-black/6">
+                    <img src={qrSrc(b.id)} alt={`QR ${b.name}`} className="h-24 w-24 rounded-lg border border-black/8" />
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#1c2626]/50">QR code à imprimer pour les voyageurs</p>
+                      <button onClick={() => handleDownloadQr(b.id, b.name)} className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs text-[#1c2626] hover:bg-black/4 transition">
+                        ↓ Télécharger le QR code
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -984,17 +1115,28 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           )}
         </section>
 
-        <GrantsSection onLogout={onLogout} refreshKey={grantsRefreshKey} />
-      </main>
+        {/* Maintenance */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-medium text-[#1c2626]/40 uppercase tracking-widest">Maintenance</h2>
+          <div className={`${card} px-5 py-4 flex items-center justify-between gap-4`}>
+            <div>
+              <p className="text-sm font-medium text-[#1c2626]">Redéployer le site</p>
+              <p className="text-xs text-[#1c2626]/50 mt-0.5">
+                Le contenu des welcome books est mis à jour instantanément — ce bouton sert uniquement pour déployer des mises à jour du code.
+              </p>
+            </div>
+            <button
+              onClick={handleDeploy}
+              disabled={deployState === "loading"}
+              className="shrink-0 flex items-center gap-2 rounded-xl border border-black/15 bg-white px-4 py-2 text-sm text-[#1c2626] hover:bg-black/4 disabled:opacity-40 transition"
+            >
+              {deployState === "loading" && <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-[#1c2626]/30 border-t-[#1c2626] animate-spin" />}
+              {deployState === "ok" ? "✓ Lancé !" : deployState === "error" ? "✗ Erreur" : deployState === "unconfigured" ? "⚠ Hook non configuré" : deployState === "loading" ? "Déploiement…" : "🚀 Déployer"}
+            </button>
+          </div>
+        </section>
 
-      {accessTarget && (
-        <AccessModal
-          building={accessTarget}
-          onClose={() => setAccessTarget(null)}
-          onLogout={onLogout}
-          onSuccess={() => setGrantsRefreshKey((k) => k + 1)}
-        />
-      )}
+      </main>
     </div>
   );
 }

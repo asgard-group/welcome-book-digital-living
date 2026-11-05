@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/theme/ThemeContext";
-import { AccessExpired, BuildingGate } from "@/components/BuildingGate";
+import { BuildingGate } from "@/components/BuildingGate";
 import Welcome from "./pages/Welcome";
 import Onboarding from "./pages/Onboarding";
 import Access from "./pages/Access";
@@ -48,7 +48,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
 
               {/* Bare root: there is no default apartment — a guest needs their own link */}
-              <Route path="/" element={<AccessExpired />} />
+              <Route path="/" element={<Navigate to="/admin" replace />} />
 
               {/* One apartment per sub-URL (e.g. /haussmann-halevy-1/*), only reachable with a valid magic link. */}
               <Route path="/:buildingSlug" element={<BuildingGate />}>

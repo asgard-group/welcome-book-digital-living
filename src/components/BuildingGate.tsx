@@ -112,7 +112,6 @@ export function BuildingGate() {
 
   if (isLoading) return <Splash />;
   if (isError || !data) {
-    if (error?.message === "access_required") return <AccessExpired />;
     return error?.message === "building_not_found" ? <BuildingNotFound /> : <LoadError />;
   }
   return <Outlet />;
