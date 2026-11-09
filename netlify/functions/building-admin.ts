@@ -113,12 +113,25 @@ export default async (req: Request) => {
     const summaries = await Promise.all(
       allSlugs.map(async (s) => {
         const blob = await getBuilding(s);
-        if (blob) return { id: blob.id, name: blob.name };
         const stat = (staticBuildings as Record<string, StaticBuilding>)[s];
-        return stat ? { id: stat.id, name: stat.name } : null;
+        const hasDefault = !!stat;
+        if (blob) return { id: blob.id, name: blob.name, hasDefault };
+        return stat ? { id: stat.id, name: stat.name, hasDefault } : null;
       })
     );
     return json(200, { buildings: summaries.filter(Boolean) });
+  }
+
+  // ── POST ?restore=<slug> : recopie le contenu d'origine (buildings.json) dans Blobs ──
+  const restore = url.searchParams.get("restore");
+  if (req.method === "POST" && restore) {
+    const original = (staticBuildings as Record<string, unknown>)[restore] as
+      | Parameters<typeof putBuilding>[0]
+      | undefined;
+    if (!original) return json(404, { error: "no_default_content" });
+    // Le contenu d'origine est déjà bilingue : pas de passage par DeepL.
+    await putBuilding(original);
+    return json(200, { ok: true });
   }
 
   // ── POST (upsert) ────────────────────────────────────────────────────────
