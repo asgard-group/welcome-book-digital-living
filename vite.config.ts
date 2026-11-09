@@ -55,6 +55,14 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
+            // Tout le reste de /api (admin-check, building-admin, grants…) ne doit
+            // JAMAIS être mis en cache : sinon la règle CacheFirst plus bas servirait
+            // pour 30 jours une vieille réponse (admin « non connecté », liste périmée).
+            urlPattern: ({ url }: { url: URL }) =>
+              url.pathname.startsWith("/api/") && url.pathname !== "/api/building",
+            handler: "NetworkOnly",
+          },
+          {
             urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
             handler: "NetworkFirst",
             options: {
