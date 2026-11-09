@@ -19,7 +19,8 @@ export function isCorrectAdminPassword(candidate: string): boolean {
 }
 
 function hmacSign(payload: string): string {
-  const key = process.env.ADMIN_KEY ?? "fallback-key";
+  const key = process.env.ADMIN_KEY;
+  if (!key) throw new Error("ADMIN_KEY missing");
   return crypto.createHmac("sha256", key).update(payload).digest("base64url");
 }
 
@@ -50,13 +51,15 @@ export function getCookie(req: Request, name: string): string | null {
 
 /** Verify a stateless HMAC-signed session token — no Blobs lookup. */
 export async function isAdminRequest(req: Request): Promise<boolean> {
+  if (!process.env.ADMIN_KEY) return false;
   const token = getCookie(req, ADMIN_COOKIE_NAME);
   if (!token) return false;
   const [payloadB64, sig] = token.split(".");
   if (!payloadB64 || !sig) return false;
   const payload = Buffer.from(payloadB64, "base64url").toString();
-  const expectedSig = hmacSign(payload);
-  if (sig !== expectedSig) return false;
+  const a = Buffer.from(sig);
+  const b = Buffer.from(hmacSign(payload));
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
   const expiresAt = parseInt(payload, 10);
   return !isNaN(expiresAt) && Date.now() <= expiresAt;
 }
