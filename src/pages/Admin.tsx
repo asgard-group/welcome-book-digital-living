@@ -1016,14 +1016,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setBuildings((prev) => prev.filter((b) => b.id !== slug));
   };
 
-  const handleRestore = async (slug: string) => {
-    if (!confirm(`Restaurer le contenu d'origine de « ${slug} » ? Les modifications faites dans l'admin pour ce logement seront remplacées.`)) return;
-    const res = await fetch(`/api/building-admin?restore=${encodeURIComponent(slug)}`, { method: "POST", credentials: "include" });
-    if (res.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
-    if (!res.ok) { toast.error("Impossible de restaurer le contenu."); return; }
-    toast.success("Contenu d'origine restauré.");
-  };
-
   const handleRenameSlug = async (oldSlug: string, newSlug: string) => {
     // Fetch current building data
     const resGet = await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { credentials: "include" });
@@ -1147,15 +1139,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                         <Eye className="h-3.5 w-3.5" /> Voir
                       </a>
-                      {b.hasDefault && (
-                        <button
-                          onClick={() => handleRestore(b.id)}
-                          title="Remettre le contenu d'origine"
-                          className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
-                        >
-                          Restaurer le contenu
-                        </button>
-                      )}
                       <button
                         onClick={() => handleDelete(b.id)}
                         title="Supprimer ce logement"
