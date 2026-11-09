@@ -10,5 +10,6 @@ export default async (req: Request) => {
   const token = getCookie(req, ADMIN_COOKIE_NAME);
   if (token) await revokeAdminSession(token);
 
-  return json(200, { ok: true }, { "Set-Cookie": clearAdminCookie() });
+  const secure = new URL(req.url).protocol === "https:";
+  return json(200, { ok: true }, { "Set-Cookie": clearAdminCookie(secure) });
 };

@@ -1012,8 +1012,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     if (res.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
     if (!res.ok) { toast.error("Erreur lors de la suppression."); return; }
     toast.success("Logement supprimé.");
-    setLoadingBuildings(true);
-    await loadBuildings();
+    // Optimistic: retire immédiatement de l'UI sans attendre la propagation Blobs
+    setBuildings((prev) => prev.filter((b) => b.id !== slug));
   };
 
   const handleRenameSlug = async (oldSlug: string, newSlug: string) => {
