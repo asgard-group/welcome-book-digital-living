@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft, ChevronUp, ChevronDown } from "lucide-react";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
+import { DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -181,8 +182,8 @@ function SectionSep() {
 }
 
 /* ─── ImageUpload ────────────────────────────────────────────────────────── */
-function ImageUpload({ label, slug, field, value, onChange }: {
-  label: string; slug: string; field: string; value?: string; onChange: (url: string) => void;
+function ImageUpload({ label, slug, field, value, fallbackSrc, onChange }: {
+  label: string; slug: string; field: string; value?: string; fallbackSrc?: string; onChange: (url: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useState<HTMLInputElement | null>(null);
@@ -229,6 +230,18 @@ function ImageUpload({ label, slug, field, value, onChange }: {
               </label>
               <span className="text-[#1c2626]/20">·</span>
               <button type="button" onClick={() => onChange("")} className="text-xs text-red-400 hover:text-red-600 transition">Supprimer</button>
+            </div>
+          </div>
+        ) : fallbackSrc ? (
+          <div>
+            <img src={fallbackSrc} alt="" className="w-full h-32 object-cover rounded-t-xl" />
+            <div className="flex items-center gap-2 px-3 py-2 border-t border-black/8">
+              <span className="text-xs text-[#1c2626]/50">Photo par défaut (affichée actuellement)</span>
+              <span className="text-[#1c2626]/20">·</span>
+              <label className="cursor-pointer text-xs text-[#1c2626]/60 hover:text-[#1c2626] transition">
+                {uploading ? "Upload en cours…" : "Remplacer"}
+                <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+              </label>
             </div>
           </div>
         ) : (
@@ -307,20 +320,14 @@ function TabInfos({ data, onChange, originalId }: { data: BuildingData; onChange
             </div>
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="max-w-md">
           <ImageUpload
             label="Photo de fond"
             slug={data.id}
             field="background"
             value={data.backgroundUrl}
+            fallbackSrc={DEFAULT_BACKGROUND_URL}
             onChange={(url) => set("backgroundUrl", url || undefined)}
-          />
-          <ImageUpload
-            label="Logo de l'immeuble"
-            slug={data.id}
-            field="logo"
-            value={data.logoUrl}
-            onChange={(url) => set("logoUrl", url || undefined)}
           />
         </div>
       </div>
