@@ -1,54 +1,22 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { SERVICE_ICONS } from "@/lib/serviceIcons";
 import {
   ChevronLeft,
   ArrowRight,
   Check,
   Plus,
   Wrench,
-  KeyRound,
-  Sparkles,
-  Wifi,
-  ShieldCheck,
-  CookingPot,
-  Coffee,
-  Droplet,
-  BellRing,
-  Printer,
-  Apple,
-  Palette,
-  Leaf,
-  Armchair,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import joroLogo from "@/assets/joro-living-logo.png";
-import meetingImg from "@/assets/meeting.jpg";
 import kaffeImg from "@/assets/kaffe.jpg";
-import livingImg from "@/assets/living.jpg";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ExternalLink } from "@/components/ExternalLink";
 
-const JORO_SPACE_IMAGES = [meetingImg, kaffeImg, livingImg];
-
-// Maps the "icone" Select option chosen in Notion's Services table to a lucide icon.
-const SERVICE_ICONS: Record<string, LucideIcon> = {
-  "clé": KeyRound,
-  bouclier: ShieldCheck,
-  wifi: Wifi,
-  cuisine: CookingPot,
-  "café": Coffee,
-  "ménage": Sparkles,
-  outil: Wrench,
-  eau: Droplet,
-  imprimante: Printer,
-  nourriture: Apple,
-  "déco": Palette,
-  plante: Leaf,
-  mobilier: Armchair,
-  alarme: BellRing,
-};
+const JORO_SPACE_IMAGES = [kaffeImg];
 
 function ServiceCard({
   icon: Icon,

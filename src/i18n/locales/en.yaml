@@ -82,15 +82,9 @@ services:
   joroSpaceTitle: "Jöro Space"
   joroSpaceSubtitle: "Discover the Jöro ecosystem"
   joroSpaceItems:
-    - name: "Jöro Meeting"
-      role: "Events & meetings"
-      link: "https://joro-space.fr/lieux-reunions-evenements/"
     - name: "Jöro Kaffé"
       role: "Coffee & coworking"
       link: "https://joro-space.fr/joro-kaffe-coffee-shop-co-working/"
-    - name: "Jöro Living"
-      role: "Aparthotels"
-      link: "https://joro-space.fr/reservation-joro/"
 
 facilities:
   title: "Housing guide"

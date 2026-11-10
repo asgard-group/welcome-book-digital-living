@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft } from "lucide-react";
+import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft, ChevronUp, ChevronDown } from "lucide-react";
 import joroLogo from "@/assets/joro-living-logo.png";
+import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
+import { DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 type Bilingual = { fr: string; en: string };
@@ -135,10 +138,40 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function ItemCard({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
+/** Déplace l'élément `i` d'une position vers le haut (-1) ou le bas (+1). */
+function moveIn<T>(arr: T[], i: number, dir: -1 | 1): T[] {
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return arr;
+  const next = [...arr];
+  [next[i], next[j]] = [next[j], next[i]];
+  return next;
+}
+
+/** Props ↑ ↓ d'une carte : undefined aux extrémités (bouton désactivé). */
+function moveProps(i: number, len: number, move: (i: number, dir: -1 | 1) => void) {
+  return {
+    onMoveUp: i > 0 ? () => move(i, -1) : undefined,
+    onMoveDown: i < len - 1 ? () => move(i, 1) : undefined,
+  };
+}
+
+function MoveButtons({ onMoveUp, onMoveDown }: { onMoveUp?: () => void; onMoveDown?: () => void }) {
+  const cls = "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#1c2626]/40 hover:text-[#1c2626] hover:bg-black/5 transition disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#1c2626]/40";
+  return (
+    <>
+      <button type="button" onClick={onMoveUp} disabled={!onMoveUp} title="Monter" aria-label="Monter" className={cls}><ChevronUp className="h-4 w-4" /></button>
+      <button type="button" onClick={onMoveDown} disabled={!onMoveDown} title="Descendre" aria-label="Descendre" className={cls}><ChevronDown className="h-4 w-4" /></button>
+    </>
+  );
+}
+
+function ItemCard({ children, onRemove, onMoveUp, onMoveDown }: { children: React.ReactNode; onRemove: () => void; onMoveUp?: () => void; onMoveDown?: () => void }) {
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4 space-y-3 relative">
-      <div className="absolute top-3 right-3"><RemoveButton onClick={onRemove} /></div>
+      <div className="absolute top-3 right-3 flex items-center gap-0.5">
+        {(onMoveUp || onMoveDown) && <MoveButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />}
+        <RemoveButton onClick={onRemove} />
+      </div>
       {children}
     </div>
   );
@@ -149,8 +182,8 @@ function SectionSep() {
 }
 
 /* ─── ImageUpload ────────────────────────────────────────────────────────── */
-function ImageUpload({ label, slug, field, value, onChange }: {
-  label: string; slug: string; field: string; value?: string; onChange: (url: string) => void;
+function ImageUpload({ label, slug, field, value, fallbackSrc, onChange }: {
+  label: string; slug: string; field: string; value?: string; fallbackSrc?: string; onChange: (url: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useState<HTMLInputElement | null>(null);
@@ -199,6 +232,18 @@ function ImageUpload({ label, slug, field, value, onChange }: {
               <button type="button" onClick={() => onChange("")} className="text-xs text-red-400 hover:text-red-600 transition">Supprimer</button>
             </div>
           </div>
+        ) : fallbackSrc ? (
+          <div>
+            <img src={fallbackSrc} alt="" className="w-full h-32 object-cover rounded-t-xl" />
+            <div className="flex items-center gap-2 px-3 py-2 border-t border-black/8">
+              <span className="text-xs text-[#1c2626]/50">Photo par défaut (affichée actuellement)</span>
+              <span className="text-[#1c2626]/20">·</span>
+              <label className="cursor-pointer text-xs text-[#1c2626]/60 hover:text-[#1c2626] transition">
+                {uploading ? "Upload en cours…" : "Remplacer"}
+                <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+              </label>
+            </div>
+          </div>
         ) : (
           <label className="flex flex-col items-center justify-center gap-2 py-7 cursor-pointer">
             {uploading
@@ -215,7 +260,7 @@ function ImageUpload({ label, slug, field, value, onChange }: {
 }
 
 /* ─── Tab: Infos de base ─────────────────────────────────────────────────── */
-function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d: BuildingData) => void; isNew: boolean }) {
+function TabInfos({ data, onChange, originalId }: { data: BuildingData; onChange: (d: BuildingData) => void; originalId?: string }) {
   const set = (key: keyof BuildingData, val: unknown) => onChange({ ...data, [key]: val });
   return (
     <div className="space-y-4">
@@ -230,11 +275,14 @@ function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d:
             <input
               className={inputCls}
               value={data.id}
-              readOnly={!isNew}
               onChange={(e) => set("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
               placeholder="haussmann-halevy-1"
-              title={isNew ? undefined : "Le slug ne peut pas être modifié après création"}
             />
+            {originalId && data.id && data.id !== originalId && (
+              <p className="mt-1.5 text-xs text-amber-700">
+                Le lien <span className="font-mono">/{originalId}</span> cessera de fonctionner (QR codes et liens magiques déjà envoyés compris). Nouveau lien : <span className="font-mono">/{data.id}</span>
+              </p>
+            )}
           </Field>
         </div>
         <Field label="Adresse complète">
@@ -255,26 +303,6 @@ function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d:
         </div>
       </div>
 
-      {/* WiFi invité */}
-      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className={sectionTitle}>WiFi invité <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
-          {!data.guestWifi
-            ? <button type="button" onClick={() => set("guestWifi", { network: "", password: "" })} className="text-xs text-[#1c2626]/60 hover:text-[#1c2626]">+ Ajouter</button>
-            : <button type="button" onClick={() => set("guestWifi", undefined)} className="text-xs text-red-400 hover:text-red-600">Supprimer</button>}
-        </div>
-        {data.guestWifi && (
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Réseau">
-              <input className={inputCls} value={data.guestWifi.network} onChange={(e) => set("guestWifi", { ...data.guestWifi, network: e.target.value })} placeholder="JORO-GUEST" />
-            </Field>
-            <Field label="Mot de passe">
-              <input className={inputCls} value={data.guestWifi.password} onChange={(e) => set("guestWifi", { ...data.guestWifi, password: e.target.value })} placeholder="" />
-            </Field>
-          </div>
-        )}
-      </div>
-
       {/* Apparence */}
       <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
         <p className={sectionTitle}>Apparence <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
@@ -292,20 +320,14 @@ function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d:
             </div>
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="max-w-md">
           <ImageUpload
             label="Photo de fond"
             slug={data.id}
             field="background"
             value={data.backgroundUrl}
+            fallbackSrc={DEFAULT_BACKGROUND_URL}
             onChange={(url) => set("backgroundUrl", url || undefined)}
-          />
-          <ImageUpload
-            label="Logo de l'immeuble"
-            slug={data.id}
-            field="logo"
-            value={data.logoUrl}
-            onChange={(url) => set("logoUrl", url || undefined)}
           />
         </div>
       </div>
@@ -321,12 +343,13 @@ function TabAcces({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
   };
   const add = () => onChange({ ...data, access: [...steps, { name: { fr: "", en: "" } }] });
   const remove = (i: number) => onChange({ ...data, access: steps.filter((_, j) => j !== i) });
+  const move = (i: number, dir: -1 | 1) => onChange({ ...data, access: moveIn(steps, i, dir) });
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#1c2626]/50 mb-4">Étapes pour accéder à l'appartement (codes, ascenseur, porte…)</p>
       {steps.map((step, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, steps.length, move)}>
           <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">Étape {i + 1}</div>
           <BilingualInput label="Titre de l'étape" value={step.name} onChange={(v) => update(i, { ...step, name: v })} />
           <BilingualInput label="Description" value={step.detail ?? { fr: "", en: "" }} onChange={(v) => update(i, { ...step, detail: v.fr || v.en ? v : undefined })} />
@@ -348,6 +371,7 @@ function TabCheckin({ data, onChange }: { data: BuildingData; onChange: (d: Buil
   };
   const add = () => onChange({ ...data, stay: [...stays, { kind: "information", name: { fr: "", en: "" }, detail: { fr: "", en: "" } }] });
   const remove = (i: number) => onChange({ ...data, stay: stays.filter((_, j) => j !== i) });
+  const move = (i: number, dir: -1 | 1) => onChange({ ...data, stay: moveIn(stays, i, dir) });
 
   const KIND_LABELS: Record<StayBlock["kind"], string> = {
     arrivee: "Arrivée (15h)",
@@ -359,7 +383,7 @@ function TabCheckin({ data, onChange }: { data: BuildingData; onChange: (d: Buil
     <div className="space-y-3">
       <p className="text-sm text-[#1c2626]/50 mb-4">Les lignes commençant par « - » s'affichent en puces dans l'app.</p>
       {stays.map((block, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, stays.length, move)}>
           <Field label="Type de bloc">
             <select
               className={inputCls}
@@ -388,18 +412,40 @@ function TabFaq({ data, onChange }: { data: BuildingData; onChange: (d: Building
   };
   const add = () => onChange({ ...data, extraInfo: [...items, { name: { fr: "", en: "" }, detail: { fr: "", en: "" } }] });
   const remove = (i: number) => onChange({ ...data, extraInfo: items.filter((_, j) => j !== i) });
+  const move = (i: number, dir: -1 | 1) => onChange({ ...data, extraInfo: moveIn(items, i, dir) });
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#1c2626]/50 mb-4">Questions / réponses affichées en accordéon sur la page d'accès.</p>
       {items.map((item, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <BilingualInput label="Question" value={item.name} onChange={(v) => update(i, { ...item, name: v })} />
           <BilingualInput label="Réponse" value={item.detail ?? { fr: "", en: "" }} onChange={(v) => update(i, { ...item, detail: v.fr || v.en ? v : undefined })} multiline />
         </ItemCard>
       ))}
       <AddButton label="Ajouter une question" onClick={add} />
     </div>
+  );
+}
+
+/** Sélecteur d'icône (liste fermée des icônes gérées par la page Services). */
+function IconSelect({ value, onChange }: { value?: string; onChange: (v?: string) => void }) {
+  const known = SERVICE_ICON_OPTIONS.some((o) => o.value === value);
+  return (
+    <Select value={value || "none"} onValueChange={(v) => onChange(v === "none" ? undefined : v)}>
+      <SelectTrigger className="h-auto rounded-xl border-black/15 bg-[#f5f2ed] px-3.5 py-2.5 text-sm text-[#1c2626]">
+        <SelectValue placeholder="Aucune icône" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Aucune icône (par défaut)</SelectItem>
+        {SERVICE_ICON_OPTIONS.map(({ value: v, label, Icon }) => (
+          <SelectItem key={v} value={v}>
+            <span className="flex items-center gap-2"><Icon className="h-4 w-4" /> {label}</span>
+          </SelectItem>
+        ))}
+        {value && !known && <SelectItem value={value}>{value} (personnalisée)</SelectItem>}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -412,16 +458,17 @@ function ServiceList({
   const update = (i: number, item: ServiceItem) => { const next = [...items]; next[i] = item; onChange(next); };
   const add = () => onChange([...items, { name: { fr: "", en: "" } }]);
   const remove = (i: number) => onChange(items.filter((_, j) => j !== i));
+  const move = (i: number, dir: -1 | 1) => onChange(moveIn(items, i, dir));
 
   return (
     <div className="space-y-3">
       <p className={sectionTitle}>{label}</p>
       {items.map((svc, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <BilingualInput label="Nom du service" value={svc.name} onChange={(v) => update(i, { ...svc, name: v })} />
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Icône (texte libre)">
-              <input className={inputCls} value={svc.icon ?? ""} onChange={(e) => update(i, { ...svc, icon: e.target.value || undefined })} placeholder="wifi, clé, ménage…" />
+            <Field label="Icône">
+              <IconSelect value={svc.icon} onChange={(icon) => update(i, { ...svc, icon })} />
             </Field>
             <Field label="Email de contact (optionnel)">
               <input className={inputCls} type="email" value={svc.email ?? ""} onChange={(e) => update(i, { ...svc, email: e.target.value || undefined })} placeholder="reservation@joro-space.fr" />
@@ -470,11 +517,12 @@ function PlaceList({
   const update = (i: number, item: PlaceItem) => { const next = [...items]; next[i] = item; onChange(next); };
   const add = () => onChange([...items, { name: "", description: { fr: "", en: "" } }]);
   const remove = (i: number) => onChange(items.filter((_, j) => j !== i));
+  const move = (i: number, dir: -1 | 1) => onChange(moveIn(items, i, dir));
 
   return (
     <div className="space-y-3">
       {items.map((place, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Nom">
               <input className={inputCls} value={place.name} onChange={(e) => update(i, { ...place, name: e.target.value })} />
@@ -544,6 +592,9 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
   };
   const removeItem = (si: number, ii: number) =>
     updateSection(si, { ...sections[si], items: sections[si].items.filter((_, j) => j !== ii) });
+  const moveItem = (si: number, ii: number, dir: -1 | 1) =>
+    updateSection(si, { ...sections[si], items: moveIn(sections[si].items, ii, dir) });
+  const moveSection = (si: number, dir: -1 | 1) => updateSections(moveIn(sections, si, dir));
   const addItem = (si: number) =>
     updateSection(si, { ...sections[si], items: [...sections[si].items, { name: { fr: "", en: "" } }] });
 
@@ -553,9 +604,12 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
         <div key={section.id} className={`${card} p-4 space-y-4`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest">Section {si + 1}</span>
-            <button type="button" onClick={() => removeSection(si)} className="flex h-7 w-7 items-center justify-center rounded-lg text-[#1c2626]/30 hover:text-red-500 hover:bg-red-50 transition">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <MoveButtons {...moveProps(si, sections.length, moveSection)} />
+              <button type="button" onClick={() => removeSection(si)} className="flex h-7 w-7 items-center justify-center rounded-lg text-[#1c2626]/30 hover:text-red-500 hover:bg-red-50 transition">
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
           <BilingualInput label="Titre de la section" value={section.title} onChange={(v) => updateSection(si, { ...section, title: v })} />
           <div className="grid grid-cols-2 gap-3">
@@ -573,7 +627,7 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
           <div className="border-t border-black/8 pt-4 space-y-3">
             <p className="text-xs font-medium text-[#1c2626]/50 uppercase tracking-wide">Éléments</p>
             {section.items.map((item, ii) => (
-              <ItemCard key={ii} onRemove={() => removeItem(si, ii)}>
+              <ItemCard key={ii} onRemove={() => removeItem(si, ii)} {...moveProps(ii, section.items.length, (i, d) => moveItem(si, i, d))}>
                 <BilingualInput label="Nom" value={item.name} onChange={(v) => updateItem(si, ii, { ...item, name: v })} />
                 <BilingualInput label="Description" value={item.detail ?? { fr: "", en: "" }} onChange={(v) => updateItem(si, ii, { ...item, detail: v.fr || v.en ? v : undefined })} multiline />
                 <Field label="URL vidéo (optionnel)">
@@ -607,16 +661,15 @@ function BuildingForm({
   initial,
   isNew,
   onSave,
-  onRenameSlug,
   onCancel,
 }: {
   initial: BuildingData;
   isNew: boolean;
-  onSave: (data: BuildingData) => Promise<void>;
-  onRenameSlug?: (oldSlug: string, newSlug: string) => Promise<void>;
+  onSave: (data: BuildingData, originalSlug?: string) => Promise<void>;
   onCancel: () => void;
 }) {
   const [data, setData] = useState<BuildingData>(initial);
+  const originalId = isNew ? undefined : initial.id;
   const [tab, setTab] = useState<TabId>("infos");
   const [saving, setSaving] = useState(false);
 
@@ -625,7 +678,7 @@ function BuildingForm({
     if (!data.name) { toast.error("Le nom public est obligatoire."); setTab("infos"); return; }
     setSaving(true);
     try {
-      await onSave(data);
+      await onSave(data, originalId);
     } finally {
       setSaving(false);
     }
@@ -646,20 +699,6 @@ function BuildingForm({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!isNew && onRenameSlug && data.id && (
-              <button
-                onClick={async () => {
-                  const newSlug = window.prompt(`Nouveau slug (identifiant URL)\nActuel : ${data.id}\n\nUniquement lettres minuscules, chiffres et tirets.`);
-                  if (!newSlug || newSlug === data.id) return;
-                  if (!/^[a-z0-9-]+$/.test(newSlug)) { toast.error("Slug invalide : lettres minuscules, chiffres et tirets uniquement."); return; }
-                  if (!window.confirm(`Changer «${data.id}» → «${newSlug}» ?\nCette action est irréversible.`)) return;
-                  await onRenameSlug(data.id, newSlug);
-                }}
-                className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
-              >
-                <Key className="h-3.5 w-3.5" /> Changer le slug
-              </button>
-            )}
             {!isNew && data.id && (
               <a href={`/${data.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                 <Eye className="h-3.5 w-3.5" /> Prévisualiser
@@ -688,7 +727,7 @@ function BuildingForm({
 
       {/* Content */}
       <main className="mx-auto max-w-5xl px-6 py-8">
-        {tab === "infos" && <TabInfos data={data} onChange={setData} isNew={isNew} />}
+        {tab === "infos" && <TabInfos data={data} onChange={setData} originalId={originalId} />}
         {tab === "acces" && <TabAcces data={data} onChange={setData} />}
         {tab === "checkin" && <TabCheckin data={data} onChange={setData} />}
         {tab === "faq" && <TabFaq data={data} onChange={setData} />}
@@ -986,7 +1025,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleSave = async (data: BuildingData) => {
+  const handleSave = async (data: BuildingData, originalSlug?: string) => {
+    const renamed = !!originalSlug && originalSlug !== data.id;
+    if (renamed) {
+      if (!/^[a-z0-9-]+$/.test(data.id)) { toast.error("Slug invalide : lettres minuscules, chiffres et tirets uniquement."); return; }
+      if (["access", "admin"].includes(data.id)) { toast.error("Ce slug est réservé."); return; }
+      if (buildings.some((b) => b.id === data.id)) { toast.error("Ce slug est déjà utilisé par un autre logement."); return; }
+      if (!confirm(`Changer le slug « ${originalSlug} » → « ${data.id} » ?\nLe lien /${originalSlug} ne fonctionnera plus.`)) return;
+    }
     const res = await fetch("/api/building-admin", {
       method: "POST",
       credentials: "include",
@@ -999,7 +1045,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       toast.error("Erreur lors de l'enregistrement.");
       return;
     }
-    toast.success("Logement enregistré.");
+    if (renamed) {
+      // Le logement existe maintenant sous le nouveau slug : on retire l'ancien.
+      const del = await fetch(`/api/building-admin?slug=${encodeURIComponent(originalSlug!)}`, { method: "DELETE", credentials: "include" });
+      if (!del.ok) toast.error(`Enregistré sous /${data.id}, mais l'ancien logement « ${originalSlug} » n'a pas pu être supprimé.`);
+      else toast.success(`Slug changé : « ${originalSlug} » → « ${data.id} ».`);
+    } else {
+      toast.success("Logement enregistré.");
+    }
     setView({ screen: "dashboard" });
     setEditData(null);
     setLoadingBuildings(true);
@@ -1016,41 +1069,38 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setBuildings((prev) => prev.filter((b) => b.id !== slug));
   };
 
-  const handleRestore = async (slug: string) => {
-    if (!confirm(`Restaurer le contenu d'origine de « ${slug} » ? Les modifications faites dans l'admin pour ce logement seront remplacées.`)) return;
-    const res = await fetch(`/api/building-admin?restore=${encodeURIComponent(slug)}`, { method: "POST", credentials: "include" });
-    if (res.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
-    if (!res.ok) { toast.error("Impossible de restaurer le contenu."); return; }
-    toast.success("Contenu d'origine restauré.");
-  };
+  const handleDuplicate = async (b: BuildingOption) => {
+    const newName = window.prompt("Nom du nouveau logement :", `${b.name} (copie)`);
+    if (!newName?.trim()) return;
+    const suggested = `${b.id}-copie`;
+    const newSlug = window.prompt("Slug (identifiant URL) du nouveau logement :\nLettres minuscules, chiffres et tirets uniquement.", suggested)?.trim();
+    if (!newSlug) return;
+    if (!/^[a-z0-9-]+$/.test(newSlug)) { toast.error("Slug invalide : lettres minuscules, chiffres et tirets uniquement."); return; }
+    if (["access", "admin"].includes(newSlug)) { toast.error("Ce slug est réservé."); return; }
+    if (buildings.some((x) => x.id === newSlug)) { toast.error("Ce slug est déjà utilisé par un autre logement."); return; }
 
-  const handleRenameSlug = async (oldSlug: string, newSlug: string) => {
-    // Fetch current building data
-    const resGet = await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { credentials: "include" });
-    if (resGet.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
-    if (!resGet.ok) { toast.error("Impossible de récupérer les données."); return; }
-    const data = await resGet.json();
-
-    // Save under new slug (triggers DeepL translation)
-    const updatedData = { ...data, id: newSlug };
-    const toastId = toast.loading(`Changement de slug en cours…`);
-    const resPost = await fetch("/api/building-admin", {
-      method: "POST",
-      credentials: "include",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(updatedData),
-    });
-    if (!resPost.ok) { toast.dismiss(toastId); toast.error("Erreur lors du changement de slug."); return; }
-
-    // Delete old slug
-    await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { method: "DELETE", credentials: "include" });
-
-    toast.dismiss(toastId);
-    toast.success(`Slug changé : «${oldSlug}» → «${newSlug}».`);
-    setView({ screen: "dashboard" });
-    setEditData(null);
-    setLoadingBuildings(true);
-    await loadBuildings();
+    const toastId = toast.loading("Duplication en cours…");
+    try {
+      const resGet = await fetch(`/api/building-admin?slug=${encodeURIComponent(b.id)}`, { credentials: "include" });
+      if (resGet.status === 401) { toast.dismiss(toastId); toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
+      if (!resGet.ok) { toast.dismiss(toastId); toast.error("Impossible de récupérer le logement à dupliquer."); return; }
+      const data = await resGet.json();
+      const resPost = await fetch("/api/building-admin", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...data, id: newSlug, name: newName.trim() }),
+      });
+      toast.dismiss(toastId);
+      if (resPost.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
+      if (!resPost.ok) { toast.error("Erreur lors de la duplication."); return; }
+      toast.success(`Logement dupliqué : /${newSlug}`);
+      setLoadingBuildings(true);
+      await loadBuildings();
+    } catch {
+      toast.dismiss(toastId);
+      toast.error("Erreur lors de la duplication.");
+    }
   };
 
   const buildingUrl = (slug: string) => `${window.location.origin}/${slug}`;
@@ -1084,7 +1134,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         initial={editData}
         isNew={false}
         onSave={handleSave}
-        onRenameSlug={handleRenameSlug}
         onCancel={() => { setView({ screen: "dashboard" }); setEditData(null); }}
       />
     );
@@ -1147,15 +1196,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                         <Eye className="h-3.5 w-3.5" /> Voir
                       </a>
-                      {b.hasDefault && (
-                        <button
-                          onClick={() => handleRestore(b.id)}
-                          title="Remettre le contenu d'origine"
-                          className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
-                        >
-                          Restaurer le contenu
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleDuplicate(b)}
+                        title="Dupliquer ce logement et son contenu"
+                        className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Dupliquer
+                      </button>
                       <button
                         onClick={() => handleDelete(b.id)}
                         title="Supprimer ce logement"
