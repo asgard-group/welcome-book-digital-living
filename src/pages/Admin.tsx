@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft } from "lucide-react";
 import joroLogo from "@/assets/joro-living-logo.png";
+import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 type Bilingual = { fr: string; en: string };
@@ -255,26 +257,6 @@ function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d:
         </div>
       </div>
 
-      {/* WiFi invité */}
-      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className={sectionTitle}>WiFi invité <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
-          {!data.guestWifi
-            ? <button type="button" onClick={() => set("guestWifi", { network: "", password: "" })} className="text-xs text-[#1c2626]/60 hover:text-[#1c2626]">+ Ajouter</button>
-            : <button type="button" onClick={() => set("guestWifi", undefined)} className="text-xs text-red-400 hover:text-red-600">Supprimer</button>}
-        </div>
-        {data.guestWifi && (
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Réseau">
-              <input className={inputCls} value={data.guestWifi.network} onChange={(e) => set("guestWifi", { ...data.guestWifi, network: e.target.value })} placeholder="JORO-GUEST" />
-            </Field>
-            <Field label="Mot de passe">
-              <input className={inputCls} value={data.guestWifi.password} onChange={(e) => set("guestWifi", { ...data.guestWifi, password: e.target.value })} placeholder="" />
-            </Field>
-          </div>
-        )}
-      </div>
-
       {/* Apparence */}
       <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
         <p className={sectionTitle}>Apparence <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
@@ -403,6 +385,27 @@ function TabFaq({ data, onChange }: { data: BuildingData; onChange: (d: Building
   );
 }
 
+/** Sélecteur d'icône (liste fermée des icônes gérées par la page Services). */
+function IconSelect({ value, onChange }: { value?: string; onChange: (v?: string) => void }) {
+  const known = SERVICE_ICON_OPTIONS.some((o) => o.value === value);
+  return (
+    <Select value={value || "none"} onValueChange={(v) => onChange(v === "none" ? undefined : v)}>
+      <SelectTrigger className="h-auto rounded-xl border-black/15 bg-[#f5f2ed] px-3.5 py-2.5 text-sm text-[#1c2626]">
+        <SelectValue placeholder="Aucune icône" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Aucune icône (par défaut)</SelectItem>
+        {SERVICE_ICON_OPTIONS.map(({ value: v, label, Icon }) => (
+          <SelectItem key={v} value={v}>
+            <span className="flex items-center gap-2"><Icon className="h-4 w-4" /> {label}</span>
+          </SelectItem>
+        ))}
+        {value && !known && <SelectItem value={value}>{value} (personnalisée)</SelectItem>}
+      </SelectContent>
+    </Select>
+  );
+}
+
 /* ─── Tab: Services ──────────────────────────────────────────────────────── */
 function ServiceList({
   label, items, onChange,
@@ -420,8 +423,8 @@ function ServiceList({
         <ItemCard key={i} onRemove={() => remove(i)}>
           <BilingualInput label="Nom du service" value={svc.name} onChange={(v) => update(i, { ...svc, name: v })} />
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Icône (texte libre)">
-              <input className={inputCls} value={svc.icon ?? ""} onChange={(e) => update(i, { ...svc, icon: e.target.value || undefined })} placeholder="wifi, clé, ménage…" />
+            <Field label="Icône">
+              <IconSelect value={svc.icon} onChange={(icon) => update(i, { ...svc, icon })} />
             </Field>
             <Field label="Email de contact (optionnel)">
               <input className={inputCls} type="email" value={svc.email ?? ""} onChange={(e) => update(i, { ...svc, email: e.target.value || undefined })} placeholder="reservation@joro-space.fr" />
@@ -1016,6 +1019,40 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setBuildings((prev) => prev.filter((b) => b.id !== slug));
   };
 
+  const handleDuplicate = async (b: BuildingOption) => {
+    const newName = window.prompt("Nom du nouveau logement :", `${b.name} (copie)`);
+    if (!newName?.trim()) return;
+    const suggested = `${b.id}-copie`;
+    const newSlug = window.prompt("Slug (identifiant URL) du nouveau logement :\nLettres minuscules, chiffres et tirets uniquement.", suggested)?.trim();
+    if (!newSlug) return;
+    if (!/^[a-z0-9-]+$/.test(newSlug)) { toast.error("Slug invalide : lettres minuscules, chiffres et tirets uniquement."); return; }
+    if (["access", "admin"].includes(newSlug)) { toast.error("Ce slug est réservé."); return; }
+    if (buildings.some((x) => x.id === newSlug)) { toast.error("Ce slug est déjà utilisé par un autre logement."); return; }
+
+    const toastId = toast.loading("Duplication en cours…");
+    try {
+      const resGet = await fetch(`/api/building-admin?slug=${encodeURIComponent(b.id)}`, { credentials: "include" });
+      if (resGet.status === 401) { toast.dismiss(toastId); toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
+      if (!resGet.ok) { toast.dismiss(toastId); toast.error("Impossible de récupérer le logement à dupliquer."); return; }
+      const data = await resGet.json();
+      const resPost = await fetch("/api/building-admin", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...data, id: newSlug, name: newName.trim() }),
+      });
+      toast.dismiss(toastId);
+      if (resPost.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
+      if (!resPost.ok) { toast.error("Erreur lors de la duplication."); return; }
+      toast.success(`Logement dupliqué : /${newSlug}`);
+      setLoadingBuildings(true);
+      await loadBuildings();
+    } catch {
+      toast.dismiss(toastId);
+      toast.error("Erreur lors de la duplication.");
+    }
+  };
+
   const handleRenameSlug = async (oldSlug: string, newSlug: string) => {
     // Fetch current building data
     const resGet = await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { credentials: "include" });
@@ -1139,6 +1176,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <a href={`/${b.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                         <Eye className="h-3.5 w-3.5" /> Voir
                       </a>
+                      <button
+                        onClick={() => handleDuplicate(b)}
+                        title="Dupliquer ce logement et son contenu"
+                        className="flex items-center gap-1.5 rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Dupliquer
+                      </button>
                       <button
                         onClick={() => handleDelete(b.id)}
                         title="Supprimer ce logement"
