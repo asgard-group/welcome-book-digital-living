@@ -217,7 +217,7 @@ function ImageUpload({ label, slug, field, value, onChange }: {
 }
 
 /* ─── Tab: Infos de base ─────────────────────────────────────────────────── */
-function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d: BuildingData) => void; isNew: boolean }) {
+function TabInfos({ data, onChange, originalId }: { data: BuildingData; onChange: (d: BuildingData) => void; originalId?: string }) {
   const set = (key: keyof BuildingData, val: unknown) => onChange({ ...data, [key]: val });
   return (
     <div className="space-y-4">
@@ -232,11 +232,14 @@ function TabInfos({ data, onChange, isNew }: { data: BuildingData; onChange: (d:
             <input
               className={inputCls}
               value={data.id}
-              readOnly={!isNew}
               onChange={(e) => set("id", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
               placeholder="haussmann-halevy-1"
-              title={isNew ? undefined : "Le slug ne peut pas être modifié après création"}
             />
+            {originalId && data.id && data.id !== originalId && (
+              <p className="mt-1.5 text-xs text-amber-700">
+                Le lien <span className="font-mono">/{originalId}</span> cessera de fonctionner (QR codes et liens magiques déjà envoyés compris). Nouveau lien : <span className="font-mono">/{data.id}</span>
+              </p>
+            )}
           </Field>
         </div>
         <Field label="Adresse complète">
@@ -610,16 +613,15 @@ function BuildingForm({
   initial,
   isNew,
   onSave,
-  onRenameSlug,
   onCancel,
 }: {
   initial: BuildingData;
   isNew: boolean;
-  onSave: (data: BuildingData) => Promise<void>;
-  onRenameSlug?: (oldSlug: string, newSlug: string) => Promise<void>;
+  onSave: (data: BuildingData, originalSlug?: string) => Promise<void>;
   onCancel: () => void;
 }) {
   const [data, setData] = useState<BuildingData>(initial);
+  const originalId = isNew ? undefined : initial.id;
   const [tab, setTab] = useState<TabId>("infos");
   const [saving, setSaving] = useState(false);
 
@@ -628,7 +630,7 @@ function BuildingForm({
     if (!data.name) { toast.error("Le nom public est obligatoire."); setTab("infos"); return; }
     setSaving(true);
     try {
-      await onSave(data);
+      await onSave(data, originalId);
     } finally {
       setSaving(false);
     }
@@ -649,20 +651,6 @@ function BuildingForm({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!isNew && onRenameSlug && data.id && (
-              <button
-                onClick={async () => {
-                  const newSlug = window.prompt(`Nouveau slug (identifiant URL)\nActuel : ${data.id}\n\nUniquement lettres minuscules, chiffres et tirets.`);
-                  if (!newSlug || newSlug === data.id) return;
-                  if (!/^[a-z0-9-]+$/.test(newSlug)) { toast.error("Slug invalide : lettres minuscules, chiffres et tirets uniquement."); return; }
-                  if (!window.confirm(`Changer «${data.id}» → «${newSlug}» ?\nCette action est irréversible.`)) return;
-                  await onRenameSlug(data.id, newSlug);
-                }}
-                className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
-              >
-                <Key className="h-3.5 w-3.5" /> Changer le slug
-              </button>
-            )}
             {!isNew && data.id && (
               <a href={`/${data.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
                 <Eye className="h-3.5 w-3.5" /> Prévisualiser
@@ -691,7 +679,7 @@ function BuildingForm({
 
       {/* Content */}
       <main className="mx-auto max-w-5xl px-6 py-8">
-        {tab === "infos" && <TabInfos data={data} onChange={setData} isNew={isNew} />}
+        {tab === "infos" && <TabInfos data={data} onChange={setData} originalId={originalId} />}
         {tab === "acces" && <TabAcces data={data} onChange={setData} />}
         {tab === "checkin" && <TabCheckin data={data} onChange={setData} />}
         {tab === "faq" && <TabFaq data={data} onChange={setData} />}
@@ -989,7 +977,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleSave = async (data: BuildingData) => {
+  const handleSave = async (data: BuildingData, originalSlug?: string) => {
+    const renamed = !!originalSlug && originalSlug !== data.id;
+    if (renamed) {
+      if (!/^[a-z0-9-]+$/.test(data.id)) { toast.error("Slug invalide : lettres minuscules, chiffres et tirets uniquement."); return; }
+      if (["access", "admin"].includes(data.id)) { toast.error("Ce slug est réservé."); return; }
+      if (buildings.some((b) => b.id === data.id)) { toast.error("Ce slug est déjà utilisé par un autre logement."); return; }
+      if (!confirm(`Changer le slug « ${originalSlug} » → « ${data.id} » ?\nLe lien /${originalSlug} ne fonctionnera plus.`)) return;
+    }
     const res = await fetch("/api/building-admin", {
       method: "POST",
       credentials: "include",
@@ -1002,7 +997,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       toast.error("Erreur lors de l'enregistrement.");
       return;
     }
-    toast.success("Logement enregistré.");
+    if (renamed) {
+      // Le logement existe maintenant sous le nouveau slug : on retire l'ancien.
+      const del = await fetch(`/api/building-admin?slug=${encodeURIComponent(originalSlug!)}`, { method: "DELETE", credentials: "include" });
+      if (!del.ok) toast.error(`Enregistré sous /${data.id}, mais l'ancien logement « ${originalSlug} » n'a pas pu être supprimé.`);
+      else toast.success(`Slug changé : « ${originalSlug} » → « ${data.id} ».`);
+    } else {
+      toast.success("Logement enregistré.");
+    }
     setView({ screen: "dashboard" });
     setEditData(null);
     setLoadingBuildings(true);
@@ -1053,35 +1055,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleRenameSlug = async (oldSlug: string, newSlug: string) => {
-    // Fetch current building data
-    const resGet = await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { credentials: "include" });
-    if (resGet.status === 401) { toast.error("Session expirée, reconnectez-vous."); onLogout(); return; }
-    if (!resGet.ok) { toast.error("Impossible de récupérer les données."); return; }
-    const data = await resGet.json();
-
-    // Save under new slug (triggers DeepL translation)
-    const updatedData = { ...data, id: newSlug };
-    const toastId = toast.loading(`Changement de slug en cours…`);
-    const resPost = await fetch("/api/building-admin", {
-      method: "POST",
-      credentials: "include",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(updatedData),
-    });
-    if (!resPost.ok) { toast.dismiss(toastId); toast.error("Erreur lors du changement de slug."); return; }
-
-    // Delete old slug
-    await fetch(`/api/building-admin?slug=${encodeURIComponent(oldSlug)}`, { method: "DELETE", credentials: "include" });
-
-    toast.dismiss(toastId);
-    toast.success(`Slug changé : «${oldSlug}» → «${newSlug}».`);
-    setView({ screen: "dashboard" });
-    setEditData(null);
-    setLoadingBuildings(true);
-    await loadBuildings();
-  };
-
   const buildingUrl = (slug: string) => `${window.location.origin}/${slug}`;
   const qrSrc = (slug: string) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(buildingUrl(slug))}`;
 
@@ -1113,7 +1086,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         initial={editData}
         isNew={false}
         onSave={handleSave}
-        onRenameSlug={handleRenameSlug}
         onCancel={() => { setView({ screen: "dashboard" }); setEditData(null); }}
       />
     );
