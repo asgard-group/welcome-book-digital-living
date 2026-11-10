@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft } from "lucide-react";
+import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft, ChevronUp, ChevronDown } from "lucide-react";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -137,10 +137,40 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function ItemCard({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
+/** Déplace l'élément `i` d'une position vers le haut (-1) ou le bas (+1). */
+function moveIn<T>(arr: T[], i: number, dir: -1 | 1): T[] {
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return arr;
+  const next = [...arr];
+  [next[i], next[j]] = [next[j], next[i]];
+  return next;
+}
+
+/** Props ↑ ↓ d'une carte : undefined aux extrémités (bouton désactivé). */
+function moveProps(i: number, len: number, move: (i: number, dir: -1 | 1) => void) {
+  return {
+    onMoveUp: i > 0 ? () => move(i, -1) : undefined,
+    onMoveDown: i < len - 1 ? () => move(i, 1) : undefined,
+  };
+}
+
+function MoveButtons({ onMoveUp, onMoveDown }: { onMoveUp?: () => void; onMoveDown?: () => void }) {
+  const cls = "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#1c2626]/40 hover:text-[#1c2626] hover:bg-black/5 transition disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-[#1c2626]/40";
+  return (
+    <>
+      <button type="button" onClick={onMoveUp} disabled={!onMoveUp} title="Monter" aria-label="Monter" className={cls}><ChevronUp className="h-4 w-4" /></button>
+      <button type="button" onClick={onMoveDown} disabled={!onMoveDown} title="Descendre" aria-label="Descendre" className={cls}><ChevronDown className="h-4 w-4" /></button>
+    </>
+  );
+}
+
+function ItemCard({ children, onRemove, onMoveUp, onMoveDown }: { children: React.ReactNode; onRemove: () => void; onMoveUp?: () => void; onMoveDown?: () => void }) {
   return (
     <div className="rounded-xl border border-black/10 bg-white p-4 space-y-3 relative">
-      <div className="absolute top-3 right-3"><RemoveButton onClick={onRemove} /></div>
+      <div className="absolute top-3 right-3 flex items-center gap-0.5">
+        {(onMoveUp || onMoveDown) && <MoveButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />}
+        <RemoveButton onClick={onRemove} />
+      </div>
       {children}
     </div>
   );
@@ -306,12 +336,13 @@ function TabAcces({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
   };
   const add = () => onChange({ ...data, access: [...steps, { name: { fr: "", en: "" } }] });
   const remove = (i: number) => onChange({ ...data, access: steps.filter((_, j) => j !== i) });
+  const move = (i: number, dir: -1 | 1) => onChange({ ...data, access: moveIn(steps, i, dir) });
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#1c2626]/50 mb-4">Étapes pour accéder à l'appartement (codes, ascenseur, porte…)</p>
       {steps.map((step, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, steps.length, move)}>
           <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">Étape {i + 1}</div>
           <BilingualInput label="Titre de l'étape" value={step.name} onChange={(v) => update(i, { ...step, name: v })} />
           <BilingualInput label="Description" value={step.detail ?? { fr: "", en: "" }} onChange={(v) => update(i, { ...step, detail: v.fr || v.en ? v : undefined })} />
@@ -333,6 +364,7 @@ function TabCheckin({ data, onChange }: { data: BuildingData; onChange: (d: Buil
   };
   const add = () => onChange({ ...data, stay: [...stays, { kind: "information", name: { fr: "", en: "" }, detail: { fr: "", en: "" } }] });
   const remove = (i: number) => onChange({ ...data, stay: stays.filter((_, j) => j !== i) });
+  const move = (i: number, dir: -1 | 1) => onChange({ ...data, stay: moveIn(stays, i, dir) });
 
   const KIND_LABELS: Record<StayBlock["kind"], string> = {
     arrivee: "Arrivée (15h)",
@@ -344,7 +376,7 @@ function TabCheckin({ data, onChange }: { data: BuildingData; onChange: (d: Buil
     <div className="space-y-3">
       <p className="text-sm text-[#1c2626]/50 mb-4">Les lignes commençant par « - » s'affichent en puces dans l'app.</p>
       {stays.map((block, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, stays.length, move)}>
           <Field label="Type de bloc">
             <select
               className={inputCls}
@@ -373,12 +405,13 @@ function TabFaq({ data, onChange }: { data: BuildingData; onChange: (d: Building
   };
   const add = () => onChange({ ...data, extraInfo: [...items, { name: { fr: "", en: "" }, detail: { fr: "", en: "" } }] });
   const remove = (i: number) => onChange({ ...data, extraInfo: items.filter((_, j) => j !== i) });
+  const move = (i: number, dir: -1 | 1) => onChange({ ...data, extraInfo: moveIn(items, i, dir) });
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#1c2626]/50 mb-4">Questions / réponses affichées en accordéon sur la page d'accès.</p>
       {items.map((item, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <BilingualInput label="Question" value={item.name} onChange={(v) => update(i, { ...item, name: v })} />
           <BilingualInput label="Réponse" value={item.detail ?? { fr: "", en: "" }} onChange={(v) => update(i, { ...item, detail: v.fr || v.en ? v : undefined })} multiline />
         </ItemCard>
@@ -418,12 +451,13 @@ function ServiceList({
   const update = (i: number, item: ServiceItem) => { const next = [...items]; next[i] = item; onChange(next); };
   const add = () => onChange([...items, { name: { fr: "", en: "" } }]);
   const remove = (i: number) => onChange(items.filter((_, j) => j !== i));
+  const move = (i: number, dir: -1 | 1) => onChange(moveIn(items, i, dir));
 
   return (
     <div className="space-y-3">
       <p className={sectionTitle}>{label}</p>
       {items.map((svc, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <BilingualInput label="Nom du service" value={svc.name} onChange={(v) => update(i, { ...svc, name: v })} />
           <div className="grid grid-cols-2 gap-3">
             <Field label="Icône">
@@ -476,11 +510,12 @@ function PlaceList({
   const update = (i: number, item: PlaceItem) => { const next = [...items]; next[i] = item; onChange(next); };
   const add = () => onChange([...items, { name: "", description: { fr: "", en: "" } }]);
   const remove = (i: number) => onChange(items.filter((_, j) => j !== i));
+  const move = (i: number, dir: -1 | 1) => onChange(moveIn(items, i, dir));
 
   return (
     <div className="space-y-3">
       {items.map((place, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)}>
+        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Nom">
               <input className={inputCls} value={place.name} onChange={(e) => update(i, { ...place, name: e.target.value })} />
@@ -550,6 +585,9 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
   };
   const removeItem = (si: number, ii: number) =>
     updateSection(si, { ...sections[si], items: sections[si].items.filter((_, j) => j !== ii) });
+  const moveItem = (si: number, ii: number, dir: -1 | 1) =>
+    updateSection(si, { ...sections[si], items: moveIn(sections[si].items, ii, dir) });
+  const moveSection = (si: number, dir: -1 | 1) => updateSections(moveIn(sections, si, dir));
   const addItem = (si: number) =>
     updateSection(si, { ...sections[si], items: [...sections[si].items, { name: { fr: "", en: "" } }] });
 
@@ -559,9 +597,12 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
         <div key={section.id} className={`${card} p-4 space-y-4`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest">Section {si + 1}</span>
-            <button type="button" onClick={() => removeSection(si)} className="flex h-7 w-7 items-center justify-center rounded-lg text-[#1c2626]/30 hover:text-red-500 hover:bg-red-50 transition">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <MoveButtons {...moveProps(si, sections.length, moveSection)} />
+              <button type="button" onClick={() => removeSection(si)} className="flex h-7 w-7 items-center justify-center rounded-lg text-[#1c2626]/30 hover:text-red-500 hover:bg-red-50 transition">
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
           <BilingualInput label="Titre de la section" value={section.title} onChange={(v) => updateSection(si, { ...section, title: v })} />
           <div className="grid grid-cols-2 gap-3">
@@ -579,7 +620,7 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
           <div className="border-t border-black/8 pt-4 space-y-3">
             <p className="text-xs font-medium text-[#1c2626]/50 uppercase tracking-wide">Éléments</p>
             {section.items.map((item, ii) => (
-              <ItemCard key={ii} onRemove={() => removeItem(si, ii)}>
+              <ItemCard key={ii} onRemove={() => removeItem(si, ii)} {...moveProps(ii, section.items.length, (i, d) => moveItem(si, i, d))}>
                 <BilingualInput label="Nom" value={item.name} onChange={(v) => updateItem(si, ii, { ...item, name: v })} />
                 <BilingualInput label="Description" value={item.detail ?? { fr: "", en: "" }} onChange={(v) => updateItem(si, ii, { ...item, detail: v.fr || v.en ? v : undefined })} multiline />
                 <Field label="URL vidéo (optionnel)">
