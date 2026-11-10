@@ -12,13 +12,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import joroLogo from "@/assets/joro-living-logo.png";
-import meetingImg from "@/assets/meeting.jpg";
 import kaffeImg from "@/assets/kaffe.jpg";
-import livingImg from "@/assets/living.jpg";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ExternalLink } from "@/components/ExternalLink";
 
-const JORO_SPACE_IMAGES = [meetingImg, kaffeImg, livingImg];
+const JORO_SPACE_IMAGES = [kaffeImg];
 
 function ServiceCard({
   icon: Icon,
