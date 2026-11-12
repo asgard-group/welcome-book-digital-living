@@ -61,7 +61,7 @@ export function ContactWidget() {
 
       <Accordion type="single" collapsible>
         <AccordionItem value="other-contacts">
-          <AccordionTrigger className="hover:no-underline py-4 text-white">
+          <AccordionTrigger className="justify-start gap-2 hover:no-underline py-4 text-white">
             <span className="font-semibold text-white">{t.contact.otherContacts}</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
@@ -69,18 +69,18 @@ export function ContactWidget() {
               {OTHER_CONTACTS.map((member) => (
                 <ContactCard key={member.name} member={member} t={t} lang={lang} />
               ))}
+
+              <ExternalLink
+                href={`mailto:${GENERAL_EMAIL}`}
+                className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-brand-ink dark:text-white backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80"
+              >
+                <Mail className="h-5 w-5" strokeWidth={1.75} />
+                {GENERAL_EMAIL}
+              </ExternalLink>
             </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      <ExternalLink
-        href={`mailto:${GENERAL_EMAIL}`}
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-brand-ink dark:text-white backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80"
-      >
-        <Mail className="h-5 w-5" strokeWidth={1.75} />
-        {GENERAL_EMAIL}
-      </ExternalLink>
     </div>
   );
 }
