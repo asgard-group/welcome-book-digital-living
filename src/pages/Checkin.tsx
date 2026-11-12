@@ -1,4 +1,4 @@
-import { Wifi, MapPin, ChevronLeft, Copy, ChevronDown, Check } from "lucide-react";
+import { Wifi, MapPin, KeyRound, ChevronLeft, Copy, ChevronDown, Check } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -202,6 +202,10 @@ export default function Checkin() {
             {/* Access steps (door codes, floor, keys...), from this apartment's Notion "Accès" table */}
             {property?.access && property.access.length > 0 && (
               <Widget>
+                <div className="flex items-center gap-3 mb-4">
+                  <KeyRound className="h-5 w-5 text-foreground" strokeWidth={2} />
+                  <h2 className="font-semibold text-foreground">{t.checkin.accessTitle}</h2>
+                </div>
                 <div className="space-y-4">
                   {property.access.map((step, i) => (
                     <div key={`${i}-${step.name.fr}`} className="space-y-4">

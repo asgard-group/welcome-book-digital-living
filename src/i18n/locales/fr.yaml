@@ -63,6 +63,7 @@ checkin:
   subtitle: "Wifi, Accès logement"
   wifiTitle: "Wifi"
   wifiGuestTitle: "Wifi Guest"
+  accessTitle: "Accès au logement"
   network: "Réseau"
   password: "Mot de passe"
   copyAria: "Copier"
