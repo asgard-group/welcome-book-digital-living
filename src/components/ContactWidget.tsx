@@ -21,12 +21,7 @@ type TeamMember = {
 const PRIMARY_CONTACT: TeamMember = { name: "Chris", role: "Housekeeper Manager", phoneHref: "+33659196366" };
 
 const OTHER_CONTACTS: TeamMember[] = [
-  {
-    name: "Mathilde",
-    role: "Reservation Manager",
-    phoneHref: "+33630001014",
-    note: { fr: "Congé maternité", en: "Maternity leave" },
-  },
+  { name: "Mathilde", role: "Reservation Manager", phoneHref: "+33630001014" },
   { name: "Bérénice", role: "Brand Manager", phoneHref: "+33637754570" },
 ];
 
