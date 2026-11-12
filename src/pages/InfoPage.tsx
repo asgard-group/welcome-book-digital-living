@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { ChevronLeft, Phone, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { pageText } from "@/property/texts";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { ContactWidget } from "@/components/ContactWidget";
@@ -8,7 +9,7 @@ import { ExternalLink } from "@/components/ExternalLink";
 
 export default function InfoPage() {
   const { buildingSlug } = useParams<{ buildingSlug: string }>();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { data: property } = useProperty();
 
   const emergencyList = [
@@ -40,10 +41,10 @@ export default function InfoPage() {
           {/* Title */}
           <div className="text-center px-4 pt-[30px] mb-5 shrink-0">
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
-              {t.info.securityTitle}
+              {pageText(property, "info", "title", lang, t.info.securityTitle)}
             </h1>
             <p className="text-base text-white/80">
-              {t.info.subtitle}
+              {pageText(property, "info", "subtitle", lang, t.info.subtitle)}
             </p>
           </div>
 

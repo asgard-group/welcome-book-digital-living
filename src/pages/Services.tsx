@@ -14,6 +14,7 @@ import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import joroLogo from "@/assets/joro-living-logo.png";
 import kaffeImg from "@/assets/kaffe.jpg";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { pageText } from "@/property/texts";
 import { ExternalLink } from "@/components/ExternalLink";
 
 const JORO_SPACE_IMAGES = [kaffeImg];
@@ -91,9 +92,9 @@ export default function Services() {
           {/* Title */}
           <div className="text-center px-4 pt-[30px] mb-5 shrink-0">
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
-              {t.services.title}
+              {pageText(property, "services", "title", lang, t.services.title)}
             </h1>
-            <p className="text-base text-white/80">{t.services.subtitle}</p>
+            <p className="text-base text-white/80">{pageText(property, "services", "subtitle", lang, t.services.subtitle)}</p>
           </div>
 
           {/* Widgets */}

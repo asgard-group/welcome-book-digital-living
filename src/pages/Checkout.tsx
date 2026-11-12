@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { pageText } from "@/property/texts";
 
 const KIND_ICONS: Record<"arrivee" | "depart" | "information", LucideIcon> = {
   arrivee: LogIn,
@@ -84,9 +85,9 @@ export default function Checkout() {
           {/* Title */}
           <div className="text-center px-4 pt-[30px] mb-5 shrink-0">
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
-              {t.checkout.title}
+              {pageText(property, "checkout", "title", lang, t.checkout.title)}
             </h1>
-            <p className="text-base text-white/80">{t.checkout.subtitle}</p>
+            <p className="text-base text-white/80">{pageText(property, "checkout", "subtitle", lang, t.checkout.subtitle)}</p>
           </div>
 
           {/* Horaires banner */}
