@@ -23,6 +23,8 @@ export type AccessStep = {
   name: Bilingual;
   detail?: Bilingual;
   code?: string;
+  /** Affiche le code avant le texte (« A4326 puis OK… »). */
+  codeFirst?: boolean;
 };
 
 export type StayBlock = {
