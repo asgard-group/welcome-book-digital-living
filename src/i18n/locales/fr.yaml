@@ -40,6 +40,7 @@ contact:
   emailLabel: "Email"
   whatsappLabel: "WhatsApp"
   callLabel: "Appeler"
+  otherContacts: "Autre contact en cas d'urgence"
 
 welcome:
   title: "Bienvenue"
