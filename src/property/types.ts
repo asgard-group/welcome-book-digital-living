@@ -63,8 +63,8 @@ export type PropertyData = {
   logoUrl?: string;
   /** From the building's Notion "Services" sub-database. Optional until synced. */
   services?: {
-    included: { name: Bilingual; icon: string }[];
-    quote: { name: Bilingual; icon: string; email?: string }[];
+    included: { name: Bilingual; icon: string; description?: Bilingual }[];
+    quote: { name: Bilingual; icon: string; email?: string; description?: Bilingual }[];
   };
   /**
    * From the building's Notion "Adresses utiles" sub-database, grouped by category id.

@@ -1,6 +1,6 @@
 import {
   KeyRound, ShieldCheck, Wifi, CookingPot, Coffee, Sparkles, Wrench, Droplet,
-  Printer, Apple, Palette, Leaf, Armchair, BellRing,
+  Printer, Apple, Palette, Leaf, Armchair, BellRing, Luggage,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -24,6 +24,7 @@ export const SERVICE_ICON_OPTIONS: { value: string; label: string; Icon: LucideI
   { value: "plante", label: "Plante", Icon: Leaf },
   { value: "mobilier", label: "Mobilier", Icon: Armchair },
   { value: "alarme", label: "Alarme", Icon: BellRing },
+  { value: "valise", label: "Valise", Icon: Luggage },
 ];
 
 export const SERVICE_ICONS: Record<string, LucideIcon> = Object.fromEntries(

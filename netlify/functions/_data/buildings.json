@@ -57,9 +57,9 @@
     ],
     "services": {
       "included": [
-        { "name": { "fr": "Bagagerie sur site", "en": "On-site luggage storage" }, "icon": "clé" },
+        { "name": { "fr": "Bagagerie sur site", "en": "On-site luggage storage" }, "icon": "valise", "description": { "fr": "Gratuits, couloir commun aux 3 appartements. Sous la responsabilité des clients — demander à Jöro les dispos et codes.", "en": "Free, shared hallway for the 3 apartments. Guests' responsibility — ask Jöro for availability and codes." } },
         { "name": { "fr": "Wifi haut débit", "en": "High-speed WiFi" }, "icon": "wifi" },
-        { "name": { "fr": "Bagagerie au Jöro Kaffé", "en": "Luggage storage at Jöro Kaffé" }, "icon": "café" },
+        { "name": { "fr": "Bagagerie au Jöro Kaffé", "en": "Luggage storage at Jöro Kaffé" }, "icon": "valise", "description": { "fr": "Gratuit, sous réserve de disponibilité (prévenir à l'avance). Ouvert 6j/7 (fermé le dimanche).", "en": "Free, subject to availability (let us know in advance). Open 6 days a week (closed on Sundays)." } },
         { "name": { "fr": "Ménage entre chaque séjour", "en": "Cleaning between stays" }, "icon": "ménage" }
       ],
       "quote": [
