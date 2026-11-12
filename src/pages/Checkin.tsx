@@ -209,9 +209,15 @@ export default function Checkin() {
                       <Step step={i + 1} title={step.name[lang]}>
                         {step.detail?.[lang] && (
                           <p className="text-brand-ink/70 dark:text-white/80 text-sm mt-0.5">
-                            {step.detail[lang]}
-                            {step.code && (
-                              <> : <span className="font-semibold text-brand-ink dark:text-white">{step.code}</span></>
+                            {step.code && step.codeFirst ? (
+                              <><span className="font-semibold text-brand-ink dark:text-white">{step.code}</span> {step.detail[lang]}</>
+                            ) : (
+                              <>
+                                {step.detail[lang]}
+                                {step.code && (
+                                  <> : <span className="font-semibold text-brand-ink dark:text-white">{step.code}</span></>
+                                )}
+                              </>
                             )}
                           </p>
                         )}

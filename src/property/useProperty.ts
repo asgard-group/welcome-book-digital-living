@@ -15,7 +15,7 @@ const DEV_BUILDING: PropertyData = {
   backgroundUrl: DEFAULT_BACKGROUND_URL,
   access: [
     { name: { fr: "Entrée de l'immeuble", en: "Building entrance" }, code: "A3187", detail: { fr: "Code de la porte", en: "Door code" } },
-    { name: { fr: "Porte du hall", en: "Hall door" }, code: "A4326", detail: { fr: "puis « OK » sur l'interphone", en: "then « OK » on the intercom" } },
+    { name: { fr: "Porte du hall", en: "Hall door" }, code: "A4326", codeFirst: true, detail: { fr: "puis « OK » sur l'interphone", en: "then « OK » on the intercom" } },
     { name: { fr: "3ème étage, porte grise", en: "3rd floor, grey door" }, detail: { fr: "Clés sur la table : badge immeuble (entrée principale) et clé du local poubelles (RDC, face à l'ascenseur).", en: "Keys on the table: building badge (main entrance) and bin room key (ground floor, facing the lift)." } },
   ],
   extraInfo: [

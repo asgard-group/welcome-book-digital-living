@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type Bilingual = { fr: string; en: string };
 type PlaceItem = { name: string; address?: string; distance?: string; description?: Bilingual; type?: string };
 type ServiceItem = { name: Bilingual; icon?: string; email?: string };
-type AccessStep = { name: Bilingual; detail?: Bilingual; code?: string };
+type AccessStep = { name: Bilingual; detail?: Bilingual; code?: string; codeFirst?: boolean };
 type StayBlock = { kind: "arrivee" | "depart" | "information"; name: Bilingual; detail?: Bilingual };
 type FaqItem = { name: Bilingual; detail?: Bilingual };
 type FacilityItem = { name: Bilingual; detail?: Bilingual; videoUrl?: string };
@@ -356,6 +356,12 @@ function TabAcces({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
           <Field label="Code (optionnel)">
             <input className={inputCls} value={step.code ?? ""} onChange={(e) => update(i, { ...step, code: e.target.value || undefined })} placeholder="A3187" />
           </Field>
+          {step.code && step.detail?.fr && (
+            <label className="flex items-center gap-2 text-sm text-[#1c2626]/70 cursor-pointer">
+              <input type="checkbox" checked={!!step.codeFirst} onChange={(e) => update(i, { ...step, codeFirst: e.target.checked || undefined })} />
+              Afficher le code avant la description (ex. « A4326 puis OK sur l'interphone »)
+            </label>
+          )}
         </ItemCard>
       ))}
       <AddButton label="Ajouter une étape" onClick={add} />
@@ -852,6 +858,72 @@ function GrantsSection({ onLogout, refreshKey }: { onLogout: () => void; refresh
   );
 }
 
+/* ─── Guide d'utilisation (admins) ───────────────────────────────────────── */
+function GuideSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details className="group rounded-xl border border-black/10 bg-white">
+      <summary className="cursor-pointer select-none list-none px-4 py-3 text-sm font-medium text-[#1c2626] flex items-center justify-between">
+        {title}
+        <ChevronDown className="h-4 w-4 text-[#1c2626]/40 transition group-open:rotate-180" />
+      </summary>
+      <div className="px-4 pb-4 text-sm text-[#1c2626]/75 space-y-2 leading-relaxed">{children}</div>
+    </details>
+  );
+}
+
+function AdminGuide() {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xs font-medium text-[#1c2626]/40 uppercase tracking-widest">Guide d'utilisation</h2>
+      <div className="space-y-2">
+        <GuideSection title="1. Créer un welcome book">
+          <ol className="list-decimal pl-5 space-y-1.5">
+            <li>Cliquez sur <b>Nouveau logement</b> (ou sur <b>Dupliquer</b> depuis un logement existant : tout son contenu est copié).</li>
+            <li>Onglet <b>Infos de base</b> : nom public, <b>slug</b> (identifiant de l'URL, en minuscules, chiffres et tirets, par ex. <i>haussmann-mogador</i>), adresse, WiFi, couleurs et photo de fond. Choisissez le slug avant d'envoyer le lien aux voyageurs : s'il change, l'ancien lien ne marche plus.</li>
+            <li>Renseignez les onglets <b>Accès</b>, <b>Check-in/out</b>, <b>FAQ</b>, <b>Services</b>, <b>Explorer</b> et <b>Guide</b>.</li>
+            <li>Cliquez sur <b>Enregistrer</b> en haut à droite.</li>
+          </ol>
+        </GuideSection>
+        <GuideSection title="2. Remplir le contenu">
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>Saisissez uniquement le <b>français</b> : l'anglais est traduit automatiquement à l'enregistrement.</li>
+            <li>Les flèches <b>↑ ↓</b> de chaque bloc changent leur ordre d'affichage.</li>
+            <li>Dans <b>Accès</b>, un code peut s'afficher avant ou après le texte (case « Afficher le code avant la description »).</li>
+            <li>Dans les textes de Check-in/out, une ligne qui commence par « - » devient une puce.</li>
+            <li>Pour les <b>Services</b>, choisissez l'icône dans la liste déroulante.</li>
+          </ul>
+        </GuideSection>
+        <GuideSection title="3. Vérifier avant d'envoyer">
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>Cliquez sur <b>Voir</b> (liste des logements) ou <b>Prévisualiser</b> (dans l'éditeur) pour ouvrir le welcome book comme le voit un voyageur.</li>
+            <li>Relisez les codes d'accès, le WiFi et les horaires d'arrivée et de départ.</li>
+          </ul>
+        </GuideSection>
+        <GuideSection title="4. Partager avec les voyageurs">
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>Copiez l'URL du logement (sous son nom) ou téléchargez son <b>QR code</b> à imprimer.</li>
+            <li>Ne diffusez ce lien qu'aux voyageurs du logement.</li>
+          </ul>
+        </GuideSection>
+        <GuideSection title="5. Publication et déploiement">
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li><b>Contenu :</b> chaque clic sur <b>Enregistrer</b> met le welcome book à jour tout de suite. Il n'y a pas de déploiement à faire (la mise à jour peut mettre quelques secondes à apparaître : rechargez la page).</li>
+            <li><b>Code de l'application</b> (nouvelles fonctionnalités, design) : c'est un déploiement. Il se fait en fusionnant la modification (Pull Request) dans la branche <i>main</i> sur GitHub : Netlify redéploie alors le site. Le bouton <b>Déployer</b> de la section Maintenance relance seulement un build.</li>
+            <li>Si le bouton affiche « Hook non configuré », la variable <i>NETLIFY_DEPLOY_HOOK</i> n'est pas définie sur Netlify.</li>
+          </ul>
+        </GuideSection>
+        <GuideSection title="6. Modifier, dupliquer, supprimer">
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li><b>Modifier</b> : ouvre l'éditeur. Le slug peut être changé : l'ancien lien cesse alors de fonctionner.</li>
+            <li><b>Dupliquer</b> : crée une copie sous un nouveau nom et un nouveau slug. Vérifiez les codes d'accès de la copie.</li>
+            <li><b>Supprimer</b> : définitif, après confirmation.</li>
+          </ul>
+        </GuideSection>
+      </div>
+    </section>
+  );
+}
+
 /* ─── Create access modal ─────────────────────────────────────────────────── */
 function AccessModal({
   building,
@@ -1227,6 +1299,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
         </section>
+
+        <AdminGuide />
 
         {/* Maintenance */}
         <section className="space-y-3">

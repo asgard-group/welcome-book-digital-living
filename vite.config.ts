@@ -22,9 +22,9 @@ export default defineConfig(({ mode }) => ({
       devOptions: { enabled: false },
       filename: "sw.js",
       manifest: {
-        name: "Jöro Haussmann",
+        name: "Jöro Living",
         short_name: "Jöro",
-        description: "Digital welcome booklet for Jöro Haussmann Halévy apartment in Paris.",
+        description: "Digital welcome booklet for Jöro Living apartment in Paris.",
         theme_color: "#2E3F3E",
         background_color: "#0F172A",
         display: "standalone",

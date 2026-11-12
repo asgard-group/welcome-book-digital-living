@@ -16,7 +16,8 @@
       {
         "name": { "fr": "Porte du hall", "en": "Hall door" },
         "code": "A4326",
-        "detail": { "fr": "puis « OK » sur l'interphone", "en": "then « OK » on the intercom" }
+        "detail": { "fr": "puis « OK » sur l'interphone", "en": "then « OK » on the intercom" },
+        "codeFirst": true
       },
       {
         "name": { "fr": "3ème étage, porte grise", "en": "3rd floor, grey door" },

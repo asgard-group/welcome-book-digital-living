@@ -34,7 +34,7 @@ export type PropertyData = {
   /** epoch ms when the guest's access ends; sent by the API with the grant. */
   validUntil?: number;
   /** "Accès" sub-database: ordered steps to get in (door codes, floor, keys...). */
-  access?: (TextEntry & { code?: string })[];
+  access?: (TextEntry & { code?: string; codeFirst?: boolean })[];
   /** "Infos complémentaires" sub-database: lights, A/C, other tips. */
   extraInfo?: TextEntry[];
   /** "Check-in / Check-out" sub-database: arrival, departure and info blocks. */
