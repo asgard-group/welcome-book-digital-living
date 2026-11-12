@@ -17,6 +17,8 @@ export type ServiceItem = {
   name: Bilingual;
   icon?: string;
   email?: string;
+  /** Sous-texte affiché sous le nom du service (optionnel). */
+  description?: Bilingual;
 };
 
 export type AccessStep = {

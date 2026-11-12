@@ -64,8 +64,8 @@ async function translateBuilding(raw: Record<string, unknown>): Promise<Record<s
 
   const svc = (data.services ?? { included: [], quote: [] }) as { included: Record<string, unknown>[]; quote: Record<string, unknown>[] };
   const services = {
-    included: await trArr(svc.included ?? [], async (s) => ({ ...s, name: await tr(s.name) })),
-    quote: await trArr(svc.quote ?? [], async (s) => ({ ...s, name: await tr(s.name) })),
+    included: await trArr(svc.included ?? [], async (s) => ({ ...s, name: await tr(s.name), description: await tr(s.description) })),
+    quote: await trArr(svc.quote ?? [], async (s) => ({ ...s, name: await tr(s.name), description: await tr(s.description) })),
   };
 
   const addr = (data.addresses ?? {}) as Record<string, Record<string, unknown>[]>;

@@ -22,11 +22,13 @@ const JORO_SPACE_IMAGES = [kaffeImg];
 function ServiceCard({
   icon: Icon,
   title,
+  description,
   indicator,
   href,
 }: {
   icon: LucideIcon;
   title: string;
+  description?: string;
   indicator: React.ReactNode;
   href?: string;
 }) {
@@ -41,6 +43,9 @@ function ServiceCard({
       <p className="mt-4 text-[15px] font-semibold text-brand-ink dark:text-white leading-snug">
         {title}
       </p>
+      {description && (
+        <p className="mt-1.5 text-[13px] leading-snug text-brand-ink/70 dark:text-white/70">{description}</p>
+      )}
     </>
   );
   const className = "rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80";
@@ -133,6 +138,7 @@ export default function Services() {
                     key={item.name.fr}
                     icon={SERVICE_ICONS[item.icon] ?? Wrench}
                     title={item.name[lang]}
+                    description={item.description?.[lang] || item.description?.fr}
                     indicator={<Check className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} />}
                   />
                 ))}
@@ -146,27 +152,13 @@ export default function Services() {
                     key={item.name.fr}
                     icon={SERVICE_ICONS[item.icon] ?? Wrench}
                     title={item.name[lang]}
+                    description={item.description?.[lang] || item.description?.fr}
                     href={`mailto:${item.email}`}
                     indicator={<Plus className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} />}
                   />
                 ))}
               </div>
             )}
-
-            {/* Consigne à bagages */}
-            {active === "inclus" && <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 space-y-3">
-              <h2 className="text-base font-semibold text-brand-ink dark:text-white">Consigne à bagages</h2>
-              <div className="space-y-2 text-sm text-brand-ink/80 dark:text-white/80">
-                <p>
-                  <span className="font-medium text-brand-ink dark:text-white">Casiers sur site</span>
-                  {" — "}Gratuits, couloir commun aux 3 appartements. Sous la responsabilité des clients — demander à Jöro les dispos et codes.
-                </p>
-                <p>
-                  <span className="font-medium text-brand-ink dark:text-white">Jöro Kaffé</span>
-                  {" — "}Gratuit, sous réserve de disponibilité (prévenir à l'avance). Ouvert 6j/7 (fermé le dimanche).
-                </p>
-              </div>
-            </div>}
 
             {/* Jöro Space */}
             <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 text-brand-ink dark:text-white">

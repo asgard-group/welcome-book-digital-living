@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 type Bilingual = { fr: string; en: string };
 type PlaceItem = { name: string; address?: string; distance?: string; description?: Bilingual; type?: string };
-type ServiceItem = { name: Bilingual; icon?: string; email?: string };
+type ServiceItem = { name: Bilingual; icon?: string; email?: string; description?: Bilingual };
 type AccessStep = { name: Bilingual; detail?: Bilingual; code?: string; codeFirst?: boolean };
 type StayBlock = { kind: "arrivee" | "depart" | "information"; name: Bilingual; detail?: Bilingual };
 type FaqItem = { name: Bilingual; detail?: Bilingual };
@@ -477,6 +477,12 @@ function ServiceList({
       {items.map((svc, i) => (
         <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <BilingualInput label="Nom du service" value={svc.name} onChange={(v) => update(i, { ...svc, name: v })} />
+          <BilingualInput
+            label="Sous-texte (optionnel)"
+            multiline
+            value={svc.description ?? { fr: "", en: "" }}
+            onChange={(v) => update(i, { ...svc, description: v.fr || v.en ? v : undefined })}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Field label="Icône">
               <IconSelect value={svc.icon} onChange={(icon) => update(i, { ...svc, icon })} />
