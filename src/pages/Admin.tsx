@@ -907,9 +907,8 @@ function AdminGuide() {
         </GuideSection>
         <GuideSection title="5. Publication et déploiement">
           <ul className="list-disc pl-5 space-y-1.5">
-            <li><b>Contenu :</b> chaque clic sur <b>Enregistrer</b> met le welcome book à jour tout de suite. Il n'y a pas de déploiement à faire (la mise à jour peut mettre quelques secondes à apparaître : rechargez la page).</li>
-            <li><b>Code de l'application</b> (nouvelles fonctionnalités, design) : c'est un déploiement. Il se fait en fusionnant la modification (Pull Request) dans la branche <i>main</i> sur GitHub : Netlify redéploie alors le site. Le bouton <b>Déployer</b> de la section Maintenance relance seulement un build.</li>
-            <li>Si le bouton affiche « Hook non configuré », la variable <i>NETLIFY_DEPLOY_HOOK</i> n'est pas définie sur Netlify.</li>
+            <li><b>Vos modifications de contenu</b> (textes, codes, photos…) : cliquez sur <b>Enregistrer</b>. Elles sont en ligne tout de suite, il n'y a rien d'autre à faire.</li>
+            <li>Le bouton <b>Déployer</b> (en bas de cette page) ne sert que lorsque l'équipe technique vous indique qu'une mise à jour de l'application est prête.</li>
           </ul>
         </GuideSection>
         <GuideSection title="6. Modifier, dupliquer, supprimer">
