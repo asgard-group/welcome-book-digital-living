@@ -28,10 +28,10 @@ export default function Welcome() {
   const menu: MenuItem[] = [
     { label: t.welcome.menu.checkin, icon: KeyRound, to: `/${buildingSlug}/checkin` },
     { label: t.welcome.menu.facilities, icon: HomeIcon, to: `/${buildingSlug}/facilities` },
-    { label: t.welcome.menu.services, icon: ConciergeBell, to: `/${buildingSlug}/services` },
-    { label: t.welcome.menu.info, icon: InfoIcon, to: `/${buildingSlug}/info` },
-    { label: t.welcome.menu.explore, icon: Compass, to: `/${buildingSlug}/explore` },
     { label: t.welcome.menu.checkout, icon: PenSquare, to: `/${buildingSlug}/checkout` },
+    { label: t.welcome.menu.services, icon: ConciergeBell, to: `/${buildingSlug}/services` },
+    { label: t.welcome.menu.explore, icon: Compass, to: `/${buildingSlug}/explore` },
+    { label: t.welcome.menu.info, icon: InfoIcon, to: `/${buildingSlug}/info` },
   ];
 
   return (
