@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { pageText } from "@/property/texts";
 import { ExternalLink as ExternalLinkConfirm } from "@/components/ExternalLink";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import joroLogo from "@/assets/joro-living-logo.png";
@@ -70,10 +71,10 @@ export default function Facilities() {
           {/* Title */}
           <div className="text-center px-4 pt-[30px] mb-5 shrink-0">
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
-              {t.facilities.title}
+              {pageText(property, "facilities", "title", lang, t.facilities.title)}
             </h1>
             <p className="text-base text-white/80">
-              {t.facilities.subtitle}
+              {pageText(property, "facilities", "subtitle", lang, t.facilities.subtitle)}
             </p>
           </div>
 

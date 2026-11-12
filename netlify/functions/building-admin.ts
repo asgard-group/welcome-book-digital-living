@@ -85,7 +85,32 @@ async function translateBuilding(raw: Record<string, unknown>): Promise<Record<s
     })),
   };
 
-  return { ...data, access, extraInfo, stay, services, addresses, facilities };
+  // Titres / sous-titres / boutons personnalisés : saisis en français, traduits ici.
+  const rawTexts = (data.texts ?? {}) as {
+    menu?: Record<string, Bilingual>;
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual }>;
+  };
+  const texts = {
+    menu: Object.fromEntries(
+      await Promise.all(
+        Object.entries(rawTexts.menu ?? {})
+          .filter(([, v]) => v?.fr?.trim())
+          .map(async ([k, v]) => [k, await translateBilingual(v)] as const),
+      ),
+    ),
+    pages: Object.fromEntries(
+      await Promise.all(
+        Object.entries(rawTexts.pages ?? {}).map(async ([k, v]) => {
+          const out: { title?: Bilingual; subtitle?: Bilingual } = {};
+          if (v?.title?.fr?.trim()) out.title = await translateBilingual(v.title);
+          if (v?.subtitle?.fr?.trim()) out.subtitle = await translateBilingual(v.subtitle);
+          return [k, out] as const;
+        }),
+      ),
+    ),
+  };
+
+  return { ...data, access, extraInfo, stay, services, addresses, facilities, texts };
 }
 
 type StaticBuilding = { id: string; name: string };

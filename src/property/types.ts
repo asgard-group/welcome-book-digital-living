@@ -8,6 +8,17 @@ export type Bilingual = { fr: string; en: string };
 /** One titled entry of a Notion list (access steps, extra info, check-in/out blocks). */
 export type TextEntry = { name: Bilingual; detail?: Bilingual };
 
+/** Pages du livret dont le titre / sous-titre est personnalisable. */
+export type PageKey = "welcome" | "checkin" | "facilities" | "checkout" | "services" | "explore" | "info";
+/** Boutons de la page d'accueil. */
+export type MenuKey = Exclude<PageKey, "welcome">;
+/** Textes personnalisés (vides = texte par défaut). */
+export type BuildingTexts = {
+  menu?: Partial<Record<MenuKey, Bilingual>>;
+  pages?: Partial<Record<PageKey, { title?: Bilingual; subtitle?: Bilingual }>>;
+};
+
+
 /**
  * Shape of a single apartment's guest-facing data.
  *
@@ -26,6 +37,8 @@ export type PropertyData = {
     network: string;
     password: string;
   };
+  /** Titres, sous-titres et libellés de boutons personnalisés (admin). */
+  texts?: BuildingTexts;
   /** Guest wifi network, separate from the main one above. Optional until every building sets it. */
   guestWifi?: {
     network: string;

@@ -4,6 +4,7 @@ import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft, ChevronUp,
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
 import { DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
+import { translations } from "@/i18n/translations";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -38,6 +39,10 @@ type BuildingData = {
     pratique: PlaceItem[];
   };
   facilities?: { sections: FacilitySection[] };
+  texts?: {
+    menu?: Record<string, Bilingual>;
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual }>;
+  };
 };
 
 type BuildingOption = { id: string; name: string; hasDefault?: boolean };
@@ -100,16 +105,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function BilingualInput({
-  label, value, onChange, multiline = false
+  label, value, onChange, multiline = false, placeholder
 }: {
-  label: string; value: Bilingual; onChange: (v: Bilingual) => void; multiline?: boolean;
+  label: string; value: Bilingual; onChange: (v: Bilingual) => void; multiline?: boolean; placeholder?: string;
 }) {
   const cls = multiline ? textareaCls : inputCls;
   const Tag = multiline ? "textarea" : "input";
   return (
     <div className="space-y-1.5">
       <label className={labelCls}>{label}</label>
-      <Tag className={cls} value={value.fr} onChange={(e) => onChange({ ...value, fr: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
+      <Tag className={cls} placeholder={placeholder} value={value.fr} onChange={(e) => onChange({ ...value, fr: (e.target as HTMLInputElement | HTMLTextAreaElement).value })} />
     </div>
   );
 }
@@ -582,6 +587,66 @@ function TabExplorer({ data, onChange }: { data: BuildingData; onChange: (d: Bui
   );
 }
 
+/* ─── Tab: Textes (titres, sous-titres, boutons) ─────────────────────────── */
+const fr = translations.fr;
+const TEXT_PAGES: { key: string; label: string; title: string; subtitle: string }[] = [
+  { key: "welcome", label: "Page d'accueil", title: fr.welcome.title, subtitle: "43 boulevard Haussmann, Paris 9" },
+  { key: "checkin", label: "Infos pratiques", title: fr.checkin.title, subtitle: fr.checkin.subtitle },
+  { key: "facilities", label: "Guide du logement", title: fr.facilities.title, subtitle: fr.facilities.subtitle },
+  { key: "checkout", label: "Check-in/out", title: fr.checkout.title, subtitle: fr.checkout.subtitle },
+  { key: "services", label: "Services", title: fr.services.title, subtitle: fr.services.subtitle },
+  { key: "explore", label: "Explorer", title: fr.explore.title, subtitle: fr.explore.subtitle },
+  { key: "info", label: "Urgences", title: fr.info.securityTitle, subtitle: fr.info.subtitle },
+];
+const TEXT_MENU: { key: string; label: string; fallback: string }[] = [
+  { key: "checkin", label: "Infos pratiques", fallback: fr.welcome.menu.checkin },
+  { key: "facilities", label: "Guide du logement", fallback: fr.welcome.menu.facilities },
+  { key: "checkout", label: "Check-in/out", fallback: fr.welcome.menu.checkout },
+  { key: "services", label: "Services", fallback: fr.welcome.menu.services },
+  { key: "explore", label: "Explorer", fallback: fr.welcome.menu.explore },
+  { key: "info", label: "Urgences", fallback: fr.welcome.menu.info },
+];
+
+function TabTextes({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
+  const texts = data.texts ?? {};
+  const setMenu = (key: string, v: Bilingual) =>
+    onChange({ ...data, texts: { ...texts, menu: { ...texts.menu, [key]: v } } });
+  const setPage = (key: string, field: "title" | "subtitle", v: Bilingual) =>
+    onChange({
+      ...data,
+      texts: { ...texts, pages: { ...texts.pages, [key]: { ...texts.pages?.[key], [field]: v } } },
+    });
+  const empty: Bilingual = { fr: "", en: "" };
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-[#1c2626]/50">
+        Personnalisez les titres affichés aux voyageurs. Laissez un champ vide pour garder le texte par défaut (indiqué en grisé). Saisissez en français : l'anglais est traduit à l'enregistrement.
+      </p>
+
+      <div className="space-y-3">
+        <p className={sectionTitle}>Boutons de la page d'accueil</p>
+        {TEXT_MENU.map((m) => (
+          <ItemCard key={m.key} onRemove={() => setMenu(m.key, empty)}>
+            <BilingualInput label={m.label} placeholder={m.fallback} value={texts.menu?.[m.key] ?? empty} onChange={(v) => setMenu(m.key, v)} />
+          </ItemCard>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        <p className={sectionTitle}>Titres et sous-titres des pages</p>
+        {TEXT_PAGES.map((p) => (
+          <ItemCard key={p.key} onRemove={() => { setPage(p.key, "title", empty); setPage(p.key, "subtitle", empty); }}>
+            <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">{p.label}</div>
+            <BilingualInput label="Titre" placeholder={p.title} value={texts.pages?.[p.key]?.title ?? empty} onChange={(v) => setPage(p.key, "title", v)} />
+            <BilingualInput label="Sous-titre" placeholder={p.subtitle} value={texts.pages?.[p.key]?.subtitle ?? empty} onChange={(v) => setPage(p.key, "subtitle", v)} />
+          </ItemCard>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Tab: Guide du logement ─────────────────────────────────────────────── */
 function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
   const sections = data.facilities?.sections ?? [];
@@ -659,6 +724,7 @@ const TABS = [
   { id: "services", label: "Services" },
   { id: "explorer", label: "Explorer" },
   { id: "guide", label: "Guide" },
+  { id: "textes", label: "Textes" },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -740,6 +806,7 @@ function BuildingForm({
         {tab === "services" && <TabServices data={data} onChange={setData} />}
         {tab === "explorer" && <TabExplorer data={data} onChange={setData} />}
         {tab === "guide" && <TabGuide data={data} onChange={setData} />}
+        {tab === "textes" && <TabTextes data={data} onChange={setData} />}
       </main>
     </div>
   );

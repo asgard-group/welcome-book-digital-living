@@ -12,6 +12,7 @@ import joroLogo from "@/assets/joro-living-logo.png";
 import { SettingsPopover } from "@/components/SettingsPopover";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { pageText, menuText } from "@/property/texts";
 
 type MenuItem = {
   label: string;
@@ -22,16 +23,16 @@ type MenuItem = {
 
 export default function Welcome() {
   const { data: property } = useProperty();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { buildingSlug } = useParams<{ buildingSlug: string }>();
 
   const menu: MenuItem[] = [
-    { label: t.welcome.menu.checkin, icon: KeyRound, to: `/${buildingSlug}/checkin` },
-    { label: t.welcome.menu.facilities, icon: HomeIcon, to: `/${buildingSlug}/facilities` },
-    { label: t.welcome.menu.checkout, icon: PenSquare, to: `/${buildingSlug}/checkout` },
-    { label: t.welcome.menu.services, icon: ConciergeBell, to: `/${buildingSlug}/services` },
-    { label: t.welcome.menu.explore, icon: Compass, to: `/${buildingSlug}/explore` },
-    { label: t.welcome.menu.info, icon: InfoIcon, to: `/${buildingSlug}/info` },
+    { label: menuText(property, "checkin", lang, t.welcome.menu.checkin), icon: KeyRound, to: `/${buildingSlug}/checkin` },
+    { label: menuText(property, "facilities", lang, t.welcome.menu.facilities), icon: HomeIcon, to: `/${buildingSlug}/facilities` },
+    { label: menuText(property, "checkout", lang, t.welcome.menu.checkout), icon: PenSquare, to: `/${buildingSlug}/checkout` },
+    { label: menuText(property, "services", lang, t.welcome.menu.services), icon: ConciergeBell, to: `/${buildingSlug}/services` },
+    { label: menuText(property, "explore", lang, t.welcome.menu.explore), icon: Compass, to: `/${buildingSlug}/explore` },
+    { label: menuText(property, "info", lang, t.welcome.menu.info), icon: InfoIcon, to: `/${buildingSlug}/info` },
   ];
 
   return (
@@ -56,10 +57,10 @@ export default function Welcome() {
           {/* Title / subtitle — hidden on very short viewports so it never overlaps the menu below */}
           <div className="text-center px-4 pt-[30px] shrink-0 [@media(max-height:700px)]:hidden">
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
-              {t.welcome.title}
+              {pageText(property, "welcome", "title", lang, t.welcome.title)}
             </h1>
             <p className="text-base text-white/80">
-              {"43 boulevard Haussmann, Paris 9"}
+              {pageText(property, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9")}
             </p>
           </div>
 

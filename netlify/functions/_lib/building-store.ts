@@ -77,6 +77,11 @@ export type BuildingData = {
     pratique: PlaceItem[];
   };
   facilities?: { sections: FacilitySection[] };
+  /** Titres, sous-titres et libellés de boutons personnalisés. */
+  texts?: {
+    menu?: Record<string, Bilingual>;
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual }>;
+  };
 };
 
 function store() {

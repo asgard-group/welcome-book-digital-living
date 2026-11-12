@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { pageText } from "@/property/texts";
 import type { Translation } from "@/i18n/translations";
 
 function Widget({ children }: { children: React.ReactNode }) {
@@ -125,9 +126,9 @@ export default function Checkin() {
           {/* Title */}
           <div className="text-center px-4 pt-[30px] mb-5 shrink-0">
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
-              {t.checkin.title}
+              {pageText(property, "checkin", "title", lang, t.checkin.title)}
             </h1>
-            <p className="text-base text-white/80">{t.checkin.subtitle}</p>
+            <p className="text-base text-white/80">{pageText(property, "checkin", "subtitle", lang, t.checkin.subtitle)}</p>
           </div>
 
           {/* Widgets */}
