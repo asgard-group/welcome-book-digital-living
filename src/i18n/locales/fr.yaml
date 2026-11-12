@@ -40,6 +40,7 @@ contact:
   emailLabel: "Email"
   whatsappLabel: "WhatsApp"
   callLabel: "Appeler"
+  otherContacts: "Autre contact en cas d'urgence"
 
 welcome:
   title: "Bienvenue"
@@ -63,6 +64,7 @@ checkin:
   subtitle: "Wifi, Accès logement"
   wifiTitle: "Wifi"
   wifiGuestTitle: "Wifi Guest"
+  accessTitle: "Accès au logement"
   network: "Réseau"
   password: "Mot de passe"
   copyAria: "Copier"

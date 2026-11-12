@@ -1,4 +1,10 @@
 import { Mail, Phone } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { ExternalLink } from "@/components/ExternalLink";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -11,14 +17,11 @@ type TeamMember = {
   note?: { fr: string; en: string };
 };
 
-const TEAM: TeamMember[] = [
-  { name: "Chris", role: "Housekeeper Manager", phoneHref: "+33659196366" },
-  {
-    name: "Mathilde",
-    role: "Reservation Manager",
-    phoneHref: "+33630001014",
-    note: { fr: "Congé maternité", en: "Maternity leave" },
-  },
+// Chris est mis en avant ; les autres contacts sont repliés (comme sur Jöro Office).
+const PRIMARY_CONTACT: TeamMember = { name: "Chris", role: "Housekeeper Manager", phoneHref: "+33659196366" };
+
+const OTHER_CONTACTS: TeamMember[] = [
+  { name: "Mathilde", role: "Reservation Manager", phoneHref: "+33630001014" },
   { name: "Bérénice", role: "Brand Manager", phoneHref: "+33637754570" },
 ];
 
@@ -54,9 +57,22 @@ export function ContactWidget() {
 
   return (
     <div className="space-y-3">
-      {TEAM.map((member) => (
-        <ContactCard key={member.name} member={member} t={t} lang={lang} />
-      ))}
+      <ContactCard member={PRIMARY_CONTACT} t={t} lang={lang} />
+
+      <Accordion type="single" collapsible>
+        <AccordionItem value="other-contacts">
+          <AccordionTrigger className="hover:no-underline py-4 text-white">
+            <span className="font-semibold text-white">{t.contact.otherContacts}</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <div className="space-y-3 pt-1">
+              {OTHER_CONTACTS.map((member) => (
+                <ContactCard key={member.name} member={member} t={t} lang={lang} />
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <ExternalLink
         href={`mailto:${GENERAL_EMAIL}`}
