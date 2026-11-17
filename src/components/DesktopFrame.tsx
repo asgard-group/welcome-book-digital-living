@@ -20,22 +20,13 @@ export function DesktopFrame() {
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,38fr)_minmax(0,62fr)] lg:h-app-shell lg:overflow-hidden lg:bg-brand-surface dark:lg:bg-brand-ink">
-      <aside className="hidden lg:flex relative flex-col justify-end gap-10 p-10 overflow-hidden">
+      <aside className="hidden lg:flex relative flex-col justify-between gap-10 p-10 overflow-hidden">
         <img
           src={property?.backgroundUrl ?? DEFAULT_BACKGROUND_URL}
           alt={property ? `${t.welcome.heroAltPrefix}${property.name}` : t.welcome.heroAltFallback}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-ink/20 via-brand-ink/10 to-brand-ink/75" />
-
-        <div className="relative z-10">
-          <p className="text-[40px] leading-tight font-serif font-semibold text-white uppercase">
-            {pageText(property ?? undefined, "welcome", "title", lang, t.welcome.title)}
-          </p>
-          <p className="mt-1 text-base text-white/85 whitespace-pre-line">
-            {pageText(property ?? undefined, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9")}
-          </p>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-ink/45 via-brand-ink/10 to-brand-ink/75" />
 
         <div className="relative z-10 flex items-center justify-between gap-5">
           <div className="flex items-center gap-5">
@@ -49,6 +40,15 @@ export function DesktopFrame() {
             )}
           </div>
           <SettingsPopover variant="light" />
+        </div>
+
+        <div className="relative z-10">
+          <p className="text-[40px] leading-tight font-serif font-semibold text-white uppercase">
+            {pageText(property ?? undefined, "welcome", "title", lang, t.welcome.title)}
+          </p>
+          <p className="mt-1 text-base text-white/85 whitespace-pre-line">
+            {pageText(property ?? undefined, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9")}
+          </p>
         </div>
       </aside>
 

@@ -52,9 +52,9 @@ export default function Facilities() {
     >
 
       {/* Widgets */}
-      <div className="px-[30px] space-y-4 lg:px-10">
+      <div className="px-[30px] space-y-4 lg:px-10 lg:max-w-[760px]">
         {/* Sections accordion */}
-        <Accordion type="multiple" defaultValue={sections.map((s) => s.id)} className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 lg:items-start">
+        <Accordion type="multiple" defaultValue={sections.map((s) => s.id)} className="space-y-3">
           {sections.map((section) => (
             <AccordionItem
               key={section.id}
