@@ -1,14 +1,10 @@
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useParams, useSearchParams } from "react-router-dom";
-import { useProperty, clearAdminPreview } from "@/property/useProperty";
+import { useProperty, useIsPreview, PreviewContext, clearAdminPreview } from "@/property/useProperty";
 import { hexToHslString } from "@/lib/color";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { ExternalLink } from "@/components/ExternalLink";
-
-/** True uniquement si la page a été ouverte via le bouton « Prévisualiser » (?preview=1). */
-export const PreviewContext = createContext(false);
-export const useIsPreview = () => useContext(PreviewContext);
 
 function Screen({ children }: { children: ReactNode }) {
   return (
@@ -96,14 +92,6 @@ export function BuildingNotFound() {
   );
 }
 
-/**
- * Gate for one apartment's booklet (rendered at `/:buildingSlug`): a guest needs
- * a currently-valid magic-link session for this apartment to see any content.
- * Loads the apartment's data and applies its brand colors as CSS custom
- * properties. Shows a splash while loading, AccessExpired when the link is
- * missing/expired (or belongs to another apartment), BuildingNotFound on an
- * unknown slug, LoadError otherwise.
- */
 function PreviewBanner({ slug }: { slug: string }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg">
@@ -118,13 +106,11 @@ function PreviewBanner({ slug }: { slug: string }) {
   );
 }
 
-export function BuildingGate() {
+/** Rendu à l'intérieur de PreviewContext.Provider — useProperty() lit le contexte automatiquement. */
+function BuildingGateContent() {
   const { buildingSlug } = useParams<{ buildingSlug?: string }>();
-  const [searchParams] = useSearchParams();
-  // Preview mode is activated only when the URL contains ?preview=1 (set by the admin
-  // "Prévisualiser" button). useState so navigation within the building keeps it active.
-  const [isPreview] = useState(() => searchParams.get("preview") === "1");
-  const { data, isLoading, isError, error } = useProperty(isPreview);
+  const isPreview = useIsPreview();
+  const { data, isLoading, isError, error } = useProperty();
 
   useEffect(() => {
     if (!data?.colors) return;
@@ -138,9 +124,25 @@ export function BuildingGate() {
     return error?.message === "building_not_found" ? <BuildingNotFound /> : <LoadError />;
   }
   return (
-    <PreviewContext.Provider value={isPreview}>
+    <>
       <Outlet />
       {isPreview && buildingSlug && <PreviewBanner slug={buildingSlug} />}
+    </>
+  );
+}
+
+/**
+ * Gate for one apartment's booklet. Sets up PreviewContext (active when ?preview=1
+ * is in the URL) so that all child pages automatically use preview data from
+ * localStorage instead of the API.
+ */
+export function BuildingGate() {
+  const [searchParams] = useSearchParams();
+  // Read once at mount; useState so the flag survives internal navigation.
+  const [isPreview] = useState(() => searchParams.get("preview") === "1");
+  return (
+    <PreviewContext.Provider value={isPreview}>
+      <BuildingGateContent />
     </PreviewContext.Provider>
   );
 }

@@ -1,7 +1,12 @@
+import { createContext, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import heroImg from "@/assets/hero-living-room.png";
 import type { PropertyData } from "./types";
+
+/** Contexte activé par BuildingGate quand l'URL contient ?preview=1. */
+export const PreviewContext = createContext(false);
+export const useIsPreview = () => useContext(PreviewContext);
 
 /** Fallback background, used until an apartment's own photo has loaded (or if it has none). */
 export const DEFAULT_BACKGROUND_URL = heroImg;
@@ -219,8 +224,9 @@ async function fetchBuilding(buildingSlug?: string, isPreview = false): Promise<
   throw new Error(`building_unavailable_${res.status}`);
 }
 
-export function useProperty(isPreview = false) {
+export function useProperty() {
   const { buildingSlug } = useParams<{ buildingSlug?: string }>();
+  const isPreview = useIsPreview();
   const query = useQuery({
     queryKey: ["building", buildingSlug, isPreview ? "preview" : "live"],
     queryFn: () => fetchBuilding(buildingSlug, isPreview),
