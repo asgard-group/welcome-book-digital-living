@@ -81,7 +81,7 @@ export default function Facilities() {
           {/* Widgets */}
           <div className="px-[30px] space-y-4">
             {/* Sections accordion */}
-            <Accordion type="multiple" defaultValue={["equipements"]} className="space-y-3">
+            <Accordion type="multiple" defaultValue={sections.map((s) => s.id)} className="space-y-3">
               {sections.map((section) => (
                 <AccordionItem
                   key={section.id}
