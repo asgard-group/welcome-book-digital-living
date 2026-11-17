@@ -240,7 +240,10 @@ export default function Checkin() {
 
             {/* Extra tips (FAQ accordion) */}
             {property?.extraInfo && property.extraInfo.length > 0 && (
-              <FaqWidget items={property.extraInfo} lang={lang} />
+              <div className="space-y-2">
+                <h2 className="text-white font-semibold text-lg px-1">FAQ</h2>
+                <FaqWidget items={property.extraInfo} lang={lang} />
+              </div>
             )}
           </div>
 

@@ -160,38 +160,6 @@ export default function Services() {
               </div>
             )}
 
-            {/* Jöro Space */}
-            <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 text-brand-ink dark:text-white">
-              <h2 className="text-xl font-semibold text-brand-ink dark:text-white leading-tight text-left">
-                {t.services.joroSpaceTitle}
-              </h2>
-              <p className="text-[13px] text-brand-ink/70 dark:text-white/80 mb-4">
-                {t.services.joroSpaceSubtitle}
-              </p>
-
-              <div className="space-y-3">
-                {t.services.joroSpaceItems.map((item, i) => (
-                  <ExternalLink
-                    key={item.name}
-                    href={item.link}
-                    newTab
-                    className="relative block aspect-[16/6] rounded-[0.5rem] overflow-hidden"
-                  >
-                    <img src={JORO_SPACE_IMAGES[i]} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-[0.8rem]">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-white leading-tight">{item.name}</p>
-                        <p className="text-sm text-white/80 mt-0.5">{item.role}</p>
-                      </div>
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/25 backdrop-blur-sm shrink-0">
-                        <ArrowRight className="h-4 w-4 text-white" strokeWidth={2} />
-                      </span>
-                    </div>
-                  </ExternalLink>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Footer logo */}
