@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { Outlet } from "react-router-dom";
-import { useProperty } from "@/property/useProperty";
+import { Outlet, useParams } from "react-router-dom";
+import { useProperty, isAdminPreviewActive, clearAdminPreview } from "@/property/useProperty";
 import { hexToHslString } from "@/lib/color";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { ExternalLink } from "@/components/ExternalLink";
@@ -100,8 +100,24 @@ export function BuildingNotFound() {
  * missing/expired (or belongs to another apartment), BuildingNotFound on an
  * unknown slug, LoadError otherwise.
  */
+function PreviewBanner({ slug }: { slug: string }) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg">
+      <span>Mode prévisualisation — modifications non enregistrées</span>
+      <button
+        onClick={() => { clearAdminPreview(slug); window.location.reload(); }}
+        className="shrink-0 rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition"
+      >
+        Quitter
+      </button>
+    </div>
+  );
+}
+
 export function BuildingGate() {
+  const { buildingSlug } = useParams<{ buildingSlug?: string }>();
   const { data, isLoading, isError, error } = useProperty();
+  const preview = !!(buildingSlug && isAdminPreviewActive(buildingSlug));
 
   useEffect(() => {
     if (!data?.colors) return;
@@ -114,5 +130,10 @@ export function BuildingGate() {
   if (isError || !data) {
     return error?.message === "building_not_found" ? <BuildingNotFound /> : <LoadError />;
   }
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      {preview && buildingSlug && <PreviewBanner slug={buildingSlug} />}
+    </>
+  );
 }

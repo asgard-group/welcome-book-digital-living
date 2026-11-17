@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft, ChevronUp, ChevronDown } from "lucide-react";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
-import { DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
+import { DEFAULT_BACKGROUND_URL, setAdminPreview } from "@/property/useProperty";
 import { translations } from "@/i18n/translations";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -778,7 +778,13 @@ function BuildingForm({
           </div>
           <div className="flex items-center gap-2">
             {!isNew && data.id && (
-              <a href={`/${data.id}/home`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition">
+              <a
+                href={`/${data.id}/home`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setAdminPreview(data.id, data)}
+                className="flex items-center gap-1.5 rounded-xl border border-black/15 px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition"
+              >
                 <Eye className="h-3.5 w-3.5" /> Prévisualiser
               </a>
             )}
