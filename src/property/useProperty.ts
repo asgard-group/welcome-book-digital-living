@@ -168,7 +168,46 @@ const DEV_BUILDING: PropertyData = {
  * work possible. Under `netlify dev` the real function runs and 401s
  * propagate so the expired flow can be exercised.
  */
+const ADMIN_PREVIEW_KEY = "joro_admin_preview_";
+const PREVIEW_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+export function setAdminPreview(slug: string, data: object): void {
+  try {
+    localStorage.setItem(ADMIN_PREVIEW_KEY + slug, JSON.stringify({ ...data, _previewTs: Date.now() }));
+  } catch {}
+}
+
+export function isAdminPreviewActive(slug: string): boolean {
+  try {
+    const raw = localStorage.getItem(ADMIN_PREVIEW_KEY + slug);
+    if (!raw) return false;
+    const preview = JSON.parse(raw);
+    return !!(preview._previewTs && Date.now() - preview._previewTs < PREVIEW_TTL_MS);
+  } catch {
+    return false;
+  }
+}
+
+export function clearAdminPreview(slug: string): void {
+  try {
+    localStorage.removeItem(ADMIN_PREVIEW_KEY + slug);
+  } catch {}
+}
+
 async function fetchBuilding(buildingSlug?: string): Promise<PropertyData> {
+  if (buildingSlug) {
+    try {
+      const raw = localStorage.getItem(ADMIN_PREVIEW_KEY + buildingSlug);
+      if (raw) {
+        const preview = JSON.parse(raw);
+        if (preview._previewTs && Date.now() - preview._previewTs < PREVIEW_TTL_MS) {
+          return preview as PropertyData;
+        }
+        localStorage.removeItem(ADMIN_PREVIEW_KEY + buildingSlug);
+      }
+    } catch {}
+  }
+
   const url = buildingSlug ? `/api/building?slug=${encodeURIComponent(buildingSlug)}` : "/api/building";
   let res: Response;
   try {
