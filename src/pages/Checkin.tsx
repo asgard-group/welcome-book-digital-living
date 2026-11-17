@@ -114,7 +114,7 @@ export default function Checkin() {
     >
 
       {/* Widgets */}
-      <div className="px-[30px] space-y-4 lg:px-10 lg:max-w-[760px]">
+      <div className="px-[30px] space-y-4 lg:px-10">
         {/* Wifi */}
         <Widget>
           <div className="flex items-center gap-3 mb-4">

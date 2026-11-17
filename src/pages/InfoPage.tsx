@@ -23,7 +23,7 @@ export default function InfoPage() {
     >
 
       {/* Widgets */}
-      <div className="px-[30px] space-y-4 lg:px-10 lg:max-w-[760px]">
+      <div className="px-[30px] space-y-4 lg:px-10">
         {/* Carte 112 */}
         <ExternalLink
           href="tel:112"
