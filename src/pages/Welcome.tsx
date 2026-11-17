@@ -1,39 +1,22 @@
-import { Link, useParams } from "react-router-dom";
-import {
-  KeyRound,
-  Home as HomeIcon,
-  Info as InfoIcon,
-  Compass,
-  PenSquare,
-  ConciergeBell,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Link, Navigate, useParams } from "react-router-dom";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SettingsPopover } from "@/components/SettingsPopover";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { pageText, menuText } from "@/property/texts";
-
-type MenuItem = {
-  label: string;
-  desc?: string;
-  icon: LucideIcon;
-  to: string;
-};
+import { pageText } from "@/property/texts";
+import { buildMenu } from "@/property/menu";
 
 export default function Welcome() {
   const { data: property } = useProperty();
   const { t, lang } = useLanguage();
   const { buildingSlug } = useParams<{ buildingSlug: string }>();
+  const isDesktop = useIsDesktop();
 
-  const menu: MenuItem[] = [
-    { label: menuText(property, "checkin", lang, t.welcome.menu.checkin), icon: KeyRound, to: `/${buildingSlug}/checkin` },
-    { label: menuText(property, "checkout", lang, t.welcome.menu.checkout), icon: PenSquare, to: `/${buildingSlug}/checkout` },
-    { label: menuText(property, "facilities", lang, t.welcome.menu.facilities), icon: HomeIcon, to: `/${buildingSlug}/facilities` },
-    { label: menuText(property, "services", lang, t.welcome.menu.services), icon: ConciergeBell, to: `/${buildingSlug}/services` },
-    { label: menuText(property, "explore", lang, t.welcome.menu.explore), icon: Compass, to: `/${buildingSlug}/explore` },
-    { label: menuText(property, "info", lang, t.welcome.menu.info), icon: InfoIcon, to: `/${buildingSlug}/info` },
-  ];
+  const menu = buildMenu(property, buildingSlug, lang, t);
+
+  // Sur desktop l'accueil est porté par le panneau gauche de DesktopFrame : on ouvre la première rubrique.
+  if (isDesktop) return <Navigate to={menu[0].to} replace />;
 
   return (
     <div className="h-app-shell w-full bg-brand-surface dark:bg-brand-ink">
