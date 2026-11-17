@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/theme/ThemeContext";
 import { BuildingGate } from "@/components/BuildingGate";
+import { DesktopFrame } from "@/components/DesktopFrame";
 import Welcome from "./pages/Welcome";
 import Onboarding from "./pages/Onboarding";
 import Access from "./pages/Access";
@@ -53,13 +54,15 @@ const App = () => (
               {/* One apartment per sub-URL (e.g. /haussmann-halevy-1/*), only reachable with a valid magic link. */}
               <Route path="/:buildingSlug" element={<BuildingGate />}>
                 <Route index element={<OnboardingGate />} />
-                <Route path="home" element={<Welcome />} />
-                <Route path="checkin" element={<Checkin />} />
-                <Route path="checkout" element={<Checkout />} />
-                <Route path="facilities" element={<Facilities />} />
-                <Route path="services" element={<Services />} />
-                <Route path="explore" element={<Explore />} />
-                <Route path="info" element={<InfoPage />} />
+                <Route element={<DesktopFrame />}>
+                  <Route path="home" element={<Welcome />} />
+                  <Route path="checkin" element={<Checkin />} />
+                  <Route path="checkout" element={<Checkout />} />
+                  <Route path="facilities" element={<Facilities />} />
+                  <Route path="services" element={<Services />} />
+                  <Route path="explore" element={<Explore />} />
+                  <Route path="info" element={<InfoPage />} />
+                </Route>
               </Route>
 
               <Route path="*" element={<NotFound />} />

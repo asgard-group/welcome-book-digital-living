@@ -40,7 +40,7 @@ Issue a test magic link locally (needs `ADMIN_KEY` in `.env`): `POST /api/grants
 
 **Theme (custom, not next-themes).** `useTheme()` toggles `.dark` on `<html>` and persists to `localStorage["theme"]`.
 
-**Styling.** Tailwind with HSL CSS-variable tokens in `src/index.css`; shadcn/ui components in `src/components/ui/`; `cn()` from `src/lib/utils.ts`; alias `@` → `src/`. `.h-app-shell` is the standard full-height page wrapper. Every page implements its own full-bleed layout (hero photo + `h-app-shell`).
+**Styling.** Tailwind with HSL CSS-variable tokens in `src/index.css`; shadcn/ui components in `src/components/ui/`; `cn()` from `src/lib/utils.ts`; alias `@` → `src/`. `.h-app-shell` is the standard full-height page wrapper. Content pages render through `PageShell` (mobile: full-bleed hero photo, back arrow, footer logo). From the `lg` breakpoint, `DesktopFrame` (layout route around the pages) shows the photo, welcome title and logo in a fixed left panel and the section tabs + page content on the right; `/home` redirects to the first section there. `Welcome` and `Onboarding` keep their own full-bleed layout.
 
 **PWA.** `vite-plugin-pwa` (autoUpdate); `src/lib/registerSW.ts` skips the service worker in dev, in iframes, on Lovable preview hosts and with `?sw=off`. A `NetworkFirst` rule caches `GET /api/building` so the booklet stays available offline after the first online load.
 
