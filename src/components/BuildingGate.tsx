@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
-import { Outlet, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Outlet, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Monitor, Smartphone } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useProperty, useIsPreview, PreviewContext, clearAdminPreview } from "@/property/useProperty";
 import { hexToHslString } from "@/lib/color";
 import joroLogo from "@/assets/joro-living-logo.png";
@@ -92,25 +94,66 @@ export function BuildingNotFound() {
   );
 }
 
-function PreviewBanner({ slug }: { slug: string }) {
+function PreviewBanner({
+  slug,
+  mobile,
+  onDesktop,
+  onMobile,
+}: {
+  slug: string;
+  mobile: boolean;
+  onDesktop: () => void;
+  onMobile: () => void;
+}) {
+  const option = (active: boolean) =>
+    cn("flex items-center gap-1.5 rounded px-2.5 py-1 transition", active ? "bg-white text-amber-600" : "hover:bg-white/20");
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg">
       <span>Mode prévisualisation — modifications non enregistrées</span>
-      <button
-        onClick={() => { clearAdminPreview(slug); window.location.reload(); }}
-        className="shrink-0 rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition"
-      >
-        Quitter
-      </button>
+      <div className="flex shrink-0 items-center gap-3">
+        {/* Le choix n'a de sens que sur un écran large ; reste visible tant que la vue mobile est active. */}
+        <div className={cn("items-center rounded-md bg-white/20 p-0.5 text-xs font-semibold", mobile ? "flex" : "hidden lg:flex")}>
+          <button type="button" onClick={onDesktop} aria-pressed={!mobile} className={option(!mobile)}>
+            <Monitor className="h-3.5 w-3.5" /> Desktop
+          </button>
+          <button type="button" onClick={onMobile} aria-pressed={mobile} className={option(mobile)}>
+            <Smartphone className="h-3.5 w-3.5" /> Mobile
+          </button>
+        </div>
+        <button
+          onClick={() => { clearAdminPreview(slug); window.location.href = window.location.pathname; }}
+          className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition"
+        >
+          Quitter
+        </button>
+      </div>
     </div>
   );
 }
 
 /** Rendu à l'intérieur de PreviewContext.Provider — useProperty() lit le contexte automatiquement. */
-function BuildingGateContent() {
+function BuildingGateContent({ framed }: { framed: boolean }) {
   const { buildingSlug } = useParams<{ buildingSlug?: string }>();
   const isPreview = useIsPreview();
   const { data, isLoading, isError, error } = useProperty();
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Vue mobile forcée : le livret est rechargé dans un iframe de la largeur d'un téléphone,
+  // car la mise en page dépend de la largeur réelle de la fenêtre (media queries).
+  const [frameSrc, setFrameSrc] = useState<string | null>(null);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+
+  const showMobile = () => setFrameSrc(`${location.pathname}?preview=1&frame=1`);
+  const showDesktop = () => {
+    let path: string | undefined;
+    try {
+      path = frameRef.current?.contentWindow?.location.pathname;
+    } catch {
+      path = undefined;
+    }
+    setFrameSrc(null);
+    if (path && path !== location.pathname) navigate(path);
+  };
 
   useEffect(() => {
     if (!data?.colors) return;
@@ -125,8 +168,21 @@ function BuildingGateContent() {
   }
   return (
     <>
-      <Outlet />
-      {isPreview && buildingSlug && <PreviewBanner slug={buildingSlug} />}
+      {frameSrc ? (
+        <div className="h-app-shell flex items-center justify-center bg-neutral-900 px-4 pt-6 pb-16">
+          <iframe
+            ref={frameRef}
+            src={frameSrc}
+            title="Aperçu mobile"
+            className="h-full max-h-[844px] w-[390px] max-w-full rounded-[28px] border-0 bg-black shadow-2xl"
+          />
+        </div>
+      ) : (
+        <Outlet />
+      )}
+      {isPreview && !framed && buildingSlug && (
+        <PreviewBanner slug={buildingSlug} mobile={!!frameSrc} onDesktop={showDesktop} onMobile={showMobile} />
+      )}
     </>
   );
 }
@@ -140,9 +196,11 @@ export function BuildingGate() {
   const [searchParams] = useSearchParams();
   // Read once at mount; useState so the flag survives internal navigation.
   const [isPreview] = useState(() => searchParams.get("preview") === "1");
+  // frame=1 : cette instance tourne dans l'iframe d'aperçu mobile, le bandeau est porté par la fenêtre parente.
+  const [framed] = useState(() => searchParams.get("frame") === "1");
   return (
     <PreviewContext.Provider value={isPreview}>
-      <BuildingGateContent />
+      <BuildingGateContent framed={framed} />
     </PreviewContext.Provider>
   );
 }
