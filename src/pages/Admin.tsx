@@ -987,7 +987,7 @@ function AdminGuide() {
         <GuideSection title="5. Publication et déploiement">
           <ul className="list-disc pl-5 space-y-1.5">
             <li><b>Vos modifications de contenu</b> (textes, codes, photos…) : cliquez sur <b>Enregistrer</b>. Elles sont en ligne tout de suite, il n'y a rien d'autre à faire.</li>
-            <li>Le bouton <b>Déployer</b> (en bas de cette page) ne sert que lorsque l'équipe technique vous indique qu'une mise à jour de l'application est prête.</li>
+            {/* <li>Le bouton <b>Déployer</b> (en bas de cette page) ne sert que lorsque l'équipe technique vous indique qu'une mise à jour de l'application est prête.</li> */}
           </ul>
         </GuideSection>
         <GuideSection title="6. Modifier, dupliquer, supprimer">
@@ -1382,6 +1382,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* Maintenance */}
         <section className="space-y-3">
+          {/* Bloc Déployer masqué — conserver pour usage futur si besoin de déclencher un build Netlify
           <h2 className="text-xs font-medium text-[#1c2626]/40 uppercase tracking-widest">Maintenance</h2>
           <div className={`${card} px-5 py-4 flex items-center justify-between gap-4`}>
             <div>
@@ -1399,6 +1400,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               {deployState === "ok" ? "✓ Lancé !" : deployState === "error" ? "✗ Erreur" : deployState === "unconfigured" ? "⚠ Hook non configuré" : deployState === "loading" ? "Déploiement…" : "🚀 Déployer"}
             </button>
           </div>
+          */ }
         </section>
 
       </main>
