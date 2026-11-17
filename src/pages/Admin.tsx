@@ -779,7 +779,7 @@ function BuildingForm({
           <div className="flex items-center gap-2">
             {!isNew && data.id && (
               <a
-                href={`/${data.id}/home`}
+                href={`/${data.id}/home?preview=1`}
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => setAdminPreview(data.id, data)}
