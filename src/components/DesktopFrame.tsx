@@ -19,7 +19,7 @@ export function DesktopFrame() {
   const tabs = buildMenu(property, buildingSlug, lang, t);
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,38fr)_minmax(0,62fr)] lg:h-app-shell lg:overflow-hidden lg:bg-brand-surface dark:lg:bg-brand-ink">
+    <div className="lg:grid lg:grid-cols-[minmax(0,33fr)_minmax(0,67fr)] lg:h-app-shell lg:overflow-hidden lg:bg-brand-surface dark:lg:bg-brand-ink">
       <aside className="hidden lg:flex relative flex-col justify-between gap-10 p-10 overflow-hidden">
         <img
           src={property?.backgroundUrl ?? DEFAULT_BACKGROUND_URL}
@@ -42,11 +42,11 @@ export function DesktopFrame() {
           <SettingsPopover variant="light" />
         </div>
 
-        <div className="relative z-10">
-          <p className="text-[40px] leading-tight font-serif font-semibold text-white uppercase">
+        <div className="relative z-10 rounded-xl px-6 py-5 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80">
+          <p className="text-[32px] leading-tight font-serif font-semibold text-brand-ink dark:text-white uppercase">
             {pageText(property ?? undefined, "welcome", "title", lang, t.welcome.title)}
           </p>
-          <p className="mt-1 text-base text-white/85 whitespace-pre-line">
+          <p className="mt-1 text-base text-brand-ink/70 dark:text-white/80 whitespace-pre-line">
             {pageText(property ?? undefined, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9")}
           </p>
         </div>
