@@ -1,4 +1,5 @@
-import { Wifi, MapPin, KeyRound, ChevronLeft, Copy, Check } from "lucide-react";
+import { Wifi, MapPin, KeyRound, ChevronLeft, Copy, ChevronDown, Check, HelpCircle } from "lucide-react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import joroLogo from "@/assets/joro-living-logo.png";
@@ -52,7 +53,7 @@ function Step({ step, title, children }: { step: number; title: string; children
         {step}
       </div>
       <div className="flex-1">
-        <p className="font-semibold text-brand-ink dark:text-white text-base">{title}</p>
+        <p className="font-semibold text-brand-ink dark:text-white text-sm">{title}</p>
         {children}
       </div>
     </div>
@@ -71,13 +72,29 @@ function FieldSkeleton() {
 type FaqItem = { name: { fr: string; en: string }; detail?: { fr: string; en: string } };
 
 function FaqWidget({ items, lang }: { items: FaqItem[]; lang: "fr" | "en" }) {
+  const [open, setOpen] = useState<number | null>(null);
   return (
     <div className="rounded-xl backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 overflow-hidden divide-y divide-brand-ink/10 dark:divide-white/10">
+      <div className="flex items-center gap-3 px-4 py-4">
+        <HelpCircle className="h-5 w-5 text-brand-ink dark:text-white shrink-0" strokeWidth={2} />
+        <h2 className="text-[16px] font-semibold text-brand-ink dark:text-white">FAQ</h2>
+      </div>
       {items.map((item, i) => (
-        <div key={i} className="px-4 py-4 space-y-1">
-          <p className="text-base font-semibold text-brand-ink dark:text-white">{item.name[lang]}</p>
-          {item.detail?.[lang] && (
-            <p className="text-sm text-brand-ink/60 dark:text-white/60 whitespace-pre-line">{item.detail[lang]}</p>
+        <div key={i}>
+          <button
+            onClick={() => setOpen(open === i ? null : i)}
+            className="w-full flex items-center justify-between gap-3 px-4 py-4 text-left"
+          >
+            <span className="text-[15px] font-semibold text-brand-ink dark:text-white">{item.name[lang]}</span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-brand-ink/40 dark:text-white/40 transition-transform ${open === i ? "rotate-180" : ""}`}
+              strokeWidth={1.75}
+            />
+          </button>
+          {open === i && item.detail?.[lang] && (
+            <p className="px-4 pb-4 text-sm text-brand-ink/70 dark:text-white/70 whitespace-pre-line">
+              {item.detail[lang]}
+            </p>
           )}
         </div>
       ))}
@@ -192,7 +209,7 @@ export default function Checkin() {
               <Widget>
                 <div className="flex items-center gap-3 mb-4">
                   <KeyRound className="h-5 w-5 text-foreground" strokeWidth={2} />
-                  <h2 className="font-semibold text-foreground">{t.checkin.accessTitle}</h2>
+                  <h2 className="text-[16px] font-semibold text-foreground">{t.checkin.accessTitle}</h2>
                 </div>
                 <div className="space-y-4">
                   {property.access.map((step, i) => (
@@ -227,10 +244,7 @@ export default function Checkin() {
 
             {/* Extra tips (FAQ accordion) */}
             {property?.extraInfo && property.extraInfo.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="text-white font-semibold text-lg px-1">FAQ</h2>
-                <FaqWidget items={property.extraInfo} lang={lang} />
-              </div>
+              <FaqWidget items={property.extraInfo} lang={lang} />
             )}
           </div>
 
