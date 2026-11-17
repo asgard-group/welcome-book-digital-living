@@ -59,7 +59,7 @@ export default function Welcome() {
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
               {pageText(property, "welcome", "title", lang, t.welcome.title)}
             </h1>
-            <p className="text-base text-white/80">
+            <p className="text-base text-white/80 whitespace-pre-line">
               {pageText(property, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9")}
             </p>
           </div>

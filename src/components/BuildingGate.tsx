@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
-import { useEffect } from "react";
-import { Outlet, useParams } from "react-router-dom";
-import { useProperty, isAdminPreviewActive, clearAdminPreview } from "@/property/useProperty";
+import { createContext, useContext, useEffect, useState } from "react";
+import { Outlet, useParams, useSearchParams } from "react-router-dom";
+import { useProperty, clearAdminPreview } from "@/property/useProperty";
 import { hexToHslString } from "@/lib/color";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { ExternalLink } from "@/components/ExternalLink";
+
+/** True uniquement si la page a été ouverte via le bouton « Prévisualiser » (?preview=1). */
+export const PreviewContext = createContext(false);
+export const useIsPreview = () => useContext(PreviewContext);
 
 function Screen({ children }: { children: ReactNode }) {
   return (
@@ -116,8 +120,11 @@ function PreviewBanner({ slug }: { slug: string }) {
 
 export function BuildingGate() {
   const { buildingSlug } = useParams<{ buildingSlug?: string }>();
-  const { data, isLoading, isError, error } = useProperty();
-  const preview = !!(buildingSlug && isAdminPreviewActive(buildingSlug));
+  const [searchParams] = useSearchParams();
+  // Preview mode is activated only when the URL contains ?preview=1 (set by the admin
+  // "Prévisualiser" button). useState so navigation within the building keeps it active.
+  const [isPreview] = useState(() => searchParams.get("preview") === "1");
+  const { data, isLoading, isError, error } = useProperty(isPreview);
 
   useEffect(() => {
     if (!data?.colors) return;
@@ -131,9 +138,9 @@ export function BuildingGate() {
     return error?.message === "building_not_found" ? <BuildingNotFound /> : <LoadError />;
   }
   return (
-    <>
+    <PreviewContext.Provider value={isPreview}>
       <Outlet />
-      {preview && buildingSlug && <PreviewBanner slug={buildingSlug} />}
-    </>
+      {isPreview && buildingSlug && <PreviewBanner slug={buildingSlug} />}
+    </PreviewContext.Provider>
   );
 }

@@ -177,16 +177,6 @@ export function setAdminPreview(slug: string, data: object): void {
   } catch {}
 }
 
-export function isAdminPreviewActive(slug: string): boolean {
-  try {
-    const raw = localStorage.getItem(ADMIN_PREVIEW_KEY + slug);
-    if (!raw) return false;
-    const preview = JSON.parse(raw);
-    return !!(preview._previewTs && Date.now() - preview._previewTs < PREVIEW_TTL_MS);
-  } catch {
-    return false;
-  }
-}
 
 export function clearAdminPreview(slug: string): void {
   try {
@@ -194,8 +184,8 @@ export function clearAdminPreview(slug: string): void {
   } catch {}
 }
 
-async function fetchBuilding(buildingSlug?: string): Promise<PropertyData> {
-  if (buildingSlug) {
+async function fetchBuilding(buildingSlug?: string, isPreview = false): Promise<PropertyData> {
+  if (isPreview && buildingSlug) {
     try {
       const raw = localStorage.getItem(ADMIN_PREVIEW_KEY + buildingSlug);
       if (raw) {
@@ -229,12 +219,12 @@ async function fetchBuilding(buildingSlug?: string): Promise<PropertyData> {
   throw new Error(`building_unavailable_${res.status}`);
 }
 
-export function useProperty() {
+export function useProperty(isPreview = false) {
   const { buildingSlug } = useParams<{ buildingSlug?: string }>();
   const query = useQuery({
-    queryKey: ["building", buildingSlug],
-    queryFn: () => fetchBuilding(buildingSlug),
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["building", buildingSlug, isPreview ? "preview" : "live"],
+    queryFn: () => fetchBuilding(buildingSlug, isPreview),
+    staleTime: isPreview ? Infinity : 5 * 60 * 1000,
     retry: false,
   });
 
