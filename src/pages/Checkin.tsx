@@ -75,7 +75,7 @@ function FaqWidget({ items, lang }: { items: FaqItem[]; lang: "fr" | "en" }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
     <div className="rounded-xl backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-4">
+      <div className="flex items-center gap-3 px-4 pt-4 pb-0">
         <HelpCircle className="h-5 w-5 text-brand-ink dark:text-white shrink-0" strokeWidth={2} />
         <h2 className="text-[16px] font-semibold text-brand-ink dark:text-white">Questions fréquentes</h2>
       </div>
