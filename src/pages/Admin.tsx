@@ -645,7 +645,7 @@ function TabTextes({ data, onChange }: { data: BuildingData; onChange: (d: Build
           <ItemCard key={p.key} onRemove={() => { setPage(p.key, "title", empty); setPage(p.key, "subtitle", empty); }}>
             <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">{p.label}</div>
             <BilingualInput label="Titre" placeholder={p.title} value={texts.pages?.[p.key]?.title ?? empty} onChange={(v) => setPage(p.key, "title", v)} />
-            <BilingualInput label="Sous-titre" placeholder={p.subtitle} value={texts.pages?.[p.key]?.subtitle ?? empty} onChange={(v) => setPage(p.key, "subtitle", v)} />
+            <BilingualInput label="Sous-titre" placeholder={p.subtitle} value={texts.pages?.[p.key]?.subtitle ?? empty} onChange={(v) => setPage(p.key, "subtitle", v)} multiline />
           </ItemCard>
         ))}
       </div>
