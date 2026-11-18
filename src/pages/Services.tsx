@@ -31,15 +31,17 @@ function ServiceCard({
     <>
       <div className="flex items-start justify-between gap-2">
         <Icon className="h-6 w-6 text-brand-ink dark:text-white" strokeWidth={1.75} />
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-ink/10 dark:bg-white/10 shrink-0">
-          {indicator}
-        </span>
+        {indicator && (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-ink/10 dark:bg-white/10 shrink-0">
+            {indicator}
+          </span>
+        )}
       </div>
       <p className="mt-4 text-[15px] font-semibold text-brand-ink dark:text-white leading-snug">
         {title}
       </p>
       {description && (
-        <p className="mt-1.5 text-[13px] leading-snug text-brand-ink/70 dark:text-white/70">{description}</p>
+        <p className="mt-1.5 text-[13px] leading-snug text-brand-ink/70 dark:text-white/70 whitespace-pre-line">{description}</p>
       )}
     </>
   );
@@ -125,8 +127,9 @@ export default function Services() {
                 icon={SERVICE_ICONS[item.icon] ?? Wrench}
                 title={item.name[lang]}
                 description={item.description?.[lang] || item.description?.fr}
-                href={`mailto:${item.email}`}
-                indicator={<Plus className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} />}
+                // Sans email de contact, la carte reste informative : ni lien ni « + ».
+                href={item.email?.trim() ? `mailto:${item.email.trim()}` : undefined}
+                indicator={item.email?.trim() ? <Plus className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} /> : null}
               />
             ))}
           </div>

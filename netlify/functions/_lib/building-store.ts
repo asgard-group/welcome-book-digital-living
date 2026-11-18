@@ -85,6 +85,8 @@ export type BuildingData = {
     menuOrder?: string[];
     pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>;
   };
+  /** Bandeau de la page Check-in/out : libellés et heures (admin). Absent = valeurs par défaut. */
+  schedule?: { arrivalLabel?: Bilingual; arrivalTime?: string; departureLabel?: Bilingual; departureTime?: string };
   /** Encarts libres de la page Infos pratiques (icône, titre, texte), saisis dans l'admin. */
   notes?: { icon?: string; title: Bilingual; detail?: Bilingual }[];
   /** Page Urgences : texte d'information, contacts et email. Absent = contenu par défaut. */

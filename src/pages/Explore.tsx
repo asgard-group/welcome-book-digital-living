@@ -79,7 +79,7 @@ export default function Explore() {
         {/* Panel */}
         <div className="relative z-10 rounded-t-[24px] bg-brand-surface dark:bg-brand-ink px-6 pt-5 pb-10">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-semibold text-brand-ink dark:text-white">Type de cuisine</h2>
+            <h2 className="text-base font-semibold text-brand-ink dark:text-white">{t.explore.cuisineType}</h2>
             <button onClick={() => setShowFilter(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-ink/10 dark:bg-white/10">
               <X className="h-4 w-4 text-brand-ink dark:text-white" />
             </button>
@@ -94,7 +94,7 @@ export default function Explore() {
                   : "bg-brand-ink/10 dark:bg-white/10 text-brand-ink dark:text-white"
               )}
             >
-              Tous
+              {t.explore.all}
             </button>
             {typeList.map((type) => (
               <button
@@ -148,7 +148,7 @@ export default function Explore() {
               )}
             >
               <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
-              {activeType ?? "Filtrer"}
+              {activeType ?? t.explore.filter}
             </button>
             {activeType && (
               <button
@@ -156,7 +156,7 @@ export default function Explore() {
                 className="flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-white/80 backdrop-blur-md bg-white/15 lg:text-brand-ink/80 lg:bg-brand-ink/10 dark:lg:text-white/80 dark:lg:bg-white/15"
               >
                 <X className="h-3.5 w-3.5" />
-                Tout voir
+                {t.explore.seeAll}
               </button>
             )}
           </div>

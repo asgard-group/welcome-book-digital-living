@@ -80,7 +80,7 @@ async function translateBuilding(raw: Record<string, unknown>): Promise<Record<s
       ...sec,
       title: await tr(sec.title),
       items: await trArr((sec.items as Record<string, unknown>[]) ?? [], async (item) => ({
-        ...item, name: await tr(item.name), detail: await tr(item.detail),
+        ...item, name: await tr(item.name), detail: await tr(item.detail), notice: await tr(item.notice),
       })),
     })),
   };
@@ -119,13 +119,26 @@ async function translateBuilding(raw: Record<string, unknown>): Promise<Record<s
     async (n) => ({ ...n, title: await tr(n.title), detail: await tr(n.detail) }),
   );
 
+  // Bandeau Check-in/out : seuls les libellés sont traduits, les heures restent telles quelles.
+  const rawSchedule = data.schedule as
+    | { arrivalLabel?: Bilingual; arrivalTime?: string; departureLabel?: Bilingual; departureTime?: string }
+    | undefined;
+  const schedule = rawSchedule
+    ? {
+        arrivalTime: rawSchedule.arrivalTime?.trim() || undefined,
+        departureTime: rawSchedule.departureTime?.trim() || undefined,
+        arrivalLabel: rawSchedule.arrivalLabel?.fr?.trim() ? await translateBilingual(rawSchedule.arrivalLabel) : undefined,
+        departureLabel: rawSchedule.departureLabel?.fr?.trim() ? await translateBilingual(rawSchedule.departureLabel) : undefined,
+      }
+    : undefined;
+
   // Page Urgences : seul le texte d'information est traduit (noms, rôles et numéros restent tels quels).
   const rawEmergency = data.emergency as { info?: Bilingual } | undefined;
   const emergency = rawEmergency
     ? { ...rawEmergency, info: rawEmergency.info?.fr?.trim() ? await translateBilingual(rawEmergency.info) : undefined }
     : undefined;
 
-  return { ...data, access, extraInfo, stay, services, addresses, facilities, texts, notes, emergency };
+  return { ...data, access, extraInfo, stay, services, addresses, facilities, texts, notes, schedule, emergency };
 }
 
 type StaticBuilding = { id: string; name: string };

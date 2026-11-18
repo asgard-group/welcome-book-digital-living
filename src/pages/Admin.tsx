@@ -6,6 +6,8 @@ import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
 import { DEFAULT_BACKGROUND_URL, setAdminPreview } from "@/property/useProperty";
 import { translations } from "@/i18n/translations";
 import { orderedMenuKeys } from "@/property/menu";
+import { FACILITY_ICON_OPTIONS } from "@/lib/facilityIcons";
+import { DEFAULT_ARRIVAL_TIME, DEFAULT_DEPARTURE_TIME, isStayServiceName } from "@/property/stay";
 import {
   DEFAULT_EMERGENCY_CONTACTS,
   DEFAULT_EMERGENCY_EMAIL,
@@ -17,12 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 type Bilingual = { fr: string; en: string };
 type PlaceItem = { name: string; address?: string; distance?: string; description?: Bilingual; type?: string };
-type ServiceItem = { name: Bilingual; icon?: string; email?: string; description?: Bilingual };
+type ServiceItem = { name: Bilingual; icon?: string; email?: string; description?: Bilingual; stayLink?: boolean };
 type AccessStep = { name: Bilingual; detail?: Bilingual; code?: string; codeFirst?: boolean };
 type StayBlock = { kind: "arrivee" | "depart" | "information"; name: Bilingual; detail?: Bilingual };
 type NoteBlock = { icon?: string; title: Bilingual; detail?: Bilingual };
 type FaqItem = { name: Bilingual; detail?: Bilingual };
-type FacilityItem = { name: Bilingual; detail?: Bilingual; videoUrl?: string };
+type FacilityItem = { name: Bilingual; detail?: Bilingual; videoUrl?: string; videoFile?: string; notice?: Bilingual };
 type FacilitySection = { id: string; title: Bilingual; kind: "video" | "rules"; icon?: string; items: FacilityItem[] };
 
 type BuildingData = {
@@ -53,6 +55,7 @@ type BuildingData = {
     pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>;
   };
   notes?: NoteBlock[];
+  schedule?: { arrivalLabel?: Bilingual; arrivalTime?: string; departureLabel?: Bilingual; departureTime?: string };
   emergency?: { info?: Bilingual; contacts?: EmergencyContact[]; email?: string };
 };
 
@@ -92,7 +95,10 @@ function normalizeBuilding(raw: Record<string, unknown>): BuildingData {
     stay: (raw.stay as StayBlock[]) ?? base.stay,
     services: {
       included: svc.included ?? [],
-      quote: svc.quote ?? [],
+      // Logements enregistrés avant la case « raccourci Check-in/out » : on la coche d'après le nom d'origine.
+      quote: (svc.quote ?? []).some((q) => q.stayLink !== undefined)
+        ? svc.quote
+        : (svc.quote ?? []).map((q) => ({ ...q, stayLink: isStayServiceName(q.name?.fr ?? "") })),
     },
     addresses: {
       restaurants: addr.restaurants ?? [],
@@ -411,15 +417,37 @@ function TabCheckin({ data, onChange }: { data: BuildingData; onChange: (d: Buil
   const remove = (i: number) => onChange({ ...data, stay: stays.filter((_, j) => j !== i) });
   const move = (i: number, dir: -1 | 1) => onChange({ ...data, stay: moveIn(stays, i, dir) });
 
+  // Bandeau des horaires : champs préremplis avec les valeurs par défaut, enregistrés seulement s'ils en diffèrent.
+  const sch = data.schedule ?? {};
+  const setSch = (patch: NonNullable<BuildingData["schedule"]>) => onChange({ ...data, schedule: { ...sch, ...patch } });
+  const arrivalLabel = sch.arrivalLabel ?? { fr: fr.checkout.arrivalLabel, en: "" };
+  const departureLabel = sch.departureLabel ?? { fr: fr.checkout.departureLabel, en: "" };
+  const arrivalTime = sch.arrivalTime ?? DEFAULT_ARRIVAL_TIME;
+  const departureTime = sch.departureTime ?? DEFAULT_DEPARTURE_TIME;
+
   const KIND_LABELS: Record<StayBlock["kind"], string> = {
-    arrivee: "Arrivée (15h)",
-    depart: "Départ (11h)",
+    arrivee: `${arrivalLabel.fr || fr.checkout.arrivalLabel} (${arrivalTime || DEFAULT_ARRIVAL_TIME})`,
+    depart: `${departureLabel.fr || fr.checkout.departureLabel} (${departureTime || DEFAULT_DEPARTURE_TIME})`,
     information: "Information",
   };
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-[#1c2626]/50 mb-4">Les lignes commençant par « - » s'affichent en puces dans l'app.</p>
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-4">
+        <p className={sectionTitle}>Bandeau des horaires</p>
+        <div className="grid grid-cols-2 gap-4">
+          <BilingualInput label="Libellé d'arrivée" value={arrivalLabel} onChange={(v) => setSch({ arrivalLabel: v.fr === fr.checkout.arrivalLabel ? undefined : v })} />
+          <Field label="Heure d'arrivée">
+            <input className={inputCls} value={arrivalTime} onChange={(e) => setSch({ arrivalTime: e.target.value })} placeholder={DEFAULT_ARRIVAL_TIME} />
+          </Field>
+          <BilingualInput label="Libellé de départ" value={departureLabel} onChange={(v) => setSch({ departureLabel: v.fr === fr.checkout.departureLabel ? undefined : v })} />
+          <Field label="Heure de départ">
+            <input className={inputCls} value={departureTime} onChange={(e) => setSch({ departureTime: e.target.value })} placeholder={DEFAULT_DEPARTURE_TIME} />
+          </Field>
+        </div>
+        <p className="text-sm text-[#1c2626]/50">Un champ laissé vide reprend la valeur par défaut. Le raccourci en bas de la page reprend le nom des services cochés dans l'onglet Services.</p>
+      </div>
+      <p className="text-sm text-[#1c2626]/50 mb-4">Les lignes commençant par « - » s'affichent en puces dans l'app ; les autres sauts de ligne sont conservés.</p>
       {stays.map((block, i) => (
         <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, stays.length, move)}>
           <Field label="Type de bloc">
@@ -466,9 +494,9 @@ function TabFaq({ data, onChange }: { data: BuildingData; onChange: (d: Building
   );
 }
 
-/** Sélecteur d'icône (liste fermée des icônes gérées par la page Services). */
-function IconSelect({ value, onChange }: { value?: string; onChange: (v?: string) => void }) {
-  const known = SERVICE_ICON_OPTIONS.some((o) => o.value === value);
+/** Sélecteur d'icône (liste fermée : par défaut les icônes de la page Services). */
+function IconSelect({ value, onChange, options = SERVICE_ICON_OPTIONS }: { value?: string; onChange: (v?: string) => void; options?: typeof SERVICE_ICON_OPTIONS }) {
+  const known = options.some((o) => o.value === value);
   return (
     <Select value={value || "none"} onValueChange={(v) => onChange(v === "none" ? undefined : v)}>
       <SelectTrigger className="h-auto rounded-xl border-black/15 bg-[#f5f2ed] px-3.5 py-2.5 text-sm text-[#1c2626]">
@@ -476,7 +504,7 @@ function IconSelect({ value, onChange }: { value?: string; onChange: (v?: string
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="none">Aucune icône (par défaut)</SelectItem>
-        {SERVICE_ICON_OPTIONS.map(({ value: v, label, Icon }) => (
+        {options.map(({ value: v, label, Icon }) => (
           <SelectItem key={v} value={v}>
             <span className="flex items-center gap-2"><Icon className="h-4 w-4" /> {label}</span>
           </SelectItem>
@@ -489,9 +517,9 @@ function IconSelect({ value, onChange }: { value?: string; onChange: (v?: string
 
 /* ─── Tab: Services ──────────────────────────────────────────────────────── */
 function ServiceList({
-  label, items, onChange,
+  label, items, onChange, withStayLink = false,
 }: {
-  label: string; items: ServiceItem[]; onChange: (items: ServiceItem[]) => void;
+  label: string; items: ServiceItem[]; onChange: (items: ServiceItem[]) => void; withStayLink?: boolean;
 }) {
   const update = (i: number, item: ServiceItem) => { const next = [...items]; next[i] = item; onChange(next); };
   const add = () => onChange([...items, { name: { fr: "", en: "" } }]);
@@ -514,10 +542,16 @@ function ServiceList({
             <Field label="Icône">
               <IconSelect value={svc.icon} onChange={(icon) => update(i, { ...svc, icon })} />
             </Field>
-            <Field label="Email de contact (optionnel)">
+            <Field label="Email de contact (sans email, la carte n'est pas cliquable)">
               <input className={inputCls} type="email" value={svc.email ?? ""} onChange={(e) => update(i, { ...svc, email: e.target.value || undefined })} placeholder="reservation@joro-space.fr" />
             </Field>
           </div>
+          {withStayLink && (
+            <label className="flex items-center gap-2 text-sm text-[#1c2626]/70 cursor-pointer">
+              <input type="checkbox" checked={!!svc.stayLink} onChange={(e) => update(i, { ...svc, stayLink: e.target.checked })} />
+              Rappeler ce service en bas de la page Check-in/out
+            </label>
+          )}
         </ItemCard>
       ))}
       <AddButton label={`Ajouter — ${label}`} onClick={add} />
@@ -536,6 +570,7 @@ function TabServices({ data, onChange }: { data: BuildingData; onChange: (d: Bui
       <SectionSep />
       <ServiceList
         label="Services sur devis (En plus)"
+        withStayLink
         items={data.services.quote}
         onChange={(quote) => onChange({ ...data, services: { ...data.services, quote } })}
       />
@@ -561,12 +596,12 @@ function PlaceList({
   const update = (i: number, item: PlaceItem) => { const next = [...items]; next[i] = item; onChange(next); };
   const add = () => onChange([...items, { name: "", description: { fr: "", en: "" } }]);
   const remove = (i: number) => onChange(items.filter((_, j) => j !== i));
-  const move = (i: number, dir: -1 | 1) => onChange(moveIn(items, i, dir));
 
   return (
     <div className="space-y-3">
+      <p className="text-sm text-[#1c2626]/50">Dans l'app, les lieux sont triés automatiquement du plus proche au plus éloigné (d'après la distance saisie) ; « Jöro Kaffé » reste toujours en tête.</p>
       {items.map((place, i) => (
-        <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
+        <ItemCard key={i} onRemove={() => remove(i)}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Nom">
               <input className={inputCls} value={place.name} onChange={(e) => update(i, { ...place, name: e.target.value })} />
@@ -726,6 +761,72 @@ function TabUrgences({ data, onChange }: { data: BuildingData; onChange: (d: Bui
   );
 }
 
+/* ─── VideoUpload ────────────────────────────────────────────────────────── */
+const VIDEO_CHUNK_SIZE = 2 * 1024 * 1024; // doit rester égal à MEDIA_CHUNK_SIZE (netlify/functions/upload-media.ts)
+const VIDEO_MAX_SIZE = 80 * 1024 * 1024;
+const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+
+/** Envoi d'une vidéo par morceaux (limite de taille des fonctions Netlify), lue ensuite dans le livret. */
+function VideoUpload({ slug, value, onChange }: { slug: string; value?: string; onChange: (url?: string) => void }) {
+  const [progress, setProgress] = useState<number | null>(null);
+
+  const handleFile = async (file: File) => {
+    if (!slug) return toast.error("Renseignez d'abord le slug du logement (onglet Infos de base).");
+    if (!VIDEO_TYPES.includes(file.type)) return toast.error("Format non pris en charge : utilisez une vidéo MP4, MOV ou WebM.");
+    if (file.size > VIDEO_MAX_SIZE) return toast.error("Vidéo trop lourde (80 Mo maximum).");
+    const id = `video-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const total = Math.ceil(file.size / VIDEO_CHUNK_SIZE);
+    setProgress(0);
+    try {
+      let url: string | undefined;
+      for (let index = 0; index < total; index++) {
+        const form = new FormData();
+        form.append("chunk", file.slice(index * VIDEO_CHUNK_SIZE, (index + 1) * VIDEO_CHUNK_SIZE));
+        form.append("slug", slug);
+        form.append("id", id);
+        form.append("index", String(index));
+        form.append("total", String(total));
+        form.append("size", String(file.size));
+        form.append("type", file.type);
+        const res = await fetch("/api/upload-media", { method: "POST", credentials: "include", body: form });
+        if (!res.ok) throw new Error("upload_failed");
+        url = (await res.json()).url ?? url;
+        setProgress(Math.round(((index + 1) / total) * 100));
+      }
+      if (!url) throw new Error("upload_failed");
+      onChange(url);
+      toast.success("Vidéo envoyée. Pensez à enregistrer.");
+    } catch {
+      toast.error("L'envoi de la vidéo a échoué.");
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <label className={labelCls}>Vidéo de la notice (optionnel)</label>
+      {value && <video src={value} controls playsInline preload="metadata" className="w-full max-w-xs rounded-xl bg-black" />}
+      <div className="flex items-center gap-3">
+        <label className="cursor-pointer rounded-xl border border-black/15 bg-[#f5f2ed] px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/5 transition">
+          {progress !== null ? `Envoi… ${progress} %` : value ? "Remplacer la vidéo" : "Choisir une vidéo"}
+          <input
+            type="file"
+            accept={VIDEO_TYPES.join(",")}
+            className="hidden"
+            disabled={progress !== null}
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) handleFile(f); }}
+          />
+        </label>
+        {value && progress === null && (
+          <button type="button" onClick={() => onChange(undefined)} className="text-sm text-[#1c2626]/50 hover:text-red-500 transition">Retirer</button>
+        )}
+      </div>
+      <p className="text-xs text-[#1c2626]/40">MP4 conseillé (lisible sur tous les téléphones), 80 Mo maximum. La vidéo s'affiche sous le texte, dans la fenêtre de notice.</p>
+    </div>
+  );
+}
+
 /* ─── Tab: Guide du logement ─────────────────────────────────────────────── */
 function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
   const sections = data.facilities?.sections ?? [];
@@ -769,8 +870,8 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
                 <option value="rules">Règlement intérieur</option>
               </select>
             </Field>
-            <Field label="Icône (texte libre)">
-              <input className={inputCls} value={section.icon ?? ""} onChange={(e) => updateSection(si, { ...section, icon: e.target.value || undefined })} placeholder="cuisine, équipements…" />
+            <Field label="Icône">
+              <IconSelect options={FACILITY_ICON_OPTIONS} value={section.icon} onChange={(icon) => updateSection(si, { ...section, icon })} />
             </Field>
           </div>
 
@@ -780,9 +881,13 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
               <ItemCard key={ii} onRemove={() => removeItem(si, ii)} {...moveProps(ii, section.items.length, (i, d) => moveItem(si, i, d))}>
                 <BilingualInput label="Nom" value={item.name} onChange={(v) => updateItem(si, ii, { ...item, name: v })} />
                 <BilingualInput label="Description" value={item.detail ?? { fr: "", en: "" }} onChange={(v) => updateItem(si, ii, { ...item, detail: v.fr || v.en ? v : undefined })} multiline />
-                <Field label="URL vidéo (optionnel)">
-                  <input className={inputCls} value={item.videoUrl ?? ""} onChange={(e) => updateItem(si, ii, { ...item, videoUrl: e.target.value || undefined })} placeholder="https://..." />
-                </Field>
+                <BilingualInput label="Notice (fenêtre « Voir la notice » ; lignes « - » en puces)" value={item.notice ?? { fr: "", en: "" }} onChange={(v) => updateItem(si, ii, { ...item, notice: v.fr || v.en ? v : undefined })} multiline />
+                <VideoUpload slug={data.id} value={item.videoFile} onChange={(videoFile) => updateItem(si, ii, { ...item, videoFile })} />
+                {!item.videoFile && (
+                  <Field label="Ou lien externe vers une vidéo (optionnel)">
+                    <input className={inputCls} value={item.videoUrl ?? ""} onChange={(e) => updateItem(si, ii, { ...item, videoUrl: e.target.value || undefined })} placeholder="https://..." />
+                  </Field>
+                )}
               </ItemCard>
             ))}
             <AddButton label="Ajouter un élément" onClick={() => addItem(si)} />

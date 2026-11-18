@@ -74,7 +74,7 @@ export default function InfoPage() {
         <div className="rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80 text-brand-ink dark:text-white">
           <div className="flex items-center gap-3 mb-3">
             <AlertCircle className="h-5 w-5 text-brand-ink dark:text-white shrink-0" strokeWidth={2} />
-            <h2 className="font-semibold text-brand-ink dark:text-white">Information</h2>
+            <h2 className="font-semibold text-brand-ink dark:text-white">{t.info.informationTitle}</h2>
           </div>
           <p className="text-sm text-brand-ink/70 dark:text-white/70 whitespace-pre-line">{infoText}</p>
         </div>
