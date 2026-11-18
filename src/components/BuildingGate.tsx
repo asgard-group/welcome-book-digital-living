@@ -99,11 +99,13 @@ function PreviewBanner({
   mobile,
   onDesktop,
   onMobile,
+  onOnboarding,
 }: {
   slug: string;
   mobile: boolean;
   onDesktop: () => void;
   onMobile: () => void;
+  onOnboarding: () => void;
 }) {
   const option = (active: boolean) =>
     cn("flex items-center gap-1.5 rounded px-2.5 py-1 transition", active ? "bg-white text-amber-600" : "hover:bg-white/20");
@@ -111,6 +113,13 @@ function PreviewBanner({
     <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-lg">
       <span>Mode prévisualisation — modifications non enregistrées</span>
       <div className="flex shrink-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={onOnboarding}
+          className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition"
+        >
+          Voir la 1re connexion
+        </button>
         {/* Le choix n'a de sens que sur un écran large ; reste visible tant que la vue mobile est active. */}
         <div className={cn("items-center rounded-md bg-white/20 p-0.5 text-xs font-semibold", mobile ? "flex" : "hidden lg:flex")}>
           <button type="button" onClick={onDesktop} aria-pressed={!mobile} className={option(!mobile)}>
@@ -155,6 +164,12 @@ function BuildingGateContent({ framed }: { framed: boolean }) {
     if (path && path !== location.pathname) navigate(path);
   };
 
+  // Rouvre l'écran de première connexion, dans la vue en cours (cadre mobile ou pleine fenêtre).
+  const showOnboarding = () => {
+    if (frameSrc) setFrameSrc(`/${buildingSlug}?preview=1&frame=1&t=${Date.now()}`);
+    else navigate(`/${buildingSlug}`);
+  };
+
   useEffect(() => {
     if (!data?.colors) return;
     const root = document.documentElement.style;
@@ -181,7 +196,7 @@ function BuildingGateContent({ framed }: { framed: boolean }) {
         <Outlet />
       )}
       {isPreview && !framed && buildingSlug && (
-        <PreviewBanner slug={buildingSlug} mobile={!!frameSrc} onDesktop={showDesktop} onMobile={showMobile} />
+        <PreviewBanner slug={buildingSlug} mobile={!!frameSrc} onDesktop={showDesktop} onMobile={showMobile} onOnboarding={showOnboarding} />
       )}
     </>
   );

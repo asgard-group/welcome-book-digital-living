@@ -6,7 +6,7 @@ import gbFlag from "@/assets/icon/flag-icon-set/4_3/gb.svg";
 
 import logo from "@/assets/joro-living-logo.png";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
+import { useProperty, useIsPreview, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
 import { pageText } from "@/property/texts";
 
 type Step = "language" | "welcome";
@@ -20,7 +20,11 @@ export default function Onboarding() {
   const [step, setStep] = useState<Step>("language");
   const [email, setEmail] = useState("");
 
+  const isPreview = useIsPreview();
+
   const finish = async (withEmail: boolean) => {
+    // Prévisualisation admin : ni email envoyé, ni première connexion mémorisée.
+    if (isPreview) return navigate(`/${buildingSlug}/home`);
     const trimmed = email.trim();
     if (withEmail && trimmed && trimmed.includes("@")) {
       try {
