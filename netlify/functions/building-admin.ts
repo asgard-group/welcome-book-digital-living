@@ -88,9 +88,11 @@ async function translateBuilding(raw: Record<string, unknown>): Promise<Record<s
   // Titres / sous-titres / boutons personnalisés : saisis en français, traduits ici.
   const rawTexts = (data.texts ?? {}) as {
     menu?: Record<string, Bilingual>;
-    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual }>;
+    menuOrder?: string[];
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>;
   };
   const texts = {
+    ...(Array.isArray(rawTexts.menuOrder) ? { menuOrder: rawTexts.menuOrder.filter((k) => typeof k === "string") } : {}),
     menu: Object.fromEntries(
       await Promise.all(
         Object.entries(rawTexts.menu ?? {})
@@ -101,7 +103,8 @@ async function translateBuilding(raw: Record<string, unknown>): Promise<Record<s
     pages: Object.fromEntries(
       await Promise.all(
         Object.entries(rawTexts.pages ?? {}).map(async ([k, v]) => {
-          const out: { title?: Bilingual; subtitle?: Bilingual } = {};
+          const out: { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean } = {};
+          if (v?.hideSubtitle) out.hideSubtitle = true;
           if (v?.title?.fr?.trim()) out.title = await translateBilingual(v.title);
           if (v?.subtitle?.fr?.trim()) out.subtitle = await translateBilingual(v.subtitle);
           return [k, out] as const;
@@ -110,7 +113,19 @@ async function translateBuilding(raw: Record<string, unknown>): Promise<Record<s
     ),
   };
 
-  return { ...data, access, extraInfo, stay, services, addresses, facilities, texts };
+  // Encarts libres de la page Infos pratiques ; les encarts vides ne sont pas enregistrés.
+  const notes = await trArr(
+    ((data.notes as { title?: Bilingual; detail?: Bilingual }[]) ?? []).filter((n) => n?.title?.fr?.trim() || n?.detail?.fr?.trim()),
+    async (n) => ({ ...n, title: await tr(n.title), detail: await tr(n.detail) }),
+  );
+
+  // Page Urgences : seul le texte d'information est traduit (noms, rôles et numéros restent tels quels).
+  const rawEmergency = data.emergency as { info?: Bilingual } | undefined;
+  const emergency = rawEmergency
+    ? { ...rawEmergency, info: rawEmergency.info?.fr?.trim() ? await translateBilingual(rawEmergency.info) : undefined }
+    : undefined;
+
+  return { ...data, access, extraInfo, stay, services, addresses, facilities, texts, notes, emergency };
 }
 
 type StaticBuilding = { id: string; name: string };

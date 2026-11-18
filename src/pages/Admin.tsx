@@ -5,6 +5,13 @@ import joroLogo from "@/assets/joro-living-logo.png";
 import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
 import { DEFAULT_BACKGROUND_URL, setAdminPreview } from "@/property/useProperty";
 import { translations } from "@/i18n/translations";
+import { orderedMenuKeys } from "@/property/menu";
+import {
+  DEFAULT_EMERGENCY_CONTACTS,
+  DEFAULT_EMERGENCY_EMAIL,
+  DEFAULT_EMERGENCY_INFO,
+  type EmergencyContact,
+} from "@/property/emergency";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -13,6 +20,7 @@ type PlaceItem = { name: string; address?: string; distance?: string; descriptio
 type ServiceItem = { name: Bilingual; icon?: string; email?: string; description?: Bilingual };
 type AccessStep = { name: Bilingual; detail?: Bilingual; code?: string; codeFirst?: boolean };
 type StayBlock = { kind: "arrivee" | "depart" | "information"; name: Bilingual; detail?: Bilingual };
+type NoteBlock = { icon?: string; title: Bilingual; detail?: Bilingual };
 type FaqItem = { name: Bilingual; detail?: Bilingual };
 type FacilityItem = { name: Bilingual; detail?: Bilingual; videoUrl?: string };
 type FacilitySection = { id: string; title: Bilingual; kind: "video" | "rules"; icon?: string; items: FacilityItem[] };
@@ -41,8 +49,11 @@ type BuildingData = {
   facilities?: { sections: FacilitySection[] };
   texts?: {
     menu?: Record<string, Bilingual>;
-    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual }>;
+    menuOrder?: string[];
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>;
   };
+  notes?: NoteBlock[];
+  emergency?: { info?: Bilingual; contacts?: EmergencyContact[]; email?: string };
 };
 
 type BuildingOption = { id: string; name: string; hasDefault?: boolean };
@@ -267,6 +278,8 @@ function ImageUpload({ label, slug, field, value, fallbackSrc, onChange }: {
 /* ─── Tab: Infos de base ─────────────────────────────────────────────────── */
 function TabInfos({ data, onChange, originalId }: { data: BuildingData; onChange: (d: BuildingData) => void; originalId?: string }) {
   const set = (key: keyof BuildingData, val: unknown) => onChange({ ...data, [key]: val });
+  const notes = data.notes ?? [];
+  const setNote = (i: number, n: NoteBlock) => { const next = [...notes]; next[i] = n; set("notes", next); };
   return (
     <div className="space-y-4">
       {/* Identité */}
@@ -306,6 +319,20 @@ function TabInfos({ data, onChange, originalId }: { data: BuildingData; onChange
             <input className={inputCls} value={data.wifi.password} onChange={(e) => set("wifi", { ...data.wifi, password: e.target.value })} placeholder="bienvenue2024" />
           </Field>
         </div>
+      </div>
+
+      {/* Encarts libres */}
+      <div className="bg-white rounded-2xl border border-black/8 p-5 space-y-3">
+        <p className={sectionTitle}>Encarts d'information <span className="font-normal text-[#1c2626]/40">(optionnel)</span></p>
+        <p className="text-sm text-[#1c2626]/50">Blocs de texte libres (icône, titre, texte) affichés sur la page Infos pratiques, avant la FAQ.</p>
+        {notes.map((note, i) => (
+          <ItemCard key={i} onRemove={() => set("notes", notes.filter((_, j) => j !== i))} {...moveProps(i, notes.length, (j, dir) => set("notes", moveIn(notes, j, dir)))}>
+            <Field label="Icône"><IconSelect value={note.icon} onChange={(icon) => setNote(i, { ...note, icon })} /></Field>
+            <BilingualInput label="Titre" value={note.title} onChange={(v) => setNote(i, { ...note, title: v })} />
+            <BilingualInput label="Texte" value={note.detail ?? { fr: "", en: "" }} onChange={(v) => setNote(i, { ...note, detail: v })} multiline />
+          </ItemCard>
+        ))}
+        <AddButton label="Ajouter un encart" onClick={() => set("notes", [...notes, { title: { fr: "", en: "" }, detail: { fr: "", en: "" } }])} />
       </div>
 
       {/* Apparence */}
@@ -593,7 +620,7 @@ function TabExplorer({ data, onChange }: { data: BuildingData; onChange: (d: Bui
   );
 }
 
-/* ─── Tab: Textes (titres, sous-titres, boutons) ─────────────────────────── */
+/* ─── Tab: Textes (titres et sous-titres) ────────────────────────────────── */
 const fr = translations.fr;
 const TEXT_PAGES: { key: string; label: string; title: string; subtitle: string }[] = [
   { key: "welcome", label: "Page d'accueil", title: fr.welcome.title, subtitle: "43 boulevard Haussmann, Paris 9" },
@@ -604,51 +631,92 @@ const TEXT_PAGES: { key: string; label: string; title: string; subtitle: string 
   { key: "explore", label: "Explorer", title: fr.explore.title, subtitle: fr.explore.subtitle },
   { key: "info", label: "Urgences", title: fr.info.securityTitle, subtitle: fr.info.subtitle },
 ];
-const TEXT_MENU: { key: string; label: string; fallback: string }[] = [
-  { key: "checkin", label: "Infos pratiques", fallback: fr.welcome.menu.checkin },
-  { key: "facilities", label: "Guide du logement", fallback: fr.welcome.menu.facilities },
-  { key: "checkout", label: "Check-in/out", fallback: fr.welcome.menu.checkout },
-  { key: "services", label: "Services", fallback: fr.welcome.menu.services },
-  { key: "explore", label: "Explorer", fallback: fr.welcome.menu.explore },
-  { key: "info", label: "Urgences", fallback: fr.welcome.menu.info },
-];
 
 function TabTextes({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
   const texts = data.texts ?? {};
-  const setMenu = (key: string, v: Bilingual) =>
-    onChange({ ...data, texts: { ...texts, menu: { ...texts.menu, [key]: v } } });
-  const setPage = (key: string, field: "title" | "subtitle", v: Bilingual) =>
+  const empty: Bilingual = { fr: "", en: "" };
+  const setPage = (key: string, patch: { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }) => {
+    // Le titre remplace l'ancien libellé de bouton séparé (texts.menu), qui n'est plus saisi.
+    const menu = { ...texts.menu };
+    if (patch.title) delete menu[key];
     onChange({
       ...data,
-      texts: { ...texts, pages: { ...texts.pages, [key]: { ...texts.pages?.[key], [field]: v } } },
+      texts: { ...texts, menu, pages: { ...texts.pages, [key]: { ...texts.pages?.[key], ...patch } } },
     });
-  const empty: Bilingual = { fr: "", en: "" };
+  };
+  // Les cartes suivent l'ordre des boutons de la page d'accueil ; la page d'accueil reste en tête.
+  const order = orderedMenuKeys(texts.menuOrder);
+  const pages = [
+    TEXT_PAGES.find((p) => p.key === "welcome")!,
+    ...order.map((k) => TEXT_PAGES.find((p) => p.key === k)!),
+  ];
+  const moveMenu = (i: number, dir: -1 | 1) =>
+    onChange({ ...data, texts: { ...texts, menuOrder: moveIn(order, i, dir) } });
+  /** Titre affiché dans le champ : celui de la page, sinon l'ancien libellé de bouton. */
+  const titleOf = (key: string) => (texts.pages?.[key]?.title?.fr ? texts.pages[key].title : texts.menu?.[key]) ?? empty;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[#1c2626]/50 mb-4">
+        Le titre d'une page sert aussi de libellé à son bouton sur la page d'accueil. Les flèches ↑ ↓ changent l'ordre des boutons de la page d'accueil. Laissez un champ vide pour garder le texte par défaut (indiqué en grisé), ou cochez « Pas de sous-titre » pour ne rien afficher. Saisissez en français : l'anglais est traduit à l'enregistrement.
+      </p>
+      {pages.map((p) => {
+        const page = texts.pages?.[p.key];
+        const hidden = !!page?.hideSubtitle;
+        const pos = order.indexOf(p.key as (typeof order)[number]);
+        return (
+          <ItemCard key={p.key} onRemove={() => setPage(p.key, { title: empty, subtitle: empty, hideSubtitle: false })} {...(pos >= 0 ? moveProps(pos, order.length, moveMenu) : {})}>
+            <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">{p.label}</div>
+            <BilingualInput label="Titre" placeholder={p.title} value={titleOf(p.key)} onChange={(v) => setPage(p.key, { title: v })} />
+            {!hidden && (
+              <BilingualInput label="Sous-titre" placeholder={p.subtitle} value={page?.subtitle ?? empty} onChange={(v) => setPage(p.key, { subtitle: v })} multiline />
+            )}
+            <label className="flex items-center gap-2 text-sm text-[#1c2626]/70 cursor-pointer">
+              <input type="checkbox" checked={hidden} onChange={(e) => setPage(p.key, { hideSubtitle: e.target.checked })} />
+              Pas de sous-titre
+            </label>
+          </ItemCard>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── Tab: Urgences (information + contacts) ─────────────────────────────── */
+function TabUrgences({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
+  // Tant que rien n'est personnalisé, le formulaire montre le contenu par défaut de la page.
+  const em = data.emergency ?? {};
+  const info = em.info ?? { fr: DEFAULT_EMERGENCY_INFO.fr, en: "" };
+  const contacts = em.contacts ?? DEFAULT_EMERGENCY_CONTACTS;
+  const email = em.email ?? DEFAULT_EMERGENCY_EMAIL;
+  const set = (patch: Partial<NonNullable<BuildingData["emergency"]>>) =>
+    onChange({ ...data, emergency: { info, contacts, email, ...patch } });
+  const update = (i: number, c: EmergencyContact) => { const next = [...contacts]; next[i] = c; set({ contacts: next }); };
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-[#1c2626]/50">
-        Personnalisez les titres affichés aux voyageurs. Laissez un champ vide pour garder le texte par défaut (indiqué en grisé). Saisissez en français : l'anglais est traduit à l'enregistrement.
+        Les numéros d'urgence (112, 17, 15, 18) sont fixes. Le bloc Information et les contacts ci-dessous sont propres à ce logement.
       </p>
 
-      <div className="space-y-3">
-        <p className={sectionTitle}>Boutons de la page d'accueil</p>
-        {TEXT_MENU.map((m) => (
-          <ItemCard key={m.key} onRemove={() => setMenu(m.key, empty)}>
-            <BilingualInput label={m.label} placeholder={m.fallback} value={texts.menu?.[m.key] ?? empty} onChange={(v) => setMenu(m.key, v)} />
-          </ItemCard>
-        ))}
-      </div>
+      <BilingualInput label="Bloc Information" value={info} onChange={(v) => set({ info: v })} multiline />
 
       <div className="space-y-3">
-        <p className={sectionTitle}>Titres et sous-titres des pages</p>
-        {TEXT_PAGES.map((p) => (
-          <ItemCard key={p.key} onRemove={() => { setPage(p.key, "title", empty); setPage(p.key, "subtitle", empty); }}>
-            <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">{p.label}</div>
-            <BilingualInput label="Titre" placeholder={p.title} value={texts.pages?.[p.key]?.title ?? empty} onChange={(v) => setPage(p.key, "title", v)} />
-            <BilingualInput label="Sous-titre" placeholder={p.subtitle} value={texts.pages?.[p.key]?.subtitle ?? empty} onChange={(v) => setPage(p.key, "subtitle", v)} multiline />
+        <p className={sectionTitle}>Contacts</p>
+        <p className="text-sm text-[#1c2626]/50">Le premier contact est mis en avant ; les suivants sont repliés sous « Autre contact en cas d'urgence ». Téléphone au format international (+33…), utilisé pour l'appel et WhatsApp.</p>
+        {contacts.map((c, i) => (
+          <ItemCard key={i} onRemove={() => set({ contacts: contacts.filter((_, j) => j !== i) })} {...moveProps(i, contacts.length, (j, dir) => set({ contacts: moveIn(contacts, j, dir) }))}>
+            <Field label="Nom"><input className={inputCls} value={c.name} onChange={(e) => update(i, { ...c, name: e.target.value })} /></Field>
+            <Field label="Rôle"><input className={inputCls} value={c.role ?? ""} onChange={(e) => update(i, { ...c, role: e.target.value })} /></Field>
+            <Field label="Téléphone"><input className={inputCls} placeholder="+33612345678" value={c.phone} onChange={(e) => update(i, { ...c, phone: e.target.value })} /></Field>
           </ItemCard>
         ))}
+        <AddButton label="Ajouter un contact" onClick={() => set({ contacts: [...contacts, { name: "", role: "", phone: "" }] })} />
       </div>
+
+      <Field label="Email de contact (laisser vide pour ne pas l'afficher)">
+        <input className={inputCls} type="email" value={email} onChange={(e) => set({ email: e.target.value })} />
+      </Field>
     </div>
   );
 }
@@ -730,6 +798,7 @@ const TABS = [
   { id: "services", label: "Services" },
   { id: "explorer", label: "Explorer" },
   { id: "guide", label: "Guide" },
+  { id: "urgences", label: "Urgences" },
   { id: "textes", label: "Textes" },
 ] as const;
 
@@ -818,6 +887,7 @@ function BuildingForm({
         {tab === "services" && <TabServices data={data} onChange={setData} />}
         {tab === "explorer" && <TabExplorer data={data} onChange={setData} />}
         {tab === "guide" && <TabGuide data={data} onChange={setData} />}
+        {tab === "urgences" && <TabUrgences data={data} onChange={setData} />}
         {tab === "textes" && <TabTextes data={data} onChange={setData} />}
       </main>
     </div>
