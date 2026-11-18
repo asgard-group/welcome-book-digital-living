@@ -62,6 +62,7 @@ onboarding:
   cta: "Commencer"
 
 checkin:
+  faqTitle: "Questions fréquentes"
   title: "Infos pratiques"
   subtitle: "Wifi, Accès logement"
   wifiTitle: "Wifi"
@@ -76,6 +77,9 @@ checkin:
   extraInfoSubtitle: "Retrouver quelques indications utiles pour profiter pleinement de votre séjour"
 
 checkout:
+  arrivalLabel: "Arrivée"
+  departureLabel: "Départ"
+  onRequest: "Option disponible sur devis"
   title: "Check-in/out"
   subtitle: "Avant d'arriver et de partir"
 
@@ -95,6 +99,7 @@ services:
       link: "https://joro-space.fr/joro-kaffe-coffee-shop-co-working/"
 
 facilities:
+  noticeShow: "Voir la notice"
   title: "Guide du logement"
   subtitle: "Tout ce qu'il faut savoir"
   noticeLabel: "Notice :"
@@ -133,6 +138,10 @@ facilities:
       desc: "Depuis internet est interdit"
 
 explore:
+  cuisineType: "Type de cuisine"
+  all: "Tous"
+  filter: "Filtrer"
+  seeAll: "Tout voir"
   title: "Explorer"
   subtitle: "Lieux touristiques & activités"
   map: "Carte →"
@@ -152,6 +161,7 @@ explore:
       label: "Pratique"
 
 info:
+  informationTitle: "Information"
   title: "Infos utiles"
   securityTitle: "Urgences"
   subtitle: "Contacts importants"

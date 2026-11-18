@@ -42,6 +42,8 @@ export type PropertyData = {
   };
   /** Titres, sous-titres et libellés de boutons personnalisés (admin). */
   texts?: BuildingTexts;
+  /** Bandeau de la page Check-in/out : libellés et heures (admin). Absent = valeurs par défaut. */
+  schedule?: { arrivalLabel?: Bilingual; arrivalTime?: string; departureLabel?: Bilingual; departureTime?: string };
   /** Encarts libres de la page Infos pratiques (icône, titre, texte), saisis dans l'admin. */
   notes?: { icon?: string; title: Bilingual; detail?: Bilingual }[];
   /** Page Urgences : texte d'information, contacts et email (admin). Absent = contenu par défaut. */
@@ -75,7 +77,7 @@ export type PropertyData = {
   /** From the building's Notion "Services" sub-database. Optional until synced. */
   services?: {
     included: { name: Bilingual; icon: string; description?: Bilingual }[];
-    quote: { name: Bilingual; icon: string; email?: string; description?: Bilingual }[];
+    quote: { name: Bilingual; icon: string; email?: string; description?: Bilingual; stayLink?: boolean }[];
   };
   /**
    * From the building's Notion "Adresses utiles" sub-database, grouped by category id.
@@ -101,6 +103,10 @@ export type PropertyData = {
         name: Bilingual;
         detail?: Bilingual;
         videoUrl?: string;
+        /** Vidéo envoyée depuis l'admin (servie par /api/media), lue dans la fenêtre de notice. */
+        videoFile?: string;
+        /** Texte de la notice, affiché dans la fenêtre au-dessus de la vidéo. */
+        notice?: Bilingual;
         /** Per-item image for "video" (equipment) sections. */
         imageUrl?: string;
       }[];
