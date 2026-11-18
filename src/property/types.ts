@@ -9,9 +9,9 @@ export type Bilingual = { fr: string; en: string };
 export type TextEntry = { name: Bilingual; detail?: Bilingual };
 
 /** Pages du livret dont le titre / sous-titre est personnalisable. */
-export type PageKey = "welcome" | "checkin" | "facilities" | "checkout" | "services" | "explore" | "info";
+export type PageKey = "onboarding" | "welcome" | "checkin" | "facilities" | "checkout" | "services" | "explore" | "info";
 /** Boutons de la page d'accueil. */
-export type MenuKey = Exclude<PageKey, "welcome">;
+export type MenuKey = Exclude<PageKey, "onboarding" | "welcome">;
 /** Textes personnalisés (vides = texte par défaut). */
 export type BuildingTexts = {
   menu?: Partial<Record<MenuKey, Bilingual>>;

@@ -15,7 +15,7 @@ function custom(b: Bilingual | undefined, lang: Lang): string | undefined {
 function customTitle(property: PropertyData | undefined, page: PageKey, lang: Lang): string | undefined {
   return (
     custom(property?.texts?.pages?.[page]?.title, lang) ??
-    (page === "welcome" ? undefined : custom(property?.texts?.menu?.[page], lang))
+    (page === "welcome" || page === "onboarding" ? undefined : custom(property?.texts?.menu?.[page], lang))
   );
 }
 

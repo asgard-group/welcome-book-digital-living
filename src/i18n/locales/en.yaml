@@ -55,6 +55,8 @@ welcome:
     checkout: "Check-in/out"
 
 onboarding:
+  title: "Welcome to Jöro"
+  subtitle: "Leave your email to make communication easier during your stay."
   heroAlt: "Interior of the space"
   cta: "Start"
 
