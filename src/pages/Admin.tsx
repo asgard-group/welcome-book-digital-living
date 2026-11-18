@@ -623,6 +623,7 @@ function TabExplorer({ data, onChange }: { data: BuildingData; onChange: (d: Bui
 /* ─── Tab: Textes (titres et sous-titres) ────────────────────────────────── */
 const fr = translations.fr;
 const TEXT_PAGES: { key: string; label: string; title: string; subtitle: string }[] = [
+  { key: "onboarding", label: "Première connexion (écran de bienvenue)", title: fr.onboarding.title, subtitle: fr.onboarding.subtitle },
   { key: "welcome", label: "Page d'accueil", title: fr.welcome.title, subtitle: "43 boulevard Haussmann, Paris 9" },
   { key: "checkin", label: "Infos pratiques", title: fr.checkin.title, subtitle: fr.checkin.subtitle },
   { key: "facilities", label: "Guide du logement", title: fr.facilities.title, subtitle: fr.facilities.subtitle },
@@ -634,42 +635,46 @@ const TEXT_PAGES: { key: string; label: string; title: string; subtitle: string 
 
 function TabTextes({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
   const texts = data.texts ?? {};
-  const empty: Bilingual = { fr: "", en: "" };
   const setPage = (key: string, patch: { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }) => {
     // Le titre remplace l'ancien libellé de bouton séparé (texts.menu), qui n'est plus saisi.
     const menu = { ...texts.menu };
-    if (patch.title) delete menu[key];
+    if ("title" in patch) delete menu[key];
     onChange({
       ...data,
       texts: { ...texts, menu, pages: { ...texts.pages, [key]: { ...texts.pages?.[key], ...patch } } },
     });
   };
-  // Les cartes suivent l'ordre des boutons de la page d'accueil ; la page d'accueil reste en tête.
+  // Les cartes suivent l'ordre des boutons de la page d'accueil ; l'écran de première connexion et la page d'accueil restent en tête.
   const order = orderedMenuKeys(texts.menuOrder);
   const pages = [
+    TEXT_PAGES.find((p) => p.key === "onboarding")!,
     TEXT_PAGES.find((p) => p.key === "welcome")!,
     ...order.map((k) => TEXT_PAGES.find((p) => p.key === k)!),
   ];
   const moveMenu = (i: number, dir: -1 | 1) =>
     onChange({ ...data, texts: { ...texts, menuOrder: moveIn(order, i, dir) } });
-  /** Titre affiché dans le champ : celui de la page, sinon l'ancien libellé de bouton. */
-  const titleOf = (key: string) => (texts.pages?.[key]?.title?.fr ? texts.pages[key].title : texts.menu?.[key]) ?? empty;
+  // Les champs sont préremplis avec le texte par défaut. Un texte identique au défaut n'est pas
+  // enregistré comme personnalisation (la traduction anglaise d'origine est alors conservée).
+  const shown = (custom: Bilingual | undefined, fallback: string): Bilingual => custom ?? { fr: fallback, en: "" };
+  const stored = (v: Bilingual, fallback: string) => (v.fr === fallback ? undefined : v);
+  /** Titre personnalisé : celui de la page, sinon l'ancien libellé de bouton. */
+  const titleOf = (key: string) => texts.pages?.[key]?.title ?? (texts.menu?.[key]?.fr ? texts.menu[key] : undefined);
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-[#1c2626]/50 mb-4">
-        Le titre d'une page sert aussi de libellé à son bouton sur la page d'accueil. Les flèches ↑ ↓ changent l'ordre des boutons de la page d'accueil. Laissez un champ vide pour garder le texte par défaut (indiqué en grisé), ou cochez « Pas de sous-titre » pour ne rien afficher. Saisissez en français : l'anglais est traduit à l'enregistrement.
+        Le titre d'une page sert aussi de libellé à son bouton sur la page d'accueil. Les flèches ↑ ↓ changent l'ordre des boutons de la page d'accueil. Les champs sont préremplis avec le texte actuel : modifiez-le directement. Un champ laissé vide reprend le texte par défaut ; cochez « Pas de sous-titre » pour ne rien afficher. La corbeille rétablit les textes par défaut de la page. Saisissez en français : l'anglais est traduit à l'enregistrement.
       </p>
       {pages.map((p) => {
         const page = texts.pages?.[p.key];
         const hidden = !!page?.hideSubtitle;
         const pos = order.indexOf(p.key as (typeof order)[number]);
         return (
-          <ItemCard key={p.key} onRemove={() => setPage(p.key, { title: empty, subtitle: empty, hideSubtitle: false })} {...(pos >= 0 ? moveProps(pos, order.length, moveMenu) : {})}>
+          <ItemCard key={p.key} onRemove={() => setPage(p.key, { title: undefined, subtitle: undefined, hideSubtitle: false })} {...(pos >= 0 ? moveProps(pos, order.length, moveMenu) : {})}>
             <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">{p.label}</div>
-            <BilingualInput label="Titre" placeholder={p.title} value={titleOf(p.key)} onChange={(v) => setPage(p.key, { title: v })} />
+            <BilingualInput label="Titre" placeholder={p.title} value={shown(titleOf(p.key), p.title)} onChange={(v) => setPage(p.key, { title: stored(v, p.title) })} />
             {!hidden && (
-              <BilingualInput label="Sous-titre" placeholder={p.subtitle} value={page?.subtitle ?? empty} onChange={(v) => setPage(p.key, { subtitle: v })} multiline />
+              <BilingualInput label="Sous-titre" placeholder={p.subtitle} value={shown(page?.subtitle, p.subtitle)} onChange={(v) => setPage(p.key, { subtitle: stored(v, p.subtitle) })} multiline />
             )}
             <label className="flex items-center gap-2 text-sm text-[#1c2626]/70 cursor-pointer">
               <input type="checkbox" checked={hidden} onChange={(e) => setPage(p.key, { hideSubtitle: e.target.checked })} />

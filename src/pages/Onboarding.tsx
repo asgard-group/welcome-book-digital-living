@@ -6,7 +6,8 @@ import gbFlag from "@/assets/icon/flag-icon-set/4_3/gb.svg";
 
 import logo from "@/assets/joro-living-logo.png";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useProperty, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
+import { useProperty, useIsPreview, DEFAULT_BACKGROUND_URL } from "@/property/useProperty";
+import { pageText } from "@/property/texts";
 
 type Step = "language" | "welcome";
 
@@ -19,7 +20,11 @@ export default function Onboarding() {
   const [step, setStep] = useState<Step>("language");
   const [email, setEmail] = useState("");
 
+  const isPreview = useIsPreview();
+
   const finish = async (withEmail: boolean) => {
+    // Prévisualisation admin : ni email envoyé, ni première connexion mémorisée.
+    if (isPreview) return navigate(`/${buildingSlug}/home`);
     const trimmed = email.trim();
     if (withEmail && trimmed && trimmed.includes("@")) {
       try {
@@ -29,26 +34,32 @@ export default function Onboarding() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ email: trimmed }),
         });
-      } catch {}
+      } catch {
+        // L'email est facultatif : un échec d'envoi ne bloque pas l'entrée dans le livret.
+      }
     }
     try {
       localStorage.setItem(`joro_onboarded_${buildingSlug}`, "1");
-    } catch {}
+    } catch {
+      // Stockage indisponible (navigation privée) : l'onboarding sera simplement reproposé.
+    }
     navigate(`/${buildingSlug}/home`);
   };
 
+  const welcomeSubtitle = pageText(property ?? undefined, "onboarding", "subtitle", lang, t.onboarding.subtitle);
   const bg = property?.backgroundUrl ?? DEFAULT_BACKGROUND_URL;
 
   return (
     <div className="h-app-shell w-full bg-brand-ink">
-      <div className="mx-auto w-full max-w-[760px] h-app-shell relative overflow-hidden shadow-sm">
+      <div className="mx-auto w-full max-w-[760px] h-app-shell relative overflow-hidden shadow-sm lg:max-w-none">
         <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-ink/20 via-brand-ink/10 to-brand-ink/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-ink/20 via-brand-ink/10 to-brand-ink/80 lg:bg-none lg:bg-brand-ink/35" />
 
-        <div className="relative z-10 flex h-full w-full flex-col">
+        {/* Mobile : logo en haut, contenu en bas de la photo. Desktop : le tout dans une carte en verre dépoli centrée. */}
+        <div className="relative z-10 flex h-full w-full flex-col lg:mx-auto lg:my-auto lg:h-auto lg:w-[480px] lg:top-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:bg-brand-ink/60 lg:backdrop-blur-md lg:p-10">
 
           {/* Logo + dots — zone haute */}
-          <div className="flex flex-col items-center pt-10 shrink-0">
+          <div className="flex flex-col items-center pt-10 shrink-0 lg:pt-0">
             {property?.logoUrl && (
               <>
                 <img src={property.logoUrl} alt="Logo" className="h-auto max-h-[50px] max-w-[180px] w-auto object-contain brightness-0 invert mb-1" />
@@ -74,10 +85,10 @@ export default function Onboarding() {
           </div>
 
           {/* Spacer */}
-          <div className="flex-1" />
+          <div className="flex-1 lg:flex-none lg:h-10" />
 
           {/* Contenu bas de page */}
-          <div className="px-6 pb-12 shrink-0 space-y-5">
+          <div className="px-6 pb-12 shrink-0 space-y-5 lg:px-0 lg:pb-0">
 
             {/* ── Étape 1 : langue ── */}
             {step === "language" && (
@@ -121,13 +132,11 @@ export default function Onboarding() {
               <>
                 <div className="text-center space-y-2">
                   <p className="text-white text-[26px] font-semibold leading-tight">
-                    {lang === "fr" ? "Bienvenue chez Jöro" : "Welcome to Jöro"}
+                    {pageText(property ?? undefined, "onboarding", "title", lang, t.onboarding.title)}
                   </p>
-                  <p className="text-white text-[16px] font-normal leading-snug">
-                    {lang === "fr"
-                      ? "Laissez votre email pour faciliter nos échanges durant votre séjour."
-                      : "Leave your email to make communication easier during your stay."}
-                  </p>
+                  {welcomeSubtitle && (
+                    <p className="text-white text-[16px] font-normal leading-snug whitespace-pre-line">{welcomeSubtitle}</p>
+                  )}
                 </div>
                 <div className="space-y-[24px]">
                   <div className="flex items-center gap-[14px] rounded-xl px-5 py-3 bg-white/10 backdrop-blur-[2.5px] outline outline-[0.5px] outline-white">

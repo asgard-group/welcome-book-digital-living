@@ -18,17 +18,20 @@ import Services from "./pages/Services";
 import Explore from "./pages/Explore";
 import InfoPage from "./pages/InfoPage";
 import NotFound from "./pages/NotFound";
+import { useIsPreview } from "@/property/useProperty";
 
 /** Onboarding is per building: seeing it for one address doesn't skip it for another. */
 const OnboardingGate = () => {
   const { buildingSlug } = useParams<{ buildingSlug: string }>();
+  // En prévisualisation admin, l'écran de première connexion reste toujours consultable.
+  const isPreview = useIsPreview();
   let seen = false;
   try {
     seen = typeof window !== "undefined" && localStorage.getItem(`joro_onboarded_${buildingSlug}`) === "1";
   } catch {
     // Ignore storage failures (e.g. private mode / disabled storage).
   }
-  return seen ? <Navigate to={`/${buildingSlug}/home`} replace /> : <Onboarding />;
+  return seen && !isPreview ? <Navigate to={`/${buildingSlug}/home`} replace /> : <Onboarding />;
 };
 
 const queryClient = new QueryClient();
