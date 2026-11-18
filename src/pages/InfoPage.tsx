@@ -2,6 +2,7 @@ import { Phone, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { pageText } from "@/property/texts";
 import { useProperty } from "@/property/useProperty";
+import { DEFAULT_EMERGENCY_INFO } from "@/property/emergency";
 import { PageShell } from "@/components/PageShell";
 import { ContactWidget } from "@/components/ContactWidget";
 import { ExternalLink } from "@/components/ExternalLink";
@@ -15,6 +16,9 @@ export default function InfoPage() {
     { label: t.info.samu, desc: t.info.samuDesc, number: "15" },
     { label: t.info.fire, desc: t.info.fireDesc, number: "18" },
   ];
+
+  const customInfo = property?.emergency?.info;
+  const infoText = (customInfo?.fr?.trim() ? customInfo : DEFAULT_EMERGENCY_INFO)[lang] || customInfo?.fr;
 
   return (
     <PageShell
@@ -72,9 +76,7 @@ export default function InfoPage() {
             <AlertCircle className="h-5 w-5 text-brand-ink dark:text-white shrink-0" strokeWidth={2} />
             <h2 className="font-semibold text-brand-ink dark:text-white">Information</h2>
           </div>
-          <p className="text-sm text-brand-ink/70 dark:text-white/70">
-            Privilégiez les échanges via la plateforme de réservation (Booking, Airbnb…) pour assurer le suivi par toute l'équipe Jöro. Utilisez ces contacts uniquement en cas d'urgence.
-          </p>
+          <p className="text-sm text-brand-ink/70 dark:text-white/70 whitespace-pre-line">{infoText}</p>
         </div>
 
         {/* Contact Jöro */}

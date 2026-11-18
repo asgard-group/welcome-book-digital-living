@@ -82,7 +82,16 @@ export type BuildingData = {
   /** Titres, sous-titres et libellés de boutons personnalisés. */
   texts?: {
     menu?: Record<string, Bilingual>;
-    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual }>;
+    menuOrder?: string[];
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>;
+  };
+  /** Encarts libres de la page Infos pratiques (icône, titre, texte), saisis dans l'admin. */
+  notes?: { icon?: string; title: Bilingual; detail?: Bilingual }[];
+  /** Page Urgences : texte d'information, contacts et email. Absent = contenu par défaut. */
+  emergency?: {
+    info?: Bilingual;
+    contacts?: { name: string; role?: string; phone: string }[];
+    email?: string;
   };
 };
 

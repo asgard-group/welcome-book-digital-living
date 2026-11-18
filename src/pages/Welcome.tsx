@@ -14,6 +14,7 @@ export default function Welcome() {
   const isDesktop = useIsDesktop();
 
   const menu = buildMenu(property, buildingSlug, lang, t);
+  const welcomeSubtitle = pageText(property, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9");
 
   // Sur desktop l'accueil est porté par le panneau gauche de DesktopFrame : on ouvre la première rubrique.
   if (isDesktop) return <Navigate to={menu[0].to} replace />;
@@ -42,9 +43,9 @@ export default function Welcome() {
             <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
               {pageText(property, "welcome", "title", lang, t.welcome.title)}
             </h1>
-            <p className="text-base text-white/80 whitespace-pre-line">
-              {pageText(property, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9")}
-            </p>
+            {welcomeSubtitle && (
+              <p className="text-base text-white/80 whitespace-pre-line">{welcomeSubtitle}</p>
+            )}
           </div>
 
           {/* Menu buttons — fills space between title and footer logo */}

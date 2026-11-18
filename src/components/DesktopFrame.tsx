@@ -17,6 +17,7 @@ export function DesktopFrame() {
   const { data: property } = useProperty();
   const { t, lang } = useLanguage();
   const tabs = buildMenu(property, buildingSlug, lang, t);
+  const welcomeSubtitle = pageText(property ?? undefined, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9");
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,33fr)_minmax(0,67fr)] lg:h-app-shell lg:overflow-hidden lg:bg-brand-surface dark:lg:bg-brand-ink">
@@ -46,9 +47,9 @@ export function DesktopFrame() {
           <p className="text-[32px] leading-tight font-serif font-semibold text-brand-ink dark:text-white uppercase">
             {pageText(property ?? undefined, "welcome", "title", lang, t.welcome.title)}
           </p>
-          <p className="mt-1 text-base text-brand-ink/70 dark:text-white/80 whitespace-pre-line">
-            {pageText(property ?? undefined, "welcome", "subtitle", lang, "43 boulevard Haussmann, Paris 9")}
-          </p>
+          {welcomeSubtitle && (
+            <p className="mt-1 text-base text-brand-ink/70 dark:text-white/80 whitespace-pre-line">{welcomeSubtitle}</p>
+          )}
         </div>
       </aside>
 

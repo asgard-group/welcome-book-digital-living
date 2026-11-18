@@ -17,6 +17,14 @@ describe("textes personnalisés", () => {
     expect(pageText(base, "services", "title", "fr", "Services")).toBe("Services");
     expect(pageText(undefined, "services", "title", "fr", "Services")).toBe("Services");
   });
+  it("partage le titre entre la page et son bouton", () => {
+    expect(menuText(base, "checkout", "fr", "Check-in/out")).toBe("Arrivée & départ");
+    expect(pageText(base, "explore", "title", "fr", "Explorer")).toBe("Sortir");
+  });
+  it("n'affiche aucun sous-titre quand il est masqué", () => {
+    const hidden = { texts: { pages: { info: { subtitle: { fr: "Contacts", en: "" }, hideSubtitle: true } } } } as unknown as PropertyData;
+    expect(pageText(hidden, "info", "subtitle", "fr", "défaut")).toBe("");
+  });
   it("retombe sur le français si l'anglais n'est pas encore traduit", () => {
     expect(menuText(base, "explore", "en", "Explore")).toBe("Sortir");
   });

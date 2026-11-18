@@ -1,4 +1,5 @@
-import { Wifi, MapPin, KeyRound, Copy, ChevronDown, Check, HelpCircle } from "lucide-react";
+import { Wifi, MapPin, KeyRound, Copy, ChevronDown, HelpCircle, AlertCircle } from "lucide-react";
+import { SERVICE_ICONS } from "@/lib/serviceIcons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useProperty } from "@/property/useProperty";
@@ -85,7 +86,7 @@ function FaqWidget({ items, lang }: { items: FaqItem[]; lang: "fr" | "en" }) {
             onClick={() => setOpen(open === i ? null : i)}
             className="w-full flex items-center justify-between gap-3 px-4 py-4 text-left"
           >
-            <span className="text-[15px] font-semibold text-brand-ink dark:text-white">{item.name[lang]}</span>
+            <span className="text-[14px] font-semibold text-brand-ink dark:text-white">{item.name[lang]}</span>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-brand-ink/40 dark:text-white/40 transition-transform ${open === i ? "rotate-180" : ""}`}
               strokeWidth={1.75}
@@ -219,6 +220,23 @@ export default function Checkin() {
             </div>
           </Widget>
         )}
+
+        {/* Encarts libres (icône, titre, texte) ajoutés dans l'onglet « Infos de base » de l'admin */}
+        {(property?.notes ?? []).map((note, i) => {
+          const Icon = SERVICE_ICONS[note.icon ?? ""] ?? AlertCircle;
+          const title = note.title?.[lang] || note.title?.fr;
+          const detail = note.detail?.[lang] || note.detail?.fr;
+          if (!title && !detail) return null;
+          return (
+            <Widget key={i}>
+              <div className={`flex items-center gap-3 ${detail ? "mb-3" : ""}`}>
+                <Icon className="h-5 w-5 shrink-0 text-foreground" strokeWidth={2} />
+                {title && <h2 className="font-semibold text-foreground">{title}</h2>}
+              </div>
+              {detail && <p className="text-sm text-brand-ink/70 dark:text-white/70 whitespace-pre-line">{detail}</p>}
+            </Widget>
+          );
+        })}
 
         {/* Extra tips (FAQ accordion) */}
         {property?.extraInfo && property.extraInfo.length > 0 && (

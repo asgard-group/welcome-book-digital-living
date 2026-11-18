@@ -15,7 +15,10 @@ export type MenuKey = Exclude<PageKey, "welcome">;
 /** Textes personnalisés (vides = texte par défaut). */
 export type BuildingTexts = {
   menu?: Partial<Record<MenuKey, Bilingual>>;
-  pages?: Partial<Record<PageKey, { title?: Bilingual; subtitle?: Bilingual }>>;
+  /** Ordre des boutons de la page d'accueil (et des onglets desktop). Absent = ordre par défaut. */
+  menuOrder?: MenuKey[];
+  /** `hideSubtitle` : la page n'affiche aucun sous-titre (ni personnalisé, ni par défaut). */
+  pages?: Partial<Record<PageKey, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>>;
 };
 
 
@@ -39,6 +42,14 @@ export type PropertyData = {
   };
   /** Titres, sous-titres et libellés de boutons personnalisés (admin). */
   texts?: BuildingTexts;
+  /** Encarts libres de la page Infos pratiques (icône, titre, texte), saisis dans l'admin. */
+  notes?: { icon?: string; title: Bilingual; detail?: Bilingual }[];
+  /** Page Urgences : texte d'information, contacts et email (admin). Absent = contenu par défaut. */
+  emergency?: {
+    info?: Bilingual;
+    contacts?: { name: string; role?: string; phone: string }[];
+    email?: string;
+  };
   /** Guest wifi network, separate from the main one above. Optional until every building sets it. */
   guestWifi?: {
     network: string;
