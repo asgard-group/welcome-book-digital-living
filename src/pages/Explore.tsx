@@ -60,6 +60,10 @@ export default function Explore() {
     ? [...new Set(rawList.map((p) => p.type).filter(Boolean) as string[])]
     : [];
 
+  // Le filtre reste indexé sur le type français ; seul le libellé affiché suit la langue.
+  const typeLabel = (type: string) =>
+    (lang === "en" && rawList.find((p) => p.type === type)?.typeEn) || type;
+
   const displayList = activeType
     ? rawList.filter((p) => p.type === activeType)
     : rawList;
@@ -107,7 +111,7 @@ export default function Explore() {
                     : "bg-brand-ink/10 dark:bg-white/10 text-brand-ink dark:text-white"
                 )}
               >
-                {type}
+                {typeLabel(type)}
               </button>
             ))}
           </div>
@@ -148,7 +152,7 @@ export default function Explore() {
               )}
             >
               <SlidersHorizontal className="h-4 w-4" strokeWidth={2} />
-              {activeType ?? t.explore.filter}
+              {activeType ? typeLabel(activeType) : t.explore.filter}
             </button>
             {activeType && (
               <button
@@ -183,7 +187,7 @@ export default function Explore() {
                 </p>
                 {[place.description?.[lang], place.distance, place.price].filter(Boolean).length > 0 && (
                   <p className="text-[14px] text-brand-ink/70 dark:text-white/80 mt-0.5 truncate">
-                    {[place.type ?? place.description?.[lang], place.distance, place.price].filter(Boolean).join(" · ")}
+                    {[place.type ? typeLabel(place.type) : place.description?.[lang], place.distance, place.price].filter(Boolean).join(" · ")}
                   </p>
                 )}
               </div>

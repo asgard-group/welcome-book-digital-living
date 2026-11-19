@@ -125,7 +125,12 @@ async function translateBuilding(raw: Record<string, unknown>, dict: Map<string,
   const addr = (data.addresses ?? {}) as Record<string, Record<string, unknown>[]>;
   const addresses: Record<string, unknown[]> = {};
   for (const cat of Object.keys(addr)) {
-    addresses[cat] = await trArr(addr[cat] ?? [], async (p) => ({ ...p, description: await tr(p.description) }));
+    // `type` (filtre cuisine) est saisi en français : `typeEn` est sa traduction, absente si elle a échoué.
+    addresses[cat] = await trArr(addr[cat] ?? [], async (p) => {
+      const type = typeof p.type === "string" ? p.type.trim() : "";
+      const typeEn = type ? dict.get(type) : undefined;
+      return { ...p, description: await tr(p.description), typeEn: typeEn && typeEn !== type ? typeEn : undefined };
+    });
   }
 
   const fac = (data.facilities ?? { sections: [] }) as { sections: Record<string, unknown>[] };
@@ -253,10 +258,18 @@ export default async (req: Request) => {
     if (!body.name || typeof body.name !== "string") return json(400, { error: "missing_name" });
     // Basic slug validation: lowercase, hyphens only
     if (!/^[a-z0-9-]+$/.test(body.id)) return json(400, { error: "invalid_id" });
-    const { dict, failed } = await buildDictionary(body, [
-      await getBuilding(body.id),
-      (staticBuildings as Record<string, unknown>)[body.id],
-    ]);
+    // Les types de cuisine sont de simples chaînes : on les présente au dictionnaire comme des textes bilingues.
+    const placeTypes = (building: unknown) =>
+      Object.values(((building as { addresses?: Record<string, { type?: string; typeEn?: string }[]> } | null)?.addresses ?? {}))
+        .flat()
+        .filter((p) => typeof p?.type === "string" && p.type.trim())
+        .map((p) => ({ fr: p.type!.trim(), en: p.typeEn ?? "" }));
+    const stored = await getBuilding(body.id);
+    const original = (staticBuildings as Record<string, unknown>)[body.id];
+    const { dict, failed } = await buildDictionary(
+      [body, placeTypes(body).map((t) => ({ fr: t.fr, en: "" }))],
+      [stored, placeTypes(stored), original],
+    );
     const translated = await translateBuilding(body, dict);
     await putBuilding(translated as Parameters<typeof putBuilding>[0]);
     // `untranslated` : nombre de textes restés en français côté anglais (DeepL indisponible ou refus).
