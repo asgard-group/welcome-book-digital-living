@@ -17,8 +17,9 @@ export type BuildingTexts = {
   menu?: Partial<Record<MenuKey, Bilingual>>;
   /** Ordre des boutons de la page d'accueil (et des onglets desktop). Absent = ordre par défaut. */
   menuOrder?: MenuKey[];
+  /** `notice` (écran de première connexion) : mention sur l'usage de l'email, sous le champ. */
   /** `hideSubtitle` : la page n'affiche aucun sous-titre (ni personnalisé, ni par défaut). */
-  pages?: Partial<Record<PageKey, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>>;
+  pages?: Partial<Record<PageKey, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean; notice?: Bilingual }>>;
 };
 
 

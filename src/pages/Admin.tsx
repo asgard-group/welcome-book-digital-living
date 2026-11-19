@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Eye, Key, LogOut, X, Copy, Check, Trash2, ChevronLeft, ChevronUp, ChevronDown, Mail, Download, RefreshCw } from "lucide-react";
 import joroLogo from "@/assets/joro-living-logo.png";
 import { SERVICE_ICON_OPTIONS } from "@/lib/serviceIcons";
 import { DEFAULT_BACKGROUND_URL, setAdminPreview } from "@/property/useProperty";
@@ -52,7 +52,7 @@ type BuildingData = {
   texts?: {
     menu?: Record<string, Bilingual>;
     menuOrder?: string[];
-    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>;
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean; notice?: Bilingual }>;
   };
   notes?: NoteBlock[];
   schedule?: { arrivalLabel?: Bilingual; arrivalTime?: string; departureLabel?: Bilingual; departureTime?: string };
@@ -670,7 +670,7 @@ const TEXT_PAGES: { key: string; label: string; title: string; subtitle: string 
 
 function TabTextes({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
   const texts = data.texts ?? {};
-  const setPage = (key: string, patch: { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }) => {
+  const setPage = (key: string, patch: { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean; notice?: Bilingual }) => {
     // Le titre remplace l'ancien libellé de bouton séparé (texts.menu), qui n'est plus saisi.
     const menu = { ...texts.menu };
     if ("title" in patch) delete menu[key];
@@ -705,7 +705,7 @@ function TabTextes({ data, onChange }: { data: BuildingData; onChange: (d: Build
         const hidden = !!page?.hideSubtitle;
         const pos = order.indexOf(p.key as (typeof order)[number]);
         return (
-          <ItemCard key={p.key} onRemove={() => setPage(p.key, { title: undefined, subtitle: undefined, hideSubtitle: false })} {...(pos >= 0 ? moveProps(pos, order.length, moveMenu) : {})}>
+          <ItemCard key={p.key} onRemove={() => setPage(p.key, { title: undefined, subtitle: undefined, hideSubtitle: false, notice: undefined })} {...(pos >= 0 ? moveProps(pos, order.length, moveMenu) : {})}>
             <div className="text-xs font-semibold text-[#1c2626]/40 uppercase tracking-widest mb-2">{p.label}</div>
             <BilingualInput label="Titre" placeholder={p.title} value={shown(titleOf(p.key), p.title)} onChange={(v) => setPage(p.key, { title: stored(v, p.title) })} />
             {!hidden && (
@@ -715,6 +715,14 @@ function TabTextes({ data, onChange }: { data: BuildingData; onChange: (d: Build
               <input type="checkbox" checked={hidden} onChange={(e) => setPage(p.key, { hideSubtitle: e.target.checked })} />
               Pas de sous-titre
             </label>
+            {p.key === "onboarding" && (
+              <BilingualInput
+                label="Mention sur l'usage de l'email (affichée sous le champ)"
+                value={shown(page?.notice, fr.onboarding.emailNotice)}
+                onChange={(v) => setPage(p.key, { notice: stored(v, fr.onboarding.emailNotice) })}
+                multiline
+              />
+            )}
           </ItemCard>
         );
       })}
@@ -1296,9 +1304,152 @@ function CopyUrl({ url }: { url: string }) {
   );
 }
 
+/* ─── Emails voyageurs (écran de première connexion) ─────────────────────── */
+type GuestEmailRow = { key: string; email: string; buildingId: string; buildingName: string; lang?: "fr" | "en"; marketing?: boolean; marketingAt?: number; createdAt: number };
+
+function GuestEmailsScreen({ header, onBack, onLogout }: { header: React.ReactNode; onBack: () => void; onLogout: () => void }) {
+  const [rows, setRows] = useState<GuestEmailRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [building, setBuilding] = useState("all");
+  // Seuls les voyageurs ayant coché la case peuvent recevoir des offres.
+  const [offersOnly, setOffersOnly] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/guest-emails", { credentials: "include" });
+      if (res.status === 401) { onLogout(); return; }
+      if (!res.ok) throw new Error("load_failed");
+      setRows((await res.json()).emails ?? []);
+    } catch {
+      toast.error("Impossible de charger les emails.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
+
+  const buildings = [...new Map(rows.map((r) => [r.buildingId, r.buildingName])).entries()];
+  const shown = rows.filter((r) => (building === "all" || r.buildingId === building) && (!offersOnly || r.marketing));
+
+  const copyOne = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      toast.success("Email copié.");
+    } catch {
+      toast.error("Impossible de copier.");
+    }
+  };
+
+  const exportCsv = () => {
+    const cell = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const lines = [
+      ["Email", "Logement", "Langue", "Date", "Offres acceptées", "Date de l'accord"].map(cell).join(";"),
+      ...shown.map((r) => [
+        r.email, r.buildingName, r.lang ?? "", new Date(r.createdAt).toLocaleString("fr-FR"),
+        r.marketing ? "oui" : "non", r.marketingAt ? new Date(r.marketingAt).toLocaleString("fr-FR") : "",
+      ].map(cell).join(";")),
+    ];
+    // BOM : Excel ouvre le fichier en UTF-8 (accents corrects).
+    const url = URL.createObjectURL(new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `emails-voyageurs-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const remove = async (row: GuestEmailRow) => {
+    if (!confirm(`Supprimer définitivement ${row.email} ?`)) return;
+    const res = await fetch(`/api/guest-emails?key=${encodeURIComponent(row.key)}`, { method: "DELETE", credentials: "include" });
+    if (res.status === 401) { onLogout(); return; }
+    if (!res.ok) { toast.error("Erreur lors de la suppression."); return; }
+    setRows((prev) => prev.filter((r) => r.key !== row.key));
+    toast.success("Email supprimé.");
+  };
+
+  const btn = "flex items-center gap-2 rounded-xl border border-black/15 bg-white px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/4 transition disabled:opacity-40";
+  return (
+    <div className={`min-h-screen w-full ${cream}`}>
+      {header}
+      <main className="mx-auto max-w-5xl px-6 py-10 space-y-6">
+        <button onClick={onBack} className="flex items-center gap-1 text-sm text-[#1c2626]/60 hover:text-[#1c2626] transition">
+          <ChevronLeft className="h-4 w-4" /> Retour
+        </button>
+        <div>
+          <h1 className="text-2xl font-semibold text-[#1c2626]">Emails voyageurs</h1>
+          <p className="text-sm text-[#1c2626]/50 mt-0.5">Emails laissés sur l'écran de première connexion, du plus récent au plus ancien. N'envoyez des offres qu'aux voyageurs marqués « Offres acceptées » ; les autres ont donné leur email pour leur séjour uniquement.</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Menu maison plutôt que le <select> natif : largeur maîtrisée, flèche à distance du bord. */}
+          <Select value={building} onValueChange={setBuilding}>
+            <SelectTrigger className="h-auto w-[280px] max-w-full rounded-xl border-black/15 bg-white px-3.5 py-2 text-sm text-[#1c2626]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les logements ({rows.length})</SelectItem>
+              {buildings.map(([id, name]) => (
+                <SelectItem key={id} value={id}>{name} ({rows.filter((r) => r.buildingId === id).length})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <label className="flex items-center gap-2 text-sm text-[#1c2626]/70 cursor-pointer">
+            <input type="checkbox" checked={offersOnly} onChange={(e) => setOffersOnly(e.target.checked)} />
+            Offres acceptées uniquement ({rows.filter((r) => r.marketing).length})
+          </label>
+          <div className="ml-auto flex items-center gap-2">
+            <button className={btn} onClick={exportCsv} disabled={shown.length === 0}><Download className="h-4 w-4" /> Exporter en CSV</button>
+            <button className={btn} onClick={load} disabled={loading}><RefreshCw className="h-4 w-4" /> Actualiser</button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className={`${card} h-14 animate-pulse`} />)}</div>
+        ) : shown.length === 0 ? (
+          <div className={`${card} px-6 py-10 text-center`}>
+            <p className="text-sm text-[#1c2626]/50">Aucun email enregistré pour le moment.</p>
+          </div>
+        ) : (
+          <div className={`${card} divide-y divide-black/8 overflow-hidden`}>
+            {shown.map((r) => (
+              <div key={r.key} className="flex items-center gap-4 px-5 py-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 text-sm font-medium text-[#1c2626]">
+                    <span className="truncate">{r.email}</span>
+                    {r.marketing && <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Offres acceptées</span>}
+                  </p>
+                  <p className="text-xs text-[#1c2626]/40 truncate">
+                    {r.buildingName} · {new Date(r.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                    {r.lang ? ` · ${r.lang === "en" ? "Anglais" : "Français"}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => copyOne(r.email)}
+                    title="Copier l'email"
+                    aria-label={`Copier ${r.email}`}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[#1c2626]/30 hover:text-[#1c2626] hover:bg-black/5 transition"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                  <RemoveButton onClick={() => remove(r)} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 /* ─── Dashboard ──────────────────────────────────────────────────────────── */
 type DashboardView =
   | { screen: "dashboard" }
+  | { screen: "emails" }
   | { screen: "new" }
   | { screen: "edit"; slug: string };
 
@@ -1451,6 +1602,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     URL.revokeObjectURL(a.href);
   };
 
+  // Bandeau commun au tableau de bord et à la page des emails.
+  const header = (
+    <header className="border-b border-black/8 bg-white px-6 py-4">
+      <div className="mx-auto max-w-5xl flex items-center justify-between">
+        <img src={joroLogo} alt="Jöro Living" className="h-6 w-auto object-contain brightness-0 opacity-80" />
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-[#1c2626]/50">Espace admin</span>
+          <button onClick={handleLogout} className="flex items-center gap-1.5 text-sm text-[#1c2626]/60 hover:text-[#1c2626] transition">
+            <LogOut className="h-4 w-4" /> Déconnexion
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+
+  if (view.screen === "emails") {
+    return <GuestEmailsScreen header={header} onBack={() => setView({ screen: "dashboard" })} onLogout={onLogout} />;
+  }
+
   // ── Building form views ──────────────────────────────────────────────────
   if (view.screen === "new") {
     return (
@@ -1477,17 +1647,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   // ── Dashboard ────────────────────────────────────────────────────────────
   return (
     <div className={`min-h-screen w-full ${cream}`}>
-      <header className="border-b border-black/8 bg-white px-6 py-4">
-        <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <img src={joroLogo} alt="Jöro Living" className="h-6 w-auto object-contain brightness-0 opacity-80" />
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-[#1c2626]/50">Espace admin</span>
-            <button onClick={handleLogout} className="flex items-center gap-1.5 text-sm text-[#1c2626]/60 hover:text-[#1c2626] transition">
-              <LogOut className="h-4 w-4" /> Déconnexion
-            </button>
-          </div>
-        </div>
-      </header>
+      {header}
 
       <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
         <section className="space-y-4">
@@ -1496,12 +1656,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <h1 className="text-2xl font-semibold text-[#1c2626]">Welcome books</h1>
               <p className="text-sm text-[#1c2626]/50 mt-0.5">Gérez vos logements et les accès voyageurs.</p>
             </div>
-            <button
-              className="flex items-center gap-2 rounded-xl bg-[#1c2626] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#1c2626]/85 transition"
-              onClick={() => setView({ screen: "new" })}
-            >
-              <Plus className="h-4 w-4" /> Nouveau logement
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="flex items-center gap-2 rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm font-medium text-[#1c2626] hover:bg-black/4 transition"
+                onClick={() => setView({ screen: "emails" })}
+              >
+                <Mail className="h-4 w-4" /> Emails voyageurs
+              </button>
+              <button
+                className="flex items-center gap-2 rounded-xl bg-[#1c2626] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#1c2626]/85 transition"
+                onClick={() => setView({ screen: "new" })}
+              >
+                <Plus className="h-4 w-4" /> Nouveau logement
+              </button>
+            </div>
           </div>
 
           {loadingBuildings ? (

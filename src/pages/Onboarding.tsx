@@ -19,6 +19,8 @@ export default function Onboarding() {
 
   const [step, setStep] = useState<Step>("language");
   const [email, setEmail] = useState("");
+  // Accord pour recevoir les offres : jamais coché d'avance, le voyageur doit le choisir lui-même.
+  const [marketing, setMarketing] = useState(false);
 
   const isPreview = useIsPreview();
 
@@ -32,7 +34,7 @@ export default function Onboarding() {
           method: "POST",
           credentials: "include",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email: trimmed }),
+          body: JSON.stringify({ email: trimmed, slug: buildingSlug, lang, marketing }),
         });
       } catch {
         // L'email est facultatif : un échec d'envoi ne bloque pas l'entrée dans le livret.
@@ -47,6 +49,9 @@ export default function Onboarding() {
   };
 
   const welcomeSubtitle = pageText(property ?? undefined, "onboarding", "subtitle", lang, t.onboarding.subtitle);
+  // Mention sur l'usage de l'email : personnalisée dans l'admin (onglet Textes), sinon texte par défaut.
+  const customNotice = property?.texts?.pages?.onboarding?.notice;
+  const emailNotice = (customNotice?.[lang] || customNotice?.fr || "").trim() || t.onboarding.emailNotice;
   const bg = property?.backgroundUrl ?? DEFAULT_BACKGROUND_URL;
 
   return (
@@ -150,6 +155,15 @@ export default function Onboarding() {
                       className="flex-1 bg-transparent text-white placeholder:text-white/50 text-[16px] font-medium outline-none"
                     />
                   </div>
+                  <label className="flex items-start gap-3 text-left text-sm leading-snug text-white cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={marketing}
+                      onChange={(e) => setMarketing(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-white"
+                    />
+                    <span>{t.onboarding.marketingOptIn}</span>
+                  </label>
                   <button
                     type="button"
                     onClick={() => finish(true)}
@@ -169,6 +183,7 @@ export default function Onboarding() {
                   >
                     {lang === "fr" ? "Continuer sans email" : "Continue without email"}
                   </button>
+                  <p className="text-center text-xs leading-snug text-white/60 whitespace-pre-line">{emailNotice}</p>
                 </div>
               </>
             )}

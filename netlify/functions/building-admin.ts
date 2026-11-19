@@ -148,7 +148,7 @@ async function translateBuilding(raw: Record<string, unknown>, dict: Map<string,
   const rawTexts = (data.texts ?? {}) as {
     menu?: Record<string, Bilingual>;
     menuOrder?: string[];
-    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean }>;
+    pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean; notice?: Bilingual }>;
   };
   const texts = {
     ...(Array.isArray(rawTexts.menuOrder) ? { menuOrder: rawTexts.menuOrder.filter((k) => typeof k === "string") } : {}),
@@ -162,8 +162,9 @@ async function translateBuilding(raw: Record<string, unknown>, dict: Map<string,
     pages: Object.fromEntries(
       await Promise.all(
         Object.entries(rawTexts.pages ?? {}).map(async ([k, v]) => {
-          const out: { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean } = {};
+          const out: { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean; notice?: Bilingual } = {};
           if (v?.hideSubtitle) out.hideSubtitle = true;
+          if (v?.notice?.fr?.trim()) out.notice = await translateBilingual(v.notice);
           if (v?.title?.fr?.trim()) out.title = await translateBilingual(v.title);
           if (v?.subtitle?.fr?.trim()) out.subtitle = await translateBilingual(v.subtitle);
           return [k, out] as const;
