@@ -66,7 +66,9 @@ export default function Welcome() {
                       strokeWidth={1.5}
                     />
                   </span>
-                  <span className="flex-1 flex flex-col items-center text-center px-2 -ml-10">
+                  {/* Marge droite = largeur de l'icône : le libellé reste centré dans le bouton sans jamais passer
+                      sur l'icône, et passe sur deux lignes s'il est trop long. */}
+                  <span className="min-w-0 flex-1 flex flex-col items-center text-center pl-2 pr-[calc(3rem+0.5rem)]">
                     <span className="text-[15px] font-semibold uppercase text-brand-ink dark:text-white leading-tight">
                       {item.label}
                     </span>

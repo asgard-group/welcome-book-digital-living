@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SERVICE_ICONS } from "@/lib/serviceIcons";
-import { ArrowRight, Check, Plus, Wrench } from "lucide-react";
+import { ArrowRight, Check, Mail, Plus, Wrench } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { WhatsAppIcon } from "@/components/WhatsAppIcon";
+import { servicesContact } from "@/property/emergency";
+import type { PropertyData } from "@/property/types";
 import meetingImg from "@/assets/meeting.jpg";
 import kaffeImg from "@/assets/kaffe.jpg";
 import type { LucideIcon } from "lucide-react";
@@ -20,12 +24,14 @@ function ServiceCard({
   description,
   indicator,
   href,
+  onClick,
 }: {
   icon: LucideIcon;
   title: string;
   description?: string;
   indicator: React.ReactNode;
   href?: string;
+  onClick?: () => void;
 }) {
   const content = (
     <>
@@ -47,6 +53,13 @@ function ServiceCard({
   );
   const className = "rounded-xl p-4 backdrop-blur-md bg-brand-surface/80 dark:bg-brand-ink/80";
 
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={`${className} text-left`}>
+        {content}
+      </button>
+    );
+  }
   if (href) {
     return (
       <ExternalLink href={href} className={className}>
@@ -57,10 +70,24 @@ function ServiceCard({
   return <div className={className}>{content}</div>;
 }
 
+type QuoteService = NonNullable<PropertyData["services"]>["quote"][number];
+
+const contactButton =
+  "flex items-center justify-center gap-2 rounded-[8px] px-4 py-3 text-sm font-medium text-brand-ink dark:text-white bg-brand-ink/10 dark:bg-white/10";
+
 export default function Services() {
   const { t, lang } = useLanguage();
   const { data: property } = useProperty();
   const [active, setActive] = useState<string>("inclus");
+  // Service « En plus » dont la fenêtre de contact est ouverte (null = fermée).
+  const [request, setRequest] = useState<QuoteService | null>(null);
+  const contact = servicesContact(property);
+  const whatsappHref = (service: QuoteService) => {
+    const message = t.services.requestMessage
+      .replace("{service}", service.name[lang] || service.name.fr)
+      .replace("{home}", property?.name ?? "");
+    return `https://wa.me/${contact.phone.replace(/[^\d]/g, "")}?text=${encodeURIComponent(message)}`;
+  };
 
   const includedItems = property?.services?.included ?? [];
   const quoteItems = property?.services?.quote ?? [];
@@ -127,9 +154,8 @@ export default function Services() {
                 icon={SERVICE_ICONS[item.icon] ?? Wrench}
                 title={item.name[lang]}
                 description={item.description?.[lang] || item.description?.fr}
-                // Sans email de contact, la carte reste informative : ni lien ni « + ».
-                href={item.email?.trim() ? `mailto:${item.email.trim()}` : undefined}
-                indicator={item.email?.trim() ? <Plus className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} /> : null}
+                onClick={() => setRequest(item)}
+                indicator={<Plus className="h-4 w-4 text-brand-ink dark:text-white" strokeWidth={2.5} />}
               />
             ))}
           </div>
@@ -167,6 +193,32 @@ export default function Services() {
           </div>
         )}
       </div>
+
+      {/* Fenêtre de contact d'un service « En plus » : WhatsApp du contact principal, et email s'il est renseigné. */}
+      <Dialog open={!!request} onOpenChange={(open) => !open && setRequest(null)}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md rounded-xl border-0 bg-brand-surface text-brand-ink dark:bg-brand-ink dark:text-white">
+          {request && (
+            <>
+              <DialogTitle className="pr-6 text-lg font-semibold">{request.name[lang] || request.name.fr}</DialogTitle>
+              <DialogDescription className="text-sm text-brand-ink/70 dark:text-white/70 whitespace-pre-line">
+                {[request.description?.[lang] || request.description?.fr, t.services.requestIntro].filter(Boolean).join("\n\n")}
+              </DialogDescription>
+              <div className="space-y-2">
+                <ExternalLink href={whatsappHref(request)} newTab className={contactButton}>
+                  <WhatsAppIcon className="h-5 w-5" />
+                  {t.contact.whatsappLabel} · {contact.name}
+                </ExternalLink>
+                {request.email?.trim() && (
+                  <ExternalLink href={`mailto:${request.email.trim()}`} className={contactButton}>
+                    <Mail className="h-5 w-5" strokeWidth={1.75} />
+                    <span className="truncate">{request.email.trim()}</span>
+                  </ExternalLink>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </PageShell>
   );

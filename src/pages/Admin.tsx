@@ -12,6 +12,8 @@ import {
   DEFAULT_EMERGENCY_CONTACTS,
   DEFAULT_EMERGENCY_EMAIL,
   DEFAULT_EMERGENCY_INFO,
+  emergencyContacts,
+  servicesContact,
   type EmergencyContact,
 } from "@/property/emergency";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -55,6 +57,7 @@ type BuildingData = {
     pages?: Record<string, { title?: Bilingual; subtitle?: Bilingual; hideSubtitle?: boolean; notice?: Bilingual }>;
   };
   notes?: NoteBlock[];
+  servicesContact?: { name: string; phone: string };
   schedule?: { arrivalLabel?: Bilingual; arrivalTime?: string; departureLabel?: Bilingual; departureTime?: string };
   emergency?: { info?: Bilingual; contacts?: EmergencyContact[]; email?: string };
 };
@@ -542,9 +545,13 @@ function ServiceList({
             <Field label="Icône">
               <IconSelect value={svc.icon} onChange={(icon) => update(i, { ...svc, icon })} />
             </Field>
-            <Field label="Email de contact (sans email, la carte n'est pas cliquable)">
-              <input className={inputCls} type="email" value={svc.email ?? ""} onChange={(e) => update(i, { ...svc, email: e.target.value || undefined })} placeholder="reservation@joro-space.fr" />
-            </Field>
+            {/* L'email ne sert qu'aux services « En plus » : c'est le second bouton de leur fenêtre de contact. */}
+            {withStayLink && (
+              <Field label="Email de contact (optionnel)">
+                <input className={inputCls} type="email" value={svc.email ?? ""} onChange={(e) => update(i, { ...svc, email: e.target.value || undefined })} placeholder="reservation@joro-space.fr" />
+                <p className="mt-1.5 text-xs text-[#1c2626]/40">Quand le voyageur clique sur ce service, il voit un bouton WhatsApp. Si vous renseignez un email, un second bouton « email » s'ajoute en dessous.</p>
+              </Field>
+            )}
           </div>
           {withStayLink && (
             <label className="flex items-center gap-2 text-sm text-[#1c2626]/70 cursor-pointer">
@@ -560,6 +567,8 @@ function ServiceList({
 }
 
 function TabServices({ data, onChange }: { data: BuildingData; onChange: (d: BuildingData) => void }) {
+  const contacts = emergencyContacts(data);
+  const chosen = servicesContact(data);
   return (
     <div className="space-y-6">
       <ServiceList
@@ -567,6 +576,31 @@ function TabServices({ data, onChange }: { data: BuildingData; onChange: (d: Bui
         items={data.services.included}
         onChange={(included) => onChange({ ...data, services: { ...data.services, included } })}
       />
+      <SectionSep />
+      <div className="space-y-3">
+        <p className={sectionTitle}>Contact WhatsApp des services « En plus »</p>
+        <div className="rounded-xl border border-black/10 bg-white p-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="min-w-0 flex-1 basis-64 text-sm text-[#1c2626]/50">
+            Personne contactée par le bouton WhatsApp des services « En plus », à choisir parmi les contacts de l'onglet Urgences.
+          </p>
+            <Select value={chosen.phone} onValueChange={(phone) => {
+              const c = contacts.find((x) => x.phone === phone);
+              // Le premier contact est le choix par défaut : rien à enregistrer dans ce cas.
+              onChange({ ...data, servicesContact: c && c !== contacts[0] ? { name: c.name, phone: c.phone } : undefined });
+            }}>
+              <SelectTrigger className="h-auto w-[320px] max-w-full rounded-xl border-black/15 bg-[#f5f2ed] px-3.5 py-2.5 text-sm text-[#1c2626]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {contacts.map((c, i) => (
+                  <SelectItem key={c.phone} value={c.phone}>
+                    {c.name}{c.role ? ` — ${c.role}` : ""}{i === 0 ? " (par défaut)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+        </div>
+      </div>
       <SectionSep />
       <ServiceList
         label="Services sur devis (En plus)"
@@ -747,7 +781,9 @@ function TabUrgences({ data, onChange }: { data: BuildingData; onChange: (d: Bui
         Les numéros d'urgence (112, 17, 15, 18) sont fixes. Le bloc Information et les contacts ci-dessous sont propres à ce logement.
       </p>
 
-      <BilingualInput label="Bloc Information" value={info} onChange={(v) => set({ info: v })} multiline />
+      <div className="rounded-xl border border-black/10 bg-white p-4">
+        <BilingualInput label="Bloc Information" value={info} onChange={(v) => set({ info: v })} multiline />
+      </div>
 
       <div className="space-y-3">
         <p className={sectionTitle}>Contacts</p>
@@ -762,9 +798,11 @@ function TabUrgences({ data, onChange }: { data: BuildingData; onChange: (d: Bui
         <AddButton label="Ajouter un contact" onClick={() => set({ contacts: [...contacts, { name: "", role: "", phone: "" }] })} />
       </div>
 
-      <Field label="Email de contact (laisser vide pour ne pas l'afficher)">
-        <input className={inputCls} type="email" value={email} onChange={(e) => set({ email: e.target.value })} />
-      </Field>
+      <div className="rounded-xl border border-black/10 bg-white p-4">
+        <Field label="Email de contact (laisser vide pour ne pas l'afficher)">
+          <input className={inputCls} type="email" value={email} onChange={(e) => set({ email: e.target.value })} />
+        </Field>
+      </div>
     </div>
   );
 }
