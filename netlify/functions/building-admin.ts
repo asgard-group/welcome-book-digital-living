@@ -15,30 +15,84 @@ const DEEPL_URL = DEEPL_API_KEY?.endsWith(":fx")
   ? "https://api-free.deepl.com/v2/translate"
   : "https://api.deepl.com/v2/translate";
 
-async function translateText(text: string): Promise<string> {
-  if (!DEEPL_API_KEY || !text.trim()) return text;
-  try {
-    const res = await fetch(DEEPL_URL, {
-      method: "POST",
-      headers: { authorization: `DeepL-Auth-Key ${DEEPL_API_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ text: [text], source_lang: "FR", target_lang: "EN" }),
-    });
-    if (!res.ok) return text;
-    const data = await res.json();
-    return data?.translations?.[0]?.text ?? text;
-  } catch {
-    return text;
-  }
-}
-
 type Bilingual = { fr: string; en: string };
 
-async function translateBilingual(b: Bilingual): Promise<Bilingual> {
-  return { fr: b.fr, en: await translateText(b.fr) };
+/** Appelle `fn` sur chaque texte bilingue ({ fr, en }) trouvé dans `node`, à n'importe quelle profondeur. */
+function walkBilingual(node: unknown, fn: (b: Bilingual) => void): void {
+  if (!node || typeof node !== "object") return;
+  const b = node as Partial<Bilingual>;
+  if (typeof b.fr === "string" && typeof b.en === "string") return fn(b as Bilingual);
+  for (const value of Object.values(node as Record<string, unknown>)) walkBilingual(value, fn);
 }
 
-async function translateBuilding(raw: Record<string, unknown>): Promise<Record<string, unknown>> {
+const DEEPL_BATCH = 40; // textes par requête
+const DEEPL_ATTEMPTS = 3;
+
+/** Traduit un lot de textes en une requête ; null si DeepL refuse malgré les nouvelles tentatives. */
+async function deeplBatch(texts: string[]): Promise<string[] | null> {
+  for (let attempt = 0; attempt < DEEPL_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(DEEPL_URL, {
+        method: "POST",
+        headers: { authorization: `DeepL-Auth-Key ${DEEPL_API_KEY}`, "content-type": "application/json" },
+        body: JSON.stringify({ text: texts, source_lang: "FR", target_lang: "EN" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const out = (data?.translations ?? []).map((t: { text?: string }) => t?.text);
+        if (out.length === texts.length && out.every((t: unknown) => typeof t === "string")) return out;
+        return null;
+      }
+      // 429 (trop de requêtes) et 5xx sont passagers : on réessaie. Le reste (clé invalide, quota épuisé) ne l'est pas.
+      if (res.status !== 429 && res.status < 500) return null;
+    } catch {
+      // Erreur réseau : on réessaie.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+  }
+  return null;
+}
+
+/**
+ * Dictionnaire français → anglais pour tous les textes de `raw`.
+ *
+ * Un texte dont on connaît déjà une vraie traduction (dans `known` : version enregistrée, puis
+ * contenu d'origine) n'est pas renvoyé à DeepL. Les autres partent par lots, l'un après l'autre :
+ * une requête par texte, toutes en parallèle, laissait une partie des textes sans traduction.
+ * `failed` compte les textes restés en français faute de traduction.
+ */
+async function buildDictionary(raw: unknown, known: unknown[]): Promise<{ dict: Map<string, string>; failed: number }> {
+  const memory = new Map<string, string>();
+  for (const source of known) {
+    walkBilingual(source, (b) => {
+      if (b.fr.trim() && b.en.trim() && b.en !== b.fr && !memory.has(b.fr)) memory.set(b.fr, b.en);
+    });
+  }
+
+  const dict = new Map<string, string>();
+  const missing: string[] = [];
+  walkBilingual(raw, (b) => {
+    if (!b.fr.trim() || dict.has(b.fr) || missing.includes(b.fr)) return;
+    const en = memory.get(b.fr);
+    if (en) dict.set(b.fr, en);
+    else missing.push(b.fr);
+  });
+
+  let failed = 0;
+  if (!DEEPL_API_KEY) return { dict, failed: missing.length };
+  for (let i = 0; i < missing.length; i += DEEPL_BATCH) {
+    const batch = missing.slice(i, i + DEEPL_BATCH);
+    const out = await deeplBatch(batch);
+    if (!out) failed += batch.length;
+    else batch.forEach((fr, j) => dict.set(fr, out[j]));
+  }
+  return { dict, failed };
+}
+
+async function translateBuilding(raw: Record<string, unknown>, dict: Map<string, string>): Promise<Record<string, unknown>> {
   const data = raw as Record<string, unknown>;
+  // Faute de traduction, l'anglais reprend le français (jamais de texte vide).
+  const translateBilingual = async (b: Bilingual): Promise<Bilingual> => ({ fr: b.fr, en: dict.get(b.fr) ?? b.fr });
 
   const tr = async (b: unknown) => {
     if (!b || typeof b !== "object") return b;
@@ -199,9 +253,14 @@ export default async (req: Request) => {
     if (!body.name || typeof body.name !== "string") return json(400, { error: "missing_name" });
     // Basic slug validation: lowercase, hyphens only
     if (!/^[a-z0-9-]+$/.test(body.id)) return json(400, { error: "invalid_id" });
-    const translated = await translateBuilding(body);
+    const { dict, failed } = await buildDictionary(body, [
+      await getBuilding(body.id),
+      (staticBuildings as Record<string, unknown>)[body.id],
+    ]);
+    const translated = await translateBuilding(body, dict);
     await putBuilding(translated as Parameters<typeof putBuilding>[0]);
-    return json(200, { ok: true });
+    // `untranslated` : nombre de textes restés en français côté anglais (DeepL indisponible ou refus).
+    return json(200, { ok: true, untranslated: failed });
   }
 
   // ── DELETE ───────────────────────────────────────────────────────────────

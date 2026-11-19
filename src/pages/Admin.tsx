@@ -1375,6 +1375,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       toast.error("Erreur lors de l'enregistrement.");
       return;
     }
+    // Le serveur signale les textes qu'il n'a pas pu traduire : ils restent en français dans la version anglaise.
+    const saved = await res.json().catch(() => ({}));
+    if (saved?.untranslated > 0) {
+      toast.warning(`${saved.untranslated} texte(s) n'ont pas pu être traduits en anglais et restent en français. Réenregistrez plus tard pour relancer la traduction.`, { duration: 10000 });
+    }
     if (renamed) {
       // Le logement existe maintenant sous le nouveau slug : on retire l'ancien.
       const del = await fetch(`/api/building-admin?slug=${encodeURIComponent(originalSlug!)}`, { method: "DELETE", credentials: "include" });

@@ -63,10 +63,12 @@ export default function Facilities() {
                     const key = `${section.id}-${i}`;
                     return (
                       <div key={key}>
-                        <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
+                        <div className="flex items-start gap-3">
                           {section.kind === "rules" && (
                             <X className="h-4 w-4 text-red-500 shrink-0 mt-0.5" strokeWidth={2.5} />
                           )}
+                          {/* Seuls le texte et le bouton de notice peuvent passer à la ligne : l'icône reste à gauche du texte. */}
+                          <div className="flex min-w-0 flex-1 flex-wrap items-start gap-x-3 gap-y-2">
                           {/* Base = largeur réelle du texte : le bouton reste sur la ligne tant que le texte tient à côté. */}
                           <div className="min-w-0 flex-[1_1_auto]">
                             <p className={`text-sm text-brand-ink dark:text-white ${section.kind === "rules" ? "font-medium" : "font-semibold"}`}>
@@ -90,6 +92,7 @@ export default function Facilities() {
                               {t.facilities.noticeShow}
                             </button>
                           )}
+                          </div>
                           {!item.videoFile && item.videoUrl && (
                             <ExternalLinkConfirm
                               href={item.videoUrl}
