@@ -43,6 +43,8 @@ export type PropertyData = {
   };
   /** Titres, sous-titres et libellés de boutons personnalisés (admin). */
   texts?: BuildingTexts;
+  /** Contact WhatsApp des services « En plus », choisi parmi ceux des Urgences (repéré par son numéro). Absent = le premier. */
+  servicesContact?: { name: string; phone: string };
   /** Bandeau de la page Check-in/out : libellés et heures (admin). Absent = valeurs par défaut. */
   schedule?: { arrivalLabel?: Bilingual; arrivalTime?: string; departureLabel?: Bilingual; departureTime?: string };
   /** Encarts libres de la page Infos pratiques (icône, titre, texte), saisis dans l'admin. */

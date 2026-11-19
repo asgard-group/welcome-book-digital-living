@@ -19,3 +19,20 @@ export const DEFAULT_EMERGENCY_INFO: Bilingual = {
   fr: DEFAULT_INFO_FR,
   en: "Please use the booking platform (Booking, Airbnb…) for your messages so the whole Jöro team can follow up. Use these contacts only in an emergency.",
 };
+
+/** Contacts de la page Urgences du logement (ceux par défaut tant que rien n'est personnalisé). */
+export function emergencyContacts(property?: { emergency?: { contacts?: EmergencyContact[] } } | null): EmergencyContact[] {
+  const custom = (property?.emergency?.contacts ?? []).filter((c) => c.name?.trim() && c.phone?.trim());
+  return custom.length ? custom : DEFAULT_EMERGENCY_CONTACTS;
+}
+
+/**
+ * Contact WhatsApp des services « En plus » : celui choisi dans l'admin parmi les contacts des
+ * Urgences (retrouvé par son numéro), sinon le premier. Un contact supprimé depuis retombe sur le premier.
+ */
+export function servicesContact(
+  property?: { emergency?: { contacts?: EmergencyContact[] }; servicesContact?: { phone: string } } | null,
+): EmergencyContact {
+  const contacts = emergencyContacts(property);
+  return contacts.find((c) => c.phone === property?.servicesContact?.phone) ?? contacts[0];
+}
