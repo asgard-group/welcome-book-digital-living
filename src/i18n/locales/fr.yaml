@@ -56,6 +56,7 @@ welcome:
     checkout: "Check-in/out"
 
 onboarding:
+  emailInvalid: "Cette adresse email n'est pas valide."
   emailNotice: "Votre email sert à l'équipe Jöro pour vous contacter au sujet de votre séjour et, seulement si vous cochez la case, pour vous envoyer nos offres. Pour le faire supprimer ou vous désinscrire, écrivez à reservation@joro-space.fr."
   marketingOptIn: "J'accepte de recevoir les offres et actualités Jöro par email."
   title: "Bienvenue chez Jöro"

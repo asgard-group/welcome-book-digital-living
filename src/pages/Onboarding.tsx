@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronRight, Mail } from "lucide-react";
+import { toast } from "sonner";
 import frFlag from "@/assets/icon/flag-icon-set/4_3/fr.svg";
 import gbFlag from "@/assets/icon/flag-icon-set/4_3/gb.svg";
 
@@ -24,11 +25,18 @@ export default function Onboarding() {
 
   const isPreview = useIsPreview();
 
+  const typedEmail = email.trim();
+
   const finish = async (withEmail: boolean) => {
+    const trimmed = email.trim();
+    // Un email saisi mais mal formé n'est pas ignoré en silence : alerte, et on reste sur l'écran.
+    if (withEmail && trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast.error(t.onboarding.emailInvalid);
+      return;
+    }
     // Prévisualisation admin : ni email envoyé, ni première connexion mémorisée.
     if (isPreview) return navigate(`/${buildingSlug}/home`);
-    const trimmed = email.trim();
-    if (withEmail && trimmed && trimmed.includes("@")) {
+    if (withEmail && trimmed) {
       try {
         await fetch("/api/guest-email", {
           method: "POST",
@@ -143,7 +151,8 @@ export default function Onboarding() {
                     <p className="text-white text-[16px] font-normal leading-snug whitespace-pre-line">{welcomeSubtitle}</p>
                   )}
                 </div>
-                <div className="space-y-[24px]">
+                {/* Formulaire : la touche Entrée du clavier fait la même chose que le bouton « Commencer ». */}
+                <form className="space-y-[24px]" noValidate onSubmit={(e) => { e.preventDefault(); finish(true); }}>
                   <div className="flex items-center gap-[14px] rounded-xl px-5 py-3 bg-white/10 backdrop-blur-[2.5px] outline outline-[0.5px] outline-white">
                     <Mail className="h-6 w-6 text-white shrink-0" strokeWidth={1.75} />
                     <input
@@ -165,8 +174,7 @@ export default function Onboarding() {
                     <span>{t.onboarding.marketingOptIn}</span>
                   </label>
                   <button
-                    type="button"
-                    onClick={() => finish(true)}
+                    type="submit"
                     className="w-full relative flex items-center justify-center gap-[7px] rounded-full px-5 py-[10px] bg-white hover:bg-white/90 transition-colors"
                   >
                     <span className="text-[19px] font-semibold leading-[31.58px] text-brand-ink">
@@ -176,15 +184,18 @@ export default function Onboarding() {
                       <ChevronRight className="h-5 w-5 text-black/60" strokeWidth={2} />
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => finish(false)}
-                    className="w-full text-center text-[16px] font-medium text-white/60 underline underline-offset-2 hover:text-white/80 transition-colors"
-                  >
-                    {lang === "fr" ? "Continuer sans email" : "Continue without email"}
-                  </button>
+                  {/* Proposé seulement tant que le champ est vide : un email saisi est toujours enregistré par « Commencer ». */}
+                  {!typedEmail && (
+                    <button
+                      type="button"
+                      onClick={() => finish(false)}
+                      className="w-full text-center text-[16px] font-medium text-white/60 underline underline-offset-2 hover:text-white/80 transition-colors"
+                    >
+                      {lang === "fr" ? "Continuer sans email" : "Continue without email"}
+                    </button>
+                  )}
                   <p className="text-center text-xs leading-snug text-white/60 whitespace-pre-line">{emailNotice}</p>
-                </div>
+                </form>
               </>
             )}
 
