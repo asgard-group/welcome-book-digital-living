@@ -11,6 +11,8 @@ export type PlaceItem = {
   distance?: string;
   description?: Bilingual;
   type?: string;
+  /** Traduction anglaise de `type`, calculée à l'enregistrement. */
+  typeEn?: string;
 };
 
 export type ServiceItem = {
