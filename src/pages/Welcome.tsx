@@ -38,18 +38,18 @@ export default function Welcome() {
             <SettingsPopover variant="light" />
           </div>
 
-          {/* Title / subtitle — hidden on very short viewports so it never overlaps the menu below */}
-          <div className="text-center px-4 pt-[30px] shrink-0 [@media(max-height:700px)]:hidden">
-            <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase">
+          {/* Titre / sous-titre — réduits (jamais masqués) quand l'écran est court, pour ne pas chevaucher le menu */}
+          <div className="text-center px-4 pt-[30px] shrink-0 [@media(max-height:700px)]:pt-3 [@media(max-height:600px)]:pt-2">
+            <h1 className="text-[32px] leading-tight font-serif font-semibold text-white uppercase [@media(max-height:700px)]:text-[24px] [@media(max-height:600px)]:text-[20px]">
               {pageText(property, "welcome", "title", lang, t.welcome.title)}
             </h1>
             {welcomeSubtitle && (
-              <p className="text-base text-white/80 whitespace-pre-line">{welcomeSubtitle}</p>
+              <p className="text-base text-white/80 whitespace-pre-line [@media(max-height:700px)]:text-sm [@media(max-height:600px)]:text-xs">{welcomeSubtitle}</p>
             )}
           </div>
 
           {/* Menu buttons — fills space between title and footer logo */}
-          <nav className="flex-1 min-h-0 flex flex-col justify-center gap-[15px] pb-6 px-[40px] [@media(max-height:700px)]:pb-0">
+          <nav className="flex-1 min-h-0 flex flex-col justify-center gap-[15px] pb-6 px-[40px] [@media(max-height:700px)]:pb-0 [@media(max-height:700px)]:gap-2.5 [@media(max-height:600px)]:gap-2">
             {menu.map((item) => (
                 <Link
                   key={item.to}
@@ -84,7 +84,7 @@ export default function Welcome() {
 
 
           {/* Footer logo */}
-          <div className="flex items-center justify-center gap-5 pt-6 shrink-0">
+          <div className="flex items-center justify-center gap-5 pt-6 shrink-0 [@media(max-height:700px)]:pt-3 [@media(max-height:600px)]:pt-2">
             <img
               src={joroLogo}
               alt="Jöro Living"
