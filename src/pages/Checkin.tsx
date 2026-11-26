@@ -7,6 +7,8 @@ import { PageShell } from "@/components/PageShell";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { pageText } from "@/property/texts";
 import type { Translation } from "@/i18n/translations";
+import { PhotoFigure } from "@/components/PhotoFigure";
+import type { Photo } from "@/property/types";
 
 function Widget({ children }: { children: React.ReactNode }) {
   return (
@@ -69,7 +71,7 @@ function FieldSkeleton() {
   return <div className="h-[42px] rounded-xl bg-brand-ink/10 dark:bg-white/10 animate-pulse" />;
 }
 
-type FaqItem = { name: { fr: string; en: string }; detail?: { fr: string; en: string } };
+type FaqItem = { name: { fr: string; en: string }; detail?: { fr: string; en: string }; photo?: Photo };
 
 function FaqWidget({ items, lang, title }: { items: FaqItem[]; lang: "fr" | "en"; title: string }) {
   const [open, setOpen] = useState<number | null>(null);
@@ -92,10 +94,13 @@ function FaqWidget({ items, lang, title }: { items: FaqItem[]; lang: "fr" | "en"
               strokeWidth={1.75}
             />
           </button>
-          {open === i && item.detail?.[lang] && (
-            <p className="px-4 pb-4 text-sm text-brand-ink/70 dark:text-white/70 whitespace-pre-line">
-              {item.detail[lang]}
-            </p>
+          {open === i && (item.detail?.[lang] || item.photo?.url) && (
+            <div className="px-4 pb-4 space-y-3">
+              {item.detail?.[lang] && (
+                <p className="text-sm text-brand-ink/70 dark:text-white/70 whitespace-pre-line">{item.detail[lang]}</p>
+              )}
+              {item.photo?.url && <PhotoFigure photo={item.photo} lang={lang} />}
+            </div>
           )}
         </div>
       ))}

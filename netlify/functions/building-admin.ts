@@ -108,8 +108,14 @@ async function translateBuilding(raw: Record<string, unknown>, dict: Map<string,
     ...s, name: await tr(s.name), detail: await tr(s.detail),
   }));
 
+  // Photo d'une réponse : seule la légende est traduite ; sans URL, la photo est retirée.
+  const trPhoto = async (p: unknown) => {
+    const photo = p as { url?: string; caption?: unknown } | undefined;
+    return photo?.url ? { url: photo.url, caption: await tr(photo.caption) } : undefined;
+  };
+
   const extraInfo = await trArr((data.extraInfo as Record<string, unknown>[]) ?? [], async (s) => ({
-    ...s, name: await tr(s.name), detail: await tr(s.detail),
+    ...s, name: await tr(s.name), detail: await tr(s.detail), photo: await trPhoto(s.photo),
   }));
 
   const stay = await trArr((data.stay as Record<string, unknown>[]) ?? [], async (s) => ({
@@ -139,7 +145,7 @@ async function translateBuilding(raw: Record<string, unknown>, dict: Map<string,
       ...sec,
       title: await tr(sec.title),
       items: await trArr((sec.items as Record<string, unknown>[]) ?? [], async (item) => ({
-        ...item, name: await tr(item.name), detail: await tr(item.detail), notice: await tr(item.notice),
+        ...item, name: await tr(item.name), detail: await tr(item.detail), notice: await tr(item.notice), photo: await trPhoto(item.photo),
       })),
     })),
   };

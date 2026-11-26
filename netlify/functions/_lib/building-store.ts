@@ -37,15 +37,19 @@ export type StayBlock = {
   detail?: Bilingual;
 };
 
+export type Photo = { url: string; caption?: Bilingual };
+
 export type FaqItem = {
   name: Bilingual;
   detail?: Bilingual;
+  photo?: Photo;
 };
 
 export type FacilityItem = {
   name: Bilingual;
   detail?: Bilingual;
   videoUrl?: string;
+  photo?: Photo;
 };
 
 export type FacilitySection = {
