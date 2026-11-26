@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Tv, Building2, ExternalLink, FileText, PlayCircle, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DetailLines } from "@/components/DetailLines";
+import { PhotoFigure } from "@/components/PhotoFigure";
 import type { PropertyData } from "@/property/types";
 import { FACILITY_ICONS } from "@/lib/facilityIcons";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -82,7 +83,7 @@ export default function Facilities() {
                           </div>
                           {/* Notice (texte et/ou vidéo envoyée depuis l'admin) : ouverte dans une fenêtre.
                               Sur la même ligne que le texte, renvoyée dessous quand la place manque. */}
-                          {(item.videoFile || noticeOf(item)) && (
+                          {(item.videoFile || item.photo?.url || noticeOf(item)) && (
                             <button
                               type="button"
                               onClick={() => setOpenNotice(item)}
@@ -127,6 +128,7 @@ export default function Facilities() {
               ) : (
                 <DialogDescription className="sr-only">{t.facilities.noticeShow}</DialogDescription>
               )}
+              {openNotice.photo?.url && <PhotoFigure photo={openNotice.photo} lang={lang} />}
               {openNotice.videoFile && (
                 <video src={openNotice.videoFile} controls playsInline className="w-full max-h-[55vh] rounded-lg bg-black" />
               )}

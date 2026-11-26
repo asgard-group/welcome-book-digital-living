@@ -25,8 +25,9 @@ type ServiceItem = { name: Bilingual; icon?: string; email?: string; description
 type AccessStep = { name: Bilingual; detail?: Bilingual; code?: string; codeFirst?: boolean };
 type StayBlock = { kind: "arrivee" | "depart" | "information"; name: Bilingual; detail?: Bilingual };
 type NoteBlock = { icon?: string; title: Bilingual; detail?: Bilingual };
-type FaqItem = { name: Bilingual; detail?: Bilingual };
-type FacilityItem = { name: Bilingual; detail?: Bilingual; videoUrl?: string; videoFile?: string; notice?: Bilingual };
+type Photo = { url: string; caption?: Bilingual };
+type FaqItem = { name: Bilingual; detail?: Bilingual; photo?: Photo };
+type FacilityItem = { name: Bilingual; detail?: Bilingual; videoUrl?: string; videoFile?: string; notice?: Bilingual; photo?: Photo };
 type FacilitySection = { id: string; title: Bilingual; kind: "video" | "rules"; icon?: string; items: FacilityItem[] };
 
 type BuildingData = {
@@ -490,6 +491,7 @@ function TabFaq({ data, onChange }: { data: BuildingData; onChange: (d: Building
         <ItemCard key={i} onRemove={() => remove(i)} {...moveProps(i, items.length, move)}>
           <BilingualInput label="Question" value={item.name} onChange={(v) => update(i, { ...item, name: v })} />
           <BilingualInput label="Réponse" value={item.detail ?? { fr: "", en: "" }} onChange={(v) => update(i, { ...item, detail: v.fr || v.en ? v : undefined })} multiline />
+          <PhotoUpload slug={data.id} value={item.photo} onChange={(photo) => update(i, { ...item, photo })} />
         </ItemCard>
       ))}
       <AddButton label="Ajouter une question" onClick={add} />
@@ -807,6 +809,82 @@ function TabUrgences({ data, onChange }: { data: BuildingData; onChange: (d: Bui
   );
 }
 
+/* ─── PhotoUpload ────────────────────────────────────────────────────────── */
+const PHOTO_MAX_SIDE = 1600;
+
+/** Réduit la photo (côté max 1600 px, JPEG) : un téléphone en fournit de 5 à 10 Mo, trop lourdes pour le livret. */
+async function shrinkPhoto(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, PHOTO_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+  ctx.fillStyle = "#fff"; // les PNG transparents deviennent blancs plutôt que noirs
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+  if (!blob) throw new Error("canvas");
+  return blob;
+}
+
+/** Une photo (facultative) en réponse d'une question ou d'un élément du guide, avec une légende bilingue. */
+function PhotoUpload({ slug, value, onChange }: { slug: string; value?: Photo; onChange: (photo?: Photo) => void }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!slug) return toast.error("Renseignez d'abord le slug du logement (onglet Infos de base).");
+    if (!file.type.startsWith("image/")) return toast.error("Format non pris en charge : choisissez une image.");
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", new File([await shrinkPhoto(file)], "photo.jpg", { type: "image/jpeg" }));
+      form.append("slug", slug);
+      // Identifiant unique par envoi : une photo remplacée change d'adresse, donc le cache des téléphones ne la garde pas.
+      form.append("field", `photo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
+      const res = await fetch("/api/upload-image", { method: "POST", credentials: "include", body: form });
+      if (!res.ok) throw new Error("upload_failed");
+      onChange({ ...value, url: (await res.json()).url });
+      toast.success("Photo envoyée. Pensez à enregistrer.");
+    } catch {
+      toast.error("L'envoi de la photo a échoué.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className={labelCls}>Photo (optionnel)</label>
+      {value?.url && <img src={value.url} alt="" className="w-full max-w-xs rounded-xl object-cover" />}
+      <div className="flex items-center gap-3">
+        <label className="cursor-pointer rounded-xl border border-black/15 bg-[#f5f2ed] px-3.5 py-2 text-sm text-[#1c2626] hover:bg-black/5 transition">
+          {uploading ? "Envoi…" : value?.url ? "Remplacer la photo" : "Choisir une photo"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) handleFile(f); }}
+          />
+        </label>
+        {value?.url && !uploading && (
+          <button type="button" onClick={() => onChange(undefined)} className="text-sm text-[#1c2626]/50 hover:text-red-500 transition">Retirer</button>
+        )}
+      </div>
+      {value?.url && (
+        <BilingualInput
+          label="Légende sous la photo (optionnel)"
+          value={value.caption ?? { fr: "", en: "" }}
+          onChange={(v) => onChange({ ...value, caption: v.fr || v.en ? v : undefined })}
+        />
+      )}
+      <p className="text-xs text-[#1c2626]/40">Une seule photo, réduite automatiquement avant l'envoi. Elle s'affiche sous le texte quand la réponse est ouverte.</p>
+    </div>
+  );
+}
+
 /* ─── VideoUpload ────────────────────────────────────────────────────────── */
 const VIDEO_CHUNK_SIZE = 2 * 1024 * 1024; // doit rester égal à MEDIA_CHUNK_SIZE (netlify/functions/upload-media.ts)
 const VIDEO_MAX_SIZE = 80 * 1024 * 1024;
@@ -928,6 +1006,7 @@ function TabGuide({ data, onChange }: { data: BuildingData; onChange: (d: Buildi
                 <BilingualInput label="Nom" value={item.name} onChange={(v) => updateItem(si, ii, { ...item, name: v })} />
                 <BilingualInput label="Description" value={item.detail ?? { fr: "", en: "" }} onChange={(v) => updateItem(si, ii, { ...item, detail: v.fr || v.en ? v : undefined })} multiline />
                 <BilingualInput label="Notice (fenêtre « Voir la notice » ; lignes « - » en puces)" value={item.notice ?? { fr: "", en: "" }} onChange={(v) => updateItem(si, ii, { ...item, notice: v.fr || v.en ? v : undefined })} multiline />
+                <PhotoUpload slug={data.id} value={item.photo} onChange={(photo) => updateItem(si, ii, { ...item, photo })} />
                 <VideoUpload slug={data.id} value={item.videoFile} onChange={(videoFile) => updateItem(si, ii, { ...item, videoFile })} />
                 {!item.videoFile && (
                   <Field label="Ou lien externe vers une vidéo (optionnel)">

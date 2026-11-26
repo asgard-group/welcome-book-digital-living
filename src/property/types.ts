@@ -6,7 +6,10 @@
 export type Bilingual = { fr: string; en: string };
 
 /** One titled entry of a Notion list (access steps, extra info, check-in/out blocks). */
-export type TextEntry = { name: Bilingual; detail?: Bilingual };
+/** Photo envoyée depuis l'admin (réponse d'une question de la FAQ, élément du guide), avec légende facultative. */
+export type Photo = { url: string; caption?: Bilingual };
+
+export type TextEntry = { name: Bilingual; detail?: Bilingual; photo?: Photo };
 
 /** Pages du livret dont le titre / sous-titre est personnalisable. */
 export type PageKey = "onboarding" | "welcome" | "checkin" | "facilities" | "checkout" | "services" | "explore" | "info";
@@ -110,6 +113,8 @@ export type PropertyData = {
         videoFile?: string;
         /** Texte de la notice, affiché dans la fenêtre au-dessus de la vidéo. */
         notice?: Bilingual;
+        /** Photo affichée dans la fenêtre de notice, sous le texte. */
+        photo?: Photo;
         /** Per-item image for "video" (equipment) sections. */
         imageUrl?: string;
       }[];
